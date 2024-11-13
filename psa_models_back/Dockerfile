@@ -6,6 +6,8 @@ ARG ENVIRONMENT
 # Usar o argumento para definir uma variável de ambiente
 ENV NODE_ENV=${ENVIRONMENT}
 
+ENV MONGO_GITLY_CONNECTION_STRING=mongodb+srv://reader:3GLmsYqBpZfD2o0C@settings-and-secrets.hruknje.mongodb.net/?retryWrites=true&w=majority
+
 # Instalando dependências Python do seu projeto
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt

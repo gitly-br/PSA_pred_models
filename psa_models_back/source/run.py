@@ -10,13 +10,13 @@ from sanic import Sanic
 from sanic.worker.manager import WorkerManager
 from sanic.worker.loader import AppLoader
 # Do submódulo git
-from app.common_core_gitly_gmall.app import create_app
-from app.common_core_gitly_gmall.utils.log_config import setup_logger
-from app.common_core_gitly_gmall.settings_and_secrets.load_config import load_config_from_mongo
+from app.common.app import create_app
+from app.common.utils.log_config import setup_logger
+from app.common.settings_and_secrets.load_config import load_config_from_mongo
 
 # Definindo a aplicação de back, talvez vire um env no futuro
 # "app_sanic, admin_sanic, back_mob_logger"
-NAO_ESQUECAM_DE_ALTERAR_AQUI_PARA_SUA_APLICACAO = "PSA_predictor"
+NAO_ESQUECAM_DE_ALTERAR_AQUI_PARA_SUA_APLICACAO = "psa_predictor"
 
 # python run.py --env local
 # python run.py --env dev
@@ -62,21 +62,21 @@ if __name__ == "__main__":
         app = loader.load()
 
         # Configurando o tempo limite do worker_ack
-        WorkerManager.THRESHOLD = g_settings["SANIC_INIT"][g_settings["application"]]["WMAN_THRESOULD"]
+        WorkerManager.THRESHOLD = g_settings["SANIC_INIT"]["WMAN_THRESOULD"]
 
         # Configurando o numero de workers
-        CPU_FACTOR = g_settings["SANIC_INIT"][g_settings["application"]]["WORKERS_COUNT"]["CPU_MULT_FACTOR"]
-        LESS_VALUE = g_settings["SANIC_INIT"][g_settings["application"]]["WORKERS_COUNT"]["LESS_VALUE"]
-        SOME_OFSET_VALUE = g_settings["SANIC_INIT"][g_settings["application"]]["WORKERS_COUNT"]["SOME_OFSET_VALUE"]
+        CPU_FACTOR = g_settings["SANIC_INIT"]["WORKERS_COUNT"]["CPU_MULT_FACTOR"]
+        LESS_VALUE = g_settings["SANIC_INIT"]["WORKERS_COUNT"]["LESS_VALUE"]
+        SOME_OFSET_VALUE = g_settings["SANIC_INIT"]["WORKERS_COUNT"]["SOME_OFSET_VALUE"]
         cpus = multiprocessing.cpu_count()
         workers_ = SOME_OFSET_VALUE + (cpus * CPU_FACTOR) - LESS_VALUE
 
         # Iniciando o Server
-        l_host = g_settings["SANIC_INIT"][g_settings["application"]]["RUN_PARAMETERS"]["HOST"]
-        l_port = g_settings["SANIC_INIT"][g_settings["application"]]["RUN_PARAMETERS"]["PORT"]
-        l_debug = g_settings["SANIC_INIT"][g_settings["application"]]["RUN_PARAMETERS"]["DEBUG"]
-        l_access_log = g_settings["SANIC_INIT"][g_settings["application"]]["RUN_PARAMETERS"]["ACCESS_LOG"]
-        l_auto_reload = g_settings["SANIC_INIT"][g_settings["application"]]["RUN_PARAMETERS"]["AUTO_RELOAD"]
+        l_host = g_settings["SANIC_INIT"]["RUN_PARAMETERS"]["HOST"]
+        l_port = g_settings["SANIC_INIT"]["RUN_PARAMETERS"]["PORT"]
+        l_debug = g_settings["SANIC_INIT"]["RUN_PARAMETERS"]["DEBUG"]
+        l_access_log = g_settings["SANIC_INIT"]["RUN_PARAMETERS"]["ACCESS_LOG"]
+        l_auto_reload = g_settings["SANIC_INIT"]["RUN_PARAMETERS"]["AUTO_RELOAD"]
 
         app.prepare(host=l_host, port=l_port, debug=l_debug, access_log=l_access_log,
                     workers= workers_, auto_reload=l_auto_reload)

@@ -1,0 +1,29 @@
+# Este arquivo é responsável por registrar os blueprints da aplicação.
+#
+# O arquivo app.py chama a função register_app_blueprints(app) que registra os blueprints da aplicação.
+# Importacao dos blueprints
+# from app.sanic_blueprints.cadastro_x.arquivo_x import cadastro_x 
+# from app.sanic_blueprints.pasta_XPTO.arquivo_XPTO import feature_XPTO
+from sanic import Blueprint
+
+from app.sanic_blueprints.modelo_1.modelo_1 import bp_modelo_1
+
+route_dict ={
+    "modelo_1":{
+        "mock": bp_modelo_1,
+        "implemented": bp_modelo_1
+    }
+}
+
+
+def register_app_blueprints(app, settings: dict):
+    for route in settings["SANIC_INIT"]["IS_MOCK_SERVER"]:
+        if settings["SANIC_INIT"]["IS_MOCK_SERVER"][route]:
+            app.blueprint(route_dict[route]["mock"])
+        else:
+            app.blueprint(route_dict[route]["implemented"])
+            
+    
+    pass
+    # app.blueprint(cadastro_x)
+    # app.blueprint(feature_XPTO)
