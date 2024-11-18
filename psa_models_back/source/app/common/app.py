@@ -13,6 +13,7 @@ from sanic.response import json
 from app.common.sanic_listeners.startup import init_redis_and_mongo
 from app.common.sanic_listeners.per_worker_resources import init_redis_con, init_mongo_con
 from app.common.utils.log_config import setup_logger
+from app.utils.openweather import get_openweather_api_data
 
 # Importação dos blueprints do submódulo common
 from app.common.sanic_blueprints.blueprint_register import register_common_core_blueprints
@@ -226,6 +227,9 @@ def create_app(env, application, settings, logger):
         app.ctx.httpx_client = httpx.AsyncClient(http2=True, follow_redirects=True,
                                                  timeout=timeout, limits=httpx.Limits(max_keepalive_connections=100, max_connections=1000))
 
+    @app.before_server_start
+    async def call_api_scheduler(app, loop):
+        loop.create_task(get_openweather_api_data(app, ''))
 
     # Finaliza os recursos
     @app.before_server_stop
