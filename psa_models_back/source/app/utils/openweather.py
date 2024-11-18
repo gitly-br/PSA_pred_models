@@ -1,24 +1,24 @@
-async def call_OW_api_(request, route, params=None):
-    """
-    request: request object from sanic (usado para pegar objeto httpx_client para fazer request)
-    """
+import asyncio
+from datetime import datetime
 
 
+async def get_openweather_api_data(app, route, params=None):
+        
+    while True:
+        
+        token = app.ctx.sett['API_KEYS']['openweather']
 
-    base_url = 'https://api.openweathermap.org/data/2.5/'
-    url = base_url + route
+        res_forecast = await app.ctx.httpx_client.get(f'http://api.openweathermap.org/data/2.5/forecast?lat=-23.667548&lon=-46.528934&appid={token}&units=metric')
 
-    s = request.app.ctx.settings['openweather']['api_key']
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    
-    if params is None:
-        params = {}
-    params['appid'] = s
+        datas = res_forecast.json()
 
-    payload = {}
-    
-    response = await request.app.ctx.httpx_client.post(url, headers=headers, json=payload)
-    
-    return response.json()
+        datas['dt_request'] = datetime.now()
+
+        # Inserir registro em mongo
+
+        await app.ctx.mongo_obj.write_one(db_name='api_data',
+            col='openweather_col',
+            doc=datas)
+        
+        
+        await asyncio.sleep(3600*1.45)
