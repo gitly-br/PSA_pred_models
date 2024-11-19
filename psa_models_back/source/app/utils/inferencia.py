@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.utils.openweather import get_OW_mongo_data_and_agg
 
 async def inferencia_previsao(request, modelo, regiao: str):
@@ -18,7 +19,6 @@ async def inferencia_previsao(request, modelo, regiao: str):
             break
 
     list_data = []
-    print(model_infos.items())
 
     
     models_agg = model_infos[modelo]
@@ -27,4 +27,15 @@ async def inferencia_previsao(request, modelo, regiao: str):
         if agg_info != {}:
             list_data.append(await get_OW_mongo_data_and_agg(request, agg_info))
 
-    return {'status' : 'success', 'data' : {'score' : 0.5, 'regiao' : regiao, 'modelo' : modelo}}
+
+    #Fazer inferencia e salvar em mongo
+
+    result = {'proba' : None, 'predict' : 1, 'score' : 0.5, 'region' : regiao, 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
+
+    success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
+        db_name='models_db',
+        col='inference_col',
+        doc=result
+    )
+
+    return result

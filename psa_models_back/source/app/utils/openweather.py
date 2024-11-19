@@ -67,8 +67,6 @@ async def get_OW_mongo_data_and_agg(request, agg_config):
     agg_config_final = {}
     for i, j in agg_config.items():
         agg_config_final[i] = (j['time'], tuple(j['aggs']))
-
-    print(agg_config_final)
     
     df_agg = df.groupby(pd.Grouper(key='dt', freq='D')).agg(
                                                   **create_agg_dict(agg_config_final)
