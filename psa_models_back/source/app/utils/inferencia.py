@@ -30,7 +30,7 @@ async def inferencia_previsao(request, modelo, regiao: str):
 
     #Fazer inferencia e salvar em mongo
 
-    result = {'proba' : None, 'predict' : 1, 'score' : 0.5, 'region' : regiao, 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
+    result = {'proba' : None, 'predict' : 1, 'score' : 0.25, 'region' : regiao, 'lat' : region_models.get('region_coord', [-23.699012, -46.4537949])[0], 'lon': region_models.get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : region_models.get('circle_rad', 100), 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
 
     success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
         db_name='models_db',

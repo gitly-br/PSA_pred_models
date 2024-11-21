@@ -1,6 +1,18 @@
 version: '4.0'
 
 services:
+
+  streamlit_app:
+    build:
+      context: ./streamlit_app
+      dockerfile: Dockerfile
+    volumes:
+      - ./streamlit_app:/app
+    ports:
+      - "8501:8501"
+    networks:
+      - app_network
+
   # Backend do Aplicativo (App)
   psa_models_back:
     build:
