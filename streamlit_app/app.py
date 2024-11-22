@@ -26,23 +26,27 @@ if 'logged_in' not in st.session_state:
 
 # Tela de login
 if not st.session_state.logged_in:
-    st.title("Login")
 
-    username = st.text_input("Usuário")
-    password = st.text_input("Senha", type='password')
+    col1, col2, col3 = st.columns([3, 3, 3])
+    
+    with col2:
+        st.title("Login")
 
-    if st.button("Entrar"):
-        if check_credentials(username, password):
-            st.session_state.logged_in = True
-            st.success("Login realizado com sucesso")
-            st.rerun()
-        else:
-            st.error("Usuário ou senha inválidos")
+        username = st.text_input("Usuário")
+        password = st.text_input("Senha", type='password')
+
+        if st.button("Entrar"):
+            if check_credentials(username, password):
+                st.session_state.logged_in = True
+                st.success("Login realizado com sucesso")
+                st.rerun()
+            else:
+                st.error("Usuário ou senha inválidos")
 else:
     
     st.sidebar.image("PSA.png")
     st.sidebar.title("Sistema de Previsão de Alagamentos")
-    st.sidebar.markdown("[Formulário](https://forms.gle/yUxpb68E5cjj1YdHA)")
+    st.sidebar.markdown("[Formulário para registro de ocorrência](https://forms.gle/yUxpb68E5cjj1YdHA)")
 
     col_1, space_, col_2 = st.columns([9, 1, 6])
 
@@ -72,8 +76,7 @@ else:
             if json_response.get('status') == 'success':
                 data_list.append(json_response.get('data', {}))
             else:
-                st.error("Falha ao obter dados da API: Status não é 'success'")
-                st.stop()
+                data_list.append(json_response.get('data', {}))
 
         df = pd.DataFrame(data_list)
 
@@ -90,53 +93,80 @@ else:
 
                 # Define as cores com base nos dados
                 def get_color(value):
-                    if value <= 0.3:
-                        return (255, 237, 160, 160)  # Cor para valores baixos
-                    elif value <= 0.7:
-                        return (254, 178, 76, 160)  # Cor para valores médios
+                    if value is None:
+                        return (0,0,0,0)
+                    if value <= 0.5:
+                        return (182, 226, 161, abs(value-0.5)+0.4) 
                     else:
-                        return (240, 59, 32, 160)  # Cor para valores altos
+                        return (253, 138, 138, abs(value-0.5)+0.4)  # Cor para valores altos
 
                 def get_hex_color(value):
-                    if value <= 0.3:
-                        return '#ffeda0'
+                    if value <= 0.5:
+                        return '#B6E2A1'
                     elif value <= 0.7:
-                        return '#feb24c'
-                    else:
-                        return '#f03b20'
+                        return '#fd8a8a'
 
-                df['cor'] = df['valor'].apply(get_color)
+                df_map = df.copy()
 
+                df_map['cor'] = df_map['valor'].apply(get_color)
+
+                new_row = {'circle_rad': 0, 'valor': 0, 'cor': (0,0,0,0), 'lat' : -23.656825, 'lon' : -46.533353, 'status':1}
+                df_map = pd.concat([df_map, pd.DataFrame([new_row])], ignore_index=True)
+
+                df_maps = df_map[df_map['status'] == 1]
+                
+                
                 # Plota o mapa
-                st.map(df, latitude="lat", longitude="lon",
+                st.map(df_maps, latitude="lat", longitude="lon",
                        size="circle_rad", color="cor", height=600, zoom=13)
 
     with col_2:
         # Exibe a lista ao lado direito
         st.header("Região Considerada no Modelo")
-        st.markdown('<h4>Santo André</h4>',unsafe_allow_html=True)
+        st.markdown('<h4>Santo André (24h)</h4>',unsafe_allow_html=True)
         for idx, row in df.iterrows():
             if row['regiao'] == 'SA':
-                st.markdown(
-                    f"""<div style=' display: flex; align-items: center;'>
-                            <div style='background-color:{get_hex_color(row['valor'])}; width:20px; height:20px; border-radius:50%;'></div>
-                            <div style='margin-left: 20px;'>Confiança do modelo: {row['valor']*100:.1f}%</div>
-                            <div>Modelo: {row['model']}</div>
-                            <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
-                        </div>""",
-                    unsafe_allow_html=True
-                )
+                if row['status'] == 0:
+                    st.markdown(
+                        f"""<div style=' display: flex; align-items: center;'>
+                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                                <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+                            </div>""",
+                        unsafe_allow_html=True
+                    )
+                    break
+                else:
+                    st.markdown(
+                        f"""<div style=' display: flex; align-items: center;'>
+                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                                <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}%</div>
+                                <div>Modelo: {row['model']}</div>
+                                <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                            </div>""",
+                        unsafe_allow_html=True
+                    )
 
-        st.markdown('<br><h4>Bacia Tamanduateí</h4>',unsafe_allow_html=True)
+        st.markdown('<br><h4>Bacia Tamanduateí (24h)</h4>',unsafe_allow_html=True)
 
         for idx, row in df.iterrows():
             if row['regiao'] == 'tam':
-                st.markdown(
-                    f"""<div style=' display: flex; align-items: center;'>
-                            <div style='background-color:{get_hex_color(row['valor'])}; width:20px; height:20px; border-radius:50%;'></div>
-                            <div style='margin-left: 20px;'>Confiança do modelo: {row['valor']*100:.1f}%</div>
-                            <div>Modelo: {row['model']}</div>
-                            <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
-                        </div>""",
-                    unsafe_allow_html=True
-                )
+
+                if row['status'] == 0:
+                    st.markdown(
+                        f"""<div style=' display: flex; align-items: center;'>
+                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                                <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+                            </div>""",
+                        unsafe_allow_html=True
+                    )
+                    break
+                else:
+                    st.markdown(
+                        f"""<div style=' display: flex; align-items: center;'>
+                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                                <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}%</div>
+                                <div>Modelo: {row['model']}</div>
+                                <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                            </div>""",
+                        unsafe_allow_html=True
+                    )

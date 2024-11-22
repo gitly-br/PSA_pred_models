@@ -13,7 +13,10 @@ async def get_modelo_4(request):
     if args is None:
         args = {}
 
-    resp = await inferencia_previsao(request, args.get('modelo', "lgbm_tam_1"), args.get('regiao', 'tam'))
+    succ, resp = await inferencia_previsao(request, args.get('modelo', "lgbm_tam_1"), args.get('regiao', 'tam'))
 
+    if succ:
+        return response.json({'status' : 'success', 'data' : encode_body(resp)})
 
-    return response.json({'status' : 'success', 'data' : encode_body(resp)})
+    else:
+        return response.json({'status' : 1, 'data' : encode_body(resp)})

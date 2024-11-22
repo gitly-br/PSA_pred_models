@@ -47,6 +47,7 @@ async def get_OW_mongo_data_and_agg(request, agg_config):
             "grnd_level": entry["main"].get("grnd_level"),
             "humidity": entry["main"].get("humidity"),
             "temp_kf": entry["main"].get("temp_kf"),
+            "weather_id": entry["weather"][0].get("id") if entry.get("weather") else None,
             "weather_main": entry["weather"][0].get("main") if entry.get("weather") else None,
             "weather_description": entry["weather"][0].get("description") if entry.get("weather") else None,
             "weather_icon": entry["weather"][0].get("icon") if entry.get("weather") else None,
@@ -64,6 +65,12 @@ async def get_OW_mongo_data_and_agg(request, agg_config):
 
     # Criar o DataFrame
     df = pd.DataFrame(flattened_data)
+
+    # Verificar se tem chuva
+    if not (502 in df['weather_id'].values or 503 in df['weather_id'].values or 504 in df['weather_id'].values or 521 in df['weather_id'].values or 522 in df['weather_id'].values or 312 in df['weather_id'].values or 314 in df['weather_id'].values or 201 in df['weather_id'].values or 202 in df['weather_id'].values or 232 in df['weather_id'].values):
+        return False, None
+
+
     agg_config_final = {}
     for i, j in agg_config.items():
         agg_config_final[i] = (j['time'], tuple(j['aggs']))
@@ -72,4 +79,4 @@ async def get_OW_mongo_data_and_agg(request, agg_config):
                                                   **create_agg_dict(agg_config_final)
                                                   ).reset_index()
 
-    return df_agg
+    return True, df_agg

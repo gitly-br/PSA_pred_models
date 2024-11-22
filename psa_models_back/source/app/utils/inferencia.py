@@ -31,9 +31,13 @@ async def inferencia_previsao(request, modelo:str, regiao: str):
 
     #Fazer inferencia e salvar em mongo
     # Load the model
+
+    if list_data[0][0] == False:
+        return  False, {'status' : 0, 'proba' : None, 'predict' : None, 'score' : None,'region' : regiao, 'lat' : model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[0], 'lon': model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : 0, 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
+
     loaded_model = joblib.load(f'/source/app/utils/{modelo}.joblib')
 
-    random_row = list_data[0].iloc[[1]]
+    random_row = list_data[0][1].iloc[[1]]
 
     # Convert the row to a NumPy array
     input_data = random_row.drop(columns=['dt']).values
@@ -42,7 +46,7 @@ async def inferencia_previsao(request, modelo:str, regiao: str):
     prediction = loaded_model.predict(input_data)
     proba = loaded_model.predict_proba(input_data)
     
-    result = {'proba' : proba[0][1], 'predict' : int(prediction[0]), 'score' : 0.25, 'region' : regiao, 'lat' : model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[0], 'lon': model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : model_infos[modelo].get('circle_rad', 100), 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
+    result = {'status' : 1,'proba' : proba[0][1], 'predict' : int(prediction[0]), 'score' : 0.25, 'region' : regiao, 'lat' : model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[0], 'lon': model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : model_infos[modelo].get('circle_rad', 100), 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
 
 
     success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
@@ -51,4 +55,4 @@ async def inferencia_previsao(request, modelo:str, regiao: str):
         doc=result
     )
 
-    return result
+    return True, result

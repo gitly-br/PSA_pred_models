@@ -13,6 +13,6 @@ COPY . .
 
 EXPOSE 8501
 
-ENV API_URL=http://psa_models_back:8000
+ENV API_URL=http://10.100.42.178:8000
 
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
