@@ -18,7 +18,7 @@ def generate_slices(time_interval, start, end):
         slice objects for each interval.
     """
     slices = {}
-    for i in range(start, end, time_interval):
+    for i in range(start, end//3, time_interval//3):
         slices[f"{i}_{i+time_interval}"] = slice(i, i+time_interval)
     return slices
 

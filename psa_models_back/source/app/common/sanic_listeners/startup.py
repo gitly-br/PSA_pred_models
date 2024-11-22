@@ -27,17 +27,17 @@ async def init_redis_and_mongo(logger:Logger, settings:dict)->tuple[bool, str]:
 
     logger.debug("[init_redis_and_mongo] Mongo Connection Success")
 
-    # Criando objeto de gerenciamento do Redis
-    main_redis = RedisAppOps(settings=settings)
-    success_redis, error_message_redis = await main_redis.init_connections(max_conn=1)
-    if not success_redis:
-        await main_mongo.close_all_connections()
-        del main_mongo
-        await main_redis.close_all_connections()
-        del main_redis
-        return False, error_message_redis
+    # # Criando objeto de gerenciamento do Redis
+    # main_redis = RedisAppOps(settings=settings)
+    # success_redis, error_message_redis = await main_redis.init_connections(max_conn=1)
+    # if not success_redis:
+    #     await main_mongo.close_all_connections()
+    #     del main_mongo
+    #     await main_redis.close_all_connections()
+    #     del main_redis
+    #     return False, error_message_redis
 
-    logger.debug("[init_redis_and_mongo] Redis Connection Success")
+    # logger.debug("[init_redis_and_mongo] Redis Connection Success")
 
 
 
@@ -50,8 +50,8 @@ async def init_redis_and_mongo(logger:Logger, settings:dict)->tuple[bool, str]:
 
 
     # Certificando que não ficarão conexões zoombies e não vazamento de memória
-    await main_redis.close_all_connections()
+    # await main_redis.close_all_connections()
     await main_mongo.close_all_connections()
-    del main_redis
+    # del main_redis
     del main_mongo
     return True, None

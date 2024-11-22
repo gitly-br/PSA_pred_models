@@ -2,19 +2,22 @@ from datetime import datetime, timedelta
 import streamlit as st
 import requests
 import pandas as pd
-import geopandas as gpd
-import matplotlib.pyplot as plt
 from streamlit_autorefresh import st_autorefresh
+from os import environ
 
+
+api_url = environ.get('API_URL', 'http://psa_models_back:8000')
 
 # Função para verificar as credenciais
 
-st.set_page_config(layout='wide')
+st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
+
 st_autorefresh(interval=300000, key="datarefresh")
 
 def check_credentials(username, password):
     # Substitua pela lógica de autenticação real
-    return username == "usuario" and password == "senha"
+    return username == "psa_defesa_civil" and password == "PSA@D3fes4"
+
 
 
 # Inicializa o estado da sessão
@@ -36,33 +39,54 @@ if not st.session_state.logged_in:
         else:
             st.error("Usuário ou senha inválidos")
 else:
+    
+    st.sidebar.image("PSA.png")
+    st.sidebar.title("Sistema de Previsão de Alagamentos")
+    st.sidebar.markdown("[Formulário](https://forms.gle/yUxpb68E5cjj1YdHA)")
 
-    col_1, space_, col_2 = st.columns([11, 1, 4])
+    col_1, space_, col_2 = st.columns([9, 1, 6])
 
     with col_1:
         # Título principal após o login
-        st.title("Predição de alagamentos")
+        st.title("Predição de Alagamentos")
 
         # Conteúdo da primeira aba (Visualização)
-        # URL da API
-        api_url = "http://psa_models_back:8000/modelo_1"  # Substitua pela URL da sua API
+        responses = []
+        for i in range(1, 6):
+            api_url_i = f"{api_url}/modelo_{i}"
+            response_i = requests.post(api_url_i)
+            responses.append(response_i)
 
-        # Faz a requisição à API
-        response = requests.post(api_url)
+        success=True
+        for response in responses:
+            if response.status_code != 200:
+                st.error(f"Falha ao conectar à API: Código de status {response.status_code}")
+                st.stop()
 
-        if response.status_code == 200:
-            json_response = response.json()
+
+        json_responses = [response.json() for response in responses]
+
+
+        data_list = []
+        for json_response in json_responses:
+            if json_response.get('status') == 'success':
+                data_list.append(json_response.get('data', {}))
+            else:
+                st.error("Falha ao obter dados da API: Status não é 'success'")
+                st.stop()
+
+        df = pd.DataFrame(data_list)
+
+        if success:
 
             # Verifica se o status é 'success' e extrai os dados do campo 'data'
-            if json_response.get('status') == 'success':
-                data = json_response.get('data', {})
 
                 # Cria um DataFrame a partir dos dados
-                df = pd.DataFrame([data])
+                df = pd.DataFrame(data_list)
 
                 # Renomeia as colunas conforme necessário
                 df.rename(columns={'region': 'regiao',
-                          'score': 'valor'}, inplace=True)
+                          'proba': 'valor'}, inplace=True)
 
                 # Define as cores com base nos dados
                 def get_color(value):
@@ -85,34 +109,34 @@ else:
 
                 # Plota o mapa
                 st.map(df, latitude="lat", longitude="lon",
-                       size="circle_rad", color="cor", height=600)
-            else:
-                st.error("Falha ao obter dados da API: Status não é 'success'")
-                st.stop()
-        else:
-            st.error(
-                f"Falha ao conectar à API: Código de status {response.status_code}")
-            st.stop()
+                       size="circle_rad", color="cor", height=600, zoom=13)
 
     with col_2:
         # Exibe a lista ao lado direito
-        st.header("Regiões")
+        st.header("Região Considerada no Modelo")
+        st.markdown('<h4>Santo André</h4>',unsafe_allow_html=True)
         for idx, row in df.iterrows():
-            st.markdown(
-                f"""<div style='margin-left: 10px; display: flex; align-items: center;'>
-                        <strong>Santo André</strong></div>
-                        <div style='background-color:{get_hex_color(row['valor'])}; width:20px; height:20px; border-radius:50%; margin-left: 30px;'>
-                        <div style='margin-left: 45px;'>
-                        {row['valor']*100}%
-                        </div>
-                        </div>
-                        <div style='margin-left: 30px;'>
-                            Modelo: {row['model']}
-                        </div>
-                        <div style='margin-left: 30px;'>
-                            Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}
-                        </div>
-                        
-                        """,
-                unsafe_allow_html=True
-            )
+            if row['regiao'] == 'SA':
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:{get_hex_color(row['valor'])}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Confiança do modelo: {row['valor']*100:.1f}%</div>
+                            <div>Modelo: {row['model']}</div>
+                            <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+
+        st.markdown('<br><h4>Bacia Tamanduateí</h4>',unsafe_allow_html=True)
+
+        for idx, row in df.iterrows():
+            if row['regiao'] == 'tam':
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:{get_hex_color(row['valor'])}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Confiança do modelo: {row['valor']*100:.1f}%</div>
+                            <div>Modelo: {row['model']}</div>
+                            <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )

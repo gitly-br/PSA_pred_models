@@ -72,4 +72,4 @@ async def get_OW_mongo_data_and_agg(request, agg_config):
                                                   **create_agg_dict(agg_config_final)
                                                   ).reset_index()
 
-    print(df_agg)
+    return df_agg
