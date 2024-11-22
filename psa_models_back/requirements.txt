@@ -40,3 +40,6 @@ aioboto3
 web-pdb==1.6.2
 pandas
 unicodedata2
+joblib
+scikit-learn
+lightgbm

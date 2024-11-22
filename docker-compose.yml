@@ -31,8 +31,8 @@ services:
       - support_network
     depends_on:
       - mongo_models
-      - redisA
-      - redisB
+      # - redisA
+      # - redisB
 
   mongo_models:
     image: mongo:4.0.28
@@ -49,33 +49,33 @@ services:
       - app_network
 
   # Redis Configuration
-  redisA:
-    image: redis/redis-stack
-    init: true
-    volumes:
-      - redis_A_data:/data
-    ports:
-      - "6300:6379"
-      - "8001:8001"
-    environment:
-      - REDIS_PASSWORD=local_redis
-    command: ["redis-server", "--requirepass", "local_redis"]
-    networks:
-      - support_network
+  # redisA:
+  #   image: redis/redis-stack
+  #   init: true
+  #   volumes:
+  #     - redis_A_data:/data
+  #   ports:
+  #     - "6300:6379"
+  #     - "8001:8001"
+  #   environment:
+  #     - REDIS_PASSWORD=local_redis
+  #   command: ["redis-server", "--requirepass", "local_redis"]
+  #   networks:
+  #     - support_network
 
-  redisB:
-    image: redis/redis-stack
-    init: true
-    volumes:
-      - redis_B_data:/data
-    ports:
-      - "6310:6379"
-      - "8002:8001"
-    environment:
-      - REDIS_PASSWORD=local_redis
-    command: ["redis-server", "--requirepass", "local_redis"]
-    networks:
-      - support_network
+  # redisB:
+  #   image: redis/redis-stack
+  #   init: true
+  #   volumes:
+  #     - redis_B_data:/data
+  #   ports:
+  #     - "6310:6379"
+  #     - "8002:8001"
+  #   environment:
+  #     - REDIS_PASSWORD=local_redis
+  #   command: ["redis-server", "--requirepass", "local_redis"]
+  #   networks:
+  #     - support_network
 
 
 networks:
@@ -84,5 +84,5 @@ networks:
 
 volumes:
   models_mongo_data:
-  redis_A_data:
-  redis_B_data:
+  # redis_A_data:
+  # redis_B_data:

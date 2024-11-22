@@ -8,9 +8,11 @@ ENV NODE_ENV=${ENVIRONMENT}
 
 ENV MONGO_GITLY_CONNECTION_STRING=mongodb+srv://reader:3GLmsYqBpZfD2o0C@settings-and-secrets.hruknje.mongodb.net/?retryWrites=true&w=majority
 
+RUN apk update && apk add --virtual build-dependencies build-base gcc wget
+
 # Instalando dependências Python do seu projeto
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --verbose -r requirements.txt
 
 # CI / CD - Copiando as chaves SSH para o container
 RUN mkdir /keys
@@ -31,7 +33,7 @@ VOLUME /source
 
 # Definindo o ponto de entrada para executar o seu run.py
 #ENTRYPOINT ["python", "/source/run.py", "--env", NODE_ENV]
-CMD ["python", "/source/source/run.py", "--env", "$NODE_ENV" ]
+CMD ["python", "/source/run.py", "--env", "$NODE_ENV" ]
 
 # Porta em que o seu aplicativo SANIC estará rodando, ajuste conforme necessário
 EXPOSE 8000

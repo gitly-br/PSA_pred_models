@@ -111,33 +111,33 @@ def create_app(env, application, settings, logger):
 
 
 
-    # Inicializa Conexões com Redis
-    @app.before_server_start
-    async def before_start_load_redis(app, loop):
+    # # Inicializa Conexões com Redis
+    # @app.before_server_start
+    # async def before_start_load_redis(app, loop):
 
-        redis_connected = False
+    #     redis_connected = False
         
-        waiting_time_retry = 5
-        # get worker id from sanic or process id from os
-        if not hasattr(app.ctx, 'logger'):
-            process_id = os.getpid()
-            _, worker_logger = setup_logger(env=env, name_process=f"w_{process_id}")
-            app.ctx.worker_id = process_id
-            app.ctx.logger = worker_logger
+    #     waiting_time_retry = 5
+    #     # get worker id from sanic or process id from os
+    #     if not hasattr(app.ctx, 'logger'):
+    #         process_id = os.getpid()
+    #         _, worker_logger = setup_logger(env=env, name_process=f"w_{process_id}")
+    #         app.ctx.worker_id = process_id
+    #         app.ctx.logger = worker_logger
 
-        if not hasattr(app.ctx, 'sett'):
-            app.ctx.sett = deepcopy(settings)
+    #     if not hasattr(app.ctx, 'sett'):
+    #         app.ctx.sett = deepcopy(settings)
 
-        while not(redis_connected):
-            # ALL REDIS CONNECTIONS FOR EACH WORKER
-            sucess_dbs, conn_redis_obj, error_message = await init_redis_con(settings=app.ctx.sett)
+    #     while not(redis_connected):
+    #         # ALL REDIS CONNECTIONS FOR EACH WORKER
+    #         sucess_dbs, conn_redis_obj, error_message = await init_redis_con(settings=app.ctx.sett)
             
-            if sucess_dbs:
-                app.ctx.redis_obj = conn_redis_obj
-                redis_connected = True
-            else:
-                app.ctx.logger.error("[before_start_load_redis] Sem conexao com Redis. Erro: ", error_message)
-                await asyncio.sleep(waiting_time_retry)
+    #         if sucess_dbs:
+    #             app.ctx.redis_obj = conn_redis_obj
+    #             redis_connected = True
+    #         else:
+    #             app.ctx.logger.error("[before_start_load_redis] Sem conexao com Redis. Erro: ", error_message)
+    #             await asyncio.sleep(waiting_time_retry)
 
             # sucess_dbs, conn_redis_data_logger_obj, error_message = await init_redis_con(settings=app.ctx.sett,is_data_logger=True)
             # if sucess_dbs:
@@ -149,7 +149,7 @@ def create_app(env, application, settings, logger):
 
 
 
-        app.ctx.logger.info("[before_start_load_redis] Redis conectado com sucesso. (Worker %s)", app.ctx.worker_id)
+        # app.ctx.logger.info("[before_start_load_redis] Redis conectado com sucesso. (Worker %s)", app.ctx.worker_id)
         
         # # Criar Corotina que irá ficar escutando a fila de webhook do Redis A
         # # server_num = 0 -> Servidor Redis Primario
