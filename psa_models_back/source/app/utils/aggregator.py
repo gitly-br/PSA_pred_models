@@ -1,4 +1,4 @@
-def generate_slices(time_interval, start, end):
+def generate_slices(time_interval, start, end, time_step=3):
     """
     Generate time-based slices within a specified interval.
 
@@ -18,7 +18,7 @@ def generate_slices(time_interval, start, end):
         slice objects for each interval.
     """
     slices = {}
-    for i in range(start, end//3, time_interval//3):
+    for i in range(start, end//time_step, time_interval//time_step):
         slices[f"{i}_{i+time_interval}"] = slice(i, i+time_interval)
     return slices
 
@@ -43,7 +43,7 @@ def generate_default_config_dict(df):
         config_dict[col] = (24, ("mean",))
     return config_dict
 
-def create_agg_dict(config_dict, start=0, end=24):
+def create_agg_dict(config_dict, start=0, end=24, step=3):
     """
     Create an aggregation dictionary based on a configuration dictionary.
 

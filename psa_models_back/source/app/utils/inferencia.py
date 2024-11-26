@@ -3,7 +3,7 @@ from app.utils.openweather import get_OW_mongo_data_and_agg
 import joblib
 import pandas as pd
 
-async def inferencia_previsao(request, modelo:str, regiao: str):
+async def inferencia_previsao(request, modelo:str, regiao: str, dt_request=None):
 
     # Pega dados do modelo
 
@@ -26,7 +26,7 @@ async def inferencia_previsao(request, modelo:str, regiao: str):
     models_agg = model_infos[modelo].get("source",[])
     for data_source, agg_info in models_agg.items():
         if agg_info != {}:
-            list_data.append(await get_OW_mongo_data_and_agg(request, agg_info))
+            list_data.append(await get_OW_mongo_data_and_agg(request, agg_info, datetime.fromisoformat(dt_request) if dt_request is not None else None))
 
 
     #Fazer inferencia e salvar em mongo
@@ -37,10 +37,14 @@ async def inferencia_previsao(request, modelo:str, regiao: str):
 
     loaded_model = joblib.load(f'/source/app/utils/{modelo}.joblib')
 
-    random_row = list_data[0][1].iloc[[1]]
+    if list_data[0][1]:
+        day_row = list_data[0][2].iloc[[0]]
 
+    else:
+        day_row = list_data[0][2].iloc[[1]]
+        
     # Convert the row to a NumPy array
-    input_data = random_row.drop(columns=['dt']).values
+    input_data = day_row.drop(columns=['dt']).values
 
     # Make a prediction
     prediction = loaded_model.predict(input_data)

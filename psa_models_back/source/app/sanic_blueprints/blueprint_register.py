@@ -11,6 +11,7 @@ from app.sanic_blueprints.modelo_2.modelo_2 import bp_modelo_2
 from app.sanic_blueprints.modelo_3.modelo_3 import bp_modelo_3
 from app.sanic_blueprints.modelo_4.modelo_4 import bp_modelo_4
 from app.sanic_blueprints.modelo_5.modelo_5 import bp_modelo_5
+from app.sanic_blueprints.get_dates.get_dates import bp_get_dates
 
 route_dict ={
     "modelo_1":{
@@ -32,4 +33,5 @@ def register_app_blueprints(app, settings: dict):
     app.blueprint(bp_modelo_3)
     app.blueprint(bp_modelo_4)
     app.blueprint(bp_modelo_5)
+    app.blueprint(bp_get_dates)
     # app.blueprint(feature_XPTO)
