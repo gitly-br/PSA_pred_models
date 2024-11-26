@@ -26,49 +26,71 @@ async def get_openweather_api_data(app, route, params=None):
         await asyncio.sleep(3600*1.45)
 
 
-async def get_OW_mongo_data_and_agg(request, agg_config):
+async def get_OW_mongo_data_and_agg(request, agg_config, dt_request=None):
 
+    flag_dump = False
 
-    success, conn_prob, openw_data, err_msg = await request.app.ctx.mongo_obj.read_all(db_name='api_data', col='openweather_col', sort=[('dt_request', -1)])
+    if dt_request is None or dt_request > datetime(2024,11,24):
+        success, conn_prob, openw_data, err_msg = await request.app.ctx.mongo_obj.read_all(
+            db_name='api_data',
+            col='openweather_col',
+            sort=[('dt_request', -1)],
+            filter_={'dt_request' : {'$lte' : dt_request if dt_request is not None else datetime.now()}}
+        )
 
-    data = openw_data[0]['list']
+        step=3
 
+        data = openw_data[0]['list']
 
-    flattened_data = []
-    for entry in data:
-        flat_entry = {
-            "dt": datetime.fromtimestamp(entry.get("dt")),
-            "temp": entry["main"].get("temp"),
-            "feels_like": entry["main"].get("feels_like"),
-            "temp_min": entry["main"].get("temp_min"),
-            "temp_max": entry["main"].get("temp_max"),
-            "pressure": entry["main"].get("pressure"),
-            "sea_level": entry["main"].get("sea_level"),
-            "grnd_level": entry["main"].get("grnd_level"),
-            "humidity": entry["main"].get("humidity"),
-            "temp_kf": entry["main"].get("temp_kf"),
-            "weather_id": entry["weather"][0].get("id") if entry.get("weather") else None,
-            "weather_main": entry["weather"][0].get("main") if entry.get("weather") else None,
-            "weather_description": entry["weather"][0].get("description") if entry.get("weather") else None,
-            "weather_icon": entry["weather"][0].get("icon") if entry.get("weather") else None,
-            "clouds_all": entry["clouds"].get("all"),
-            "wind_speed": entry["wind"].get("speed"),
-            "wind_deg": entry["wind"].get("deg"),
-            "wind_gust": entry["wind"].get("gust"),
-            "visibility": entry.get("visibility"),
-            "pop": entry.get("pop"),
-            "rain_3h": entry["rain"].get("3h", 0) if "rain" in entry else 0,
-            "sys_pod": entry["sys"].get("pod"),
-            "dt_txt": datetime.fromisoformat(entry.get("dt_txt"))
-        }
-        flattened_data.append(flat_entry)
+        flattened_data = []
+        for entry in data:
+            flat_entry = {
+                "dt": datetime.fromtimestamp(entry.get("dt")),
+                "temp": entry["main"].get("temp"),
+                "feels_like": entry["main"].get("feels_like"),
+                "temp_min": entry["main"].get("temp_min"),
+                "temp_max": entry["main"].get("temp_max"),
+                "pressure": entry["main"].get("pressure"),
+                "sea_level": entry["main"].get("sea_level"),
+                "grnd_level": entry["main"].get("grnd_level"),
+                "humidity": entry["main"].get("humidity"),
+                "temp_kf": entry["main"].get("temp_kf"),
+                "weather_id": entry["weather"][0].get("id") if entry.get("weather") else None,
+                "weather_main": entry["weather"][0].get("main") if entry.get("weather") else None,
+                "weather_description": entry["weather"][0].get("description") if entry.get("weather") else None,
+                "weather_icon": entry["weather"][0].get("icon") if entry.get("weather") else None,
+                "clouds_all": entry["clouds"].get("all"),
+                "wind_speed": entry["wind"].get("speed"),
+                "wind_deg": entry["wind"].get("deg"),
+                "wind_gust": entry["wind"].get("gust"),
+                "visibility": entry.get("visibility"),
+                "pop": entry.get("pop"),
+                "rain_3h": entry["rain"].get("3h", 0) if "rain" in entry else 0,
+                "sys_pod": entry["sys"].get("pod"),
+                "dt_txt": datetime.fromisoformat(entry.get("dt_txt"))
+            }
+            flattened_data.append(flat_entry)
+
+    else:
+        success, conn_prob, openw_data, err_msg = await request.app.ctx.mongo_obj.read_all(db_name='api_data', col='openW_dump_col', filter_={'dt_request' : {"$lte" : dt_request}},sort=[('dt_request', -1)])
+
+        step=1
+
+        flattened_data = openw_data[0]['list']
+
+        flag_dump = True
 
     # Criar o DataFrame
     df = pd.DataFrame(flattened_data)
 
     # Verificar se tem chuva
-    if not (502 in df['weather_id'].values or 503 in df['weather_id'].values or 504 in df['weather_id'].values or 521 in df['weather_id'].values or 522 in df['weather_id'].values or 312 in df['weather_id'].values or 314 in df['weather_id'].values or 201 in df['weather_id'].values or 202 in df['weather_id'].values or 232 in df['weather_id'].values):
-        return False, None
+    if not flag_dump:
+        if not (502 in df['weather_id'].values or 503 in df['weather_id'].values or 504 in df['weather_id'].values or 521 in df['weather_id'].values or 522 in df['weather_id'].values or 312 in df['weather_id'].values or 314 in df['weather_id'].values or 201 in df['weather_id'].values or 202 in df['weather_id'].values or 232 in df['weather_id'].values):
+            return False, None
+        
+    # if flag_dump:
+    #     if df['accumulated'].max() < 0.1:
+    #         return False, None
 
 
     agg_config_final = {}
@@ -76,7 +98,10 @@ async def get_OW_mongo_data_and_agg(request, agg_config):
         agg_config_final[i] = (j['time'], tuple(j['aggs']))
     
     df_agg = df.groupby(pd.Grouper(key='dt', freq='D')).agg(
-                                                  **create_agg_dict(agg_config_final)
+                                                  **create_agg_dict(agg_config_final, step=step)
                                                   ).reset_index()
 
-    return True, df_agg
+    
+
+
+    return True, flag_dump, df_agg
