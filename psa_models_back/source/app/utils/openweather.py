@@ -85,7 +85,7 @@ async def get_OW_mongo_data_and_agg(request, agg_config, dt_request=None):
 
     # Verificar se tem chuva
     if not flag_dump:
-        if not (502 in df['weather_id'].values or 503 in df['weather_id'].values or 504 in df['weather_id'].values or 521 in df['weather_id'].values or 522 in df['weather_id'].values or 312 in df['weather_id'].values or 314 in df['weather_id'].values or 201 in df['weather_id'].values or 202 in df['weather_id'].values or 232 in df['weather_id'].values):
+        if not (500 in df['weather_id'].values or 501 in df['weather_id'].values or 502 in df['weather_id'].values or 503 in df['weather_id'].values or 504 in df['weather_id'].values or 521 in df['weather_id'].values or 522 in df['weather_id'].values or 312 in df['weather_id'].values or 314 in df['weather_id'].values or 201 in df['weather_id'].values or 202 in df['weather_id'].values or 232 in df['weather_id'].values):
             return False, None
         
     # if flag_dump:
