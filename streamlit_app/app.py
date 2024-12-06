@@ -18,6 +18,7 @@ def check_credentials(username, password):
     # Substitua pela lógica de autenticação real
     return username == "psa_defesa_civil" and password == "PSA@D3fes4"
 
+st.session_state.predict_date = st.session_state.selected_date.strftime('%d/%m/%Y')
 def call_models(dt_begin=None):
     # Conteúdo da primeira aba (Visualização)
     responses = []
@@ -69,19 +70,19 @@ else:
     st.sidebar.title("Sistema de Previsão de Alagamentos")
     st.sidebar.markdown("[Formulário para registro de ocorrência](https://forms.gle/yUxpb68E5cjj1YdHA)")
 
-    col_1, space_, col_2 = st.columns([9, 1, 6])
+    
+    # Título principal
+    st.title("Predição de Alagamentos")
+    col1, space, col2 = st.columns([5, 1, 6])
 
-    with col_1:
-        # Título principal
-        st.title("Predição de Alagamentos")
+    with col1:
 
         st.session_state.selected_date = st.date_input(
             'Data', 
-            value=datetime.now(), 
-            min_value=datetime(2017, 10, 7), 
-            max_value=datetime.now(),
-            format="DD/MM/YYYY"
-        )
+            value=datetime.now()+timedelta(days=1), 
+            min_value=datetime(2017, 10, 7),
+            format="DD/MM/YYYY",
+        ) + timedelta(days=1)
         
         # Botão para atualizar os dados
         if st.button("Atualizar"):
@@ -123,6 +124,15 @@ else:
             df_map = pd.concat([df_map, pd.DataFrame([new_row])], ignore_index=True)
 
             df_maps = df_map[df_map['status'] == 1]
+
+
+    with col2:
+        st.markdown("<h2>Período considerado na predição</h2>", unsafe_allow_html=True)
+        st.text(f"De {st.session_state.predict_date} 00:00  -  {st.session_state.predict_date} 23:59")
+    
+    col_1, space_, col_2 = st.columns([9, 1, 6])
+
+    with col_1:
 
             # Plota o mapa
             st.map(df_maps, latitude="lat", longitude="lon",
