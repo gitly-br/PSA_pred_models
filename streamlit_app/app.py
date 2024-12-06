@@ -18,7 +18,11 @@ def check_credentials(username, password):
     # Substitua pela lógica de autenticação real
     return username == "psa_defesa_civil" and password == "PSA@D3fes4"
 
+if 'selected_date' not in st.session_state:
+    st.session_state.selected_date = datetime.now().date() + timedelta(days=1)
+
 st.session_state.predict_date = st.session_state.selected_date.strftime('%d/%m/%Y')
+
 def call_models(dt_begin=None):
     # Conteúdo da primeira aba (Visualização)
     responses = []
@@ -77,12 +81,14 @@ else:
 
     with col1:
 
-        st.session_state.selected_date = st.date_input(
+        date_aux = st.date_input(
             'Data', 
             value=datetime.now()+timedelta(days=1), 
             min_value=datetime(2017, 10, 7),
             format="DD/MM/YYYY",
-        ) + timedelta(days=1)
+        )
+        
+        st.session_state.selected_date = date_aux + (timedelta(days=1) if date_aux > datetime(2024, 11, 24).date() else timedelta(days=0))
         
         # Botão para atualizar os dados
         if st.button("Atualizar"):
