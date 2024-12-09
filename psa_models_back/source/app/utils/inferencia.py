@@ -36,12 +36,8 @@ async def inferencia_previsao(request, modelo:str, regiao: str, dt_request=None)
         return  False, {'status' : 0, 'proba' : None, 'predict' : None, 'score' : None,'region' : regiao, 'lat' : model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[0], 'lon': model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : 0, 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
 
     loaded_model = joblib.load(f'/source/app/utils/{modelo}.joblib')
-
-    if list_data[0][1]:
-        day_row = list_data[0][2].iloc[[0]]
-
-    else:
-        day_row = list_data[0][2].iloc[[1]]
+    
+    day_row = list_data[0][2].iloc[[1]]
         
     # Convert the row to a NumPy array
     input_data = day_row.drop(columns=['dt']).values
