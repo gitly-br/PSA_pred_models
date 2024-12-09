@@ -19,9 +19,9 @@ def check_credentials(username, password):
     return username == "psa_defesa_civil" and password == "PSA@D3fes4"
 
 if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = datetime.now().date() + timedelta(days=1)
+    st.session_state.selected_date = datetime.now().date()
 
-st.session_state.predict_date = st.session_state.selected_date.strftime('%d/%m/%Y')
+st.session_state.predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
 
 def call_models(dt_begin=None):
     # Conteúdo da primeira aba (Visualização)
@@ -73,7 +73,8 @@ else:
     st.sidebar.image("PSA.png")
     st.sidebar.title("Sistema de Previsão de Alagamentos")
     st.sidebar.markdown("[Formulário para registro de ocorrência](https://forms.gle/yUxpb68E5cjj1YdHA)")
-
+    
+    st.sidebar.markdown("")
     
     # Título principal
     st.title("Predição de Alagamentos")
@@ -83,12 +84,12 @@ else:
 
         date_aux = st.date_input(
             'Data', 
-            value=datetime.now()+timedelta(days=1), 
-            min_value=datetime(2017, 10, 7),
+            value=datetime.now(), 
+            min_value=datetime(2017, 10, 6),
             format="DD/MM/YYYY",
         )
         
-        st.session_state.selected_date = date_aux + (timedelta(days=1) if date_aux > datetime(2024, 11, 24).date() else timedelta(days=0))
+        st.session_state.selected_date = date_aux
         
         # Botão para atualizar os dados
         if st.button("Atualizar"):
@@ -130,7 +131,6 @@ else:
             df_map = pd.concat([df_map, pd.DataFrame([new_row])], ignore_index=True)
 
             df_maps = df_map[df_map['status'] == 1]
-
 
     with col2:
         st.markdown("<h2>Período considerado na predição</h2>", unsafe_allow_html=True)
@@ -195,3 +195,32 @@ else:
                             </div>""",
                         unsafe_allow_html=True
                     )
+
+# footer="""<style>
+# a:link , a:visited{
+# color: blue;
+# background-color: transparent;
+# text-decoration: underline;
+# }
+
+# a:hover,  a:active {
+# color: red;
+# background-color: transparent;
+# text-decoration: underline;
+# }
+
+# .footer {
+# position: fixed;
+# left: 0;
+# bottom: 0;
+# width: 100%;
+# background-color: white;
+# color: black;
+# text-align: center;
+# }
+# </style>
+# <div class="footer">
+# <p></p>
+# </div>
+# """
+# st.markdown(footer,unsafe_allow_html=True)
