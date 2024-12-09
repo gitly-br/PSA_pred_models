@@ -72,12 +72,11 @@ async def get_OW_mongo_data_and_agg(request, agg_config, dt_request=None):
             flattened_data.append(flat_entry)
 
     else:
-        success, conn_prob, openw_data, err_msg = await request.app.ctx.mongo_obj.read_all(db_name='api_data', col='openW_dump_col', filter_={'dt_request' : {"$lte" : dt_request}},sort=[('dt_request', -1)])
+        success, conn_prob, openw_data, err_msg = await request.app.ctx.mongo_obj.read_all(db_name='api_data', col='openweather_dump_col', filter_={'dt_request' : {"$lte" : dt_request}},sort=[('dt_request', -1)])
 
         step=1
 
         flattened_data = openw_data[0]['list']
-
         flag_dump = True
 
     # Criar o DataFrame
