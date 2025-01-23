@@ -4,3 +4,5 @@ pandas
 geopandas
 matplotlib
 streamlit-autorefresh
+streamlit-folium
+plotly
