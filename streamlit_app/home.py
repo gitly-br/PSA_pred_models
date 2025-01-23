@@ -85,7 +85,7 @@ st.markdown(
 st.markdown("<h3 style='color:green;'>Modelo de Santo André:</h3>", unsafe_allow_html=True)
 
 
-col1, space, col2, col3, space2 = st.columns([3, 1, 6, 6, 10], vertical_alignment='center')
+col1, space, col2, col3, space2 = st.columns([3, 1, 3, 6, 10], vertical_alignment='center')
 
 with col1:
 
@@ -117,11 +117,22 @@ with col1:
 
 with col2:
     with st.container(border=True):
-        plot_gauge(0.123, "Amanhã", {'l':10, 'b':20, 't':50})
+        # plot_gauge(0.123, "Amanhã", {'l':10, 'b':20, 't':50})
+        st.markdown(
+        f"""
+        <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;margin-bottom: 10px;'>
+            <h4>Amanhã</h4>
+            <div style='background-color: rgba{str(get_color(0.5))}; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 with col3:
     st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5> Confiabilidade do modelo  {0.123*100:.1f}%</h5></div>", unsafe_allow_html=True)
-    # pass
+    pass
 
 st.divider()
 st.markdown("<h3 style='color:green;'>Modelo de Bacias:</h3>", unsafe_allow_html=True)
