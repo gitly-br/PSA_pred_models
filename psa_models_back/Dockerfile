@@ -12,7 +12,7 @@ RUN apk update && apk add --virtual build-dependencies build-base gcc wget
 
 # Instalando dependências Python do seu projeto
 COPY requirements.txt requirements.txt
-RUN pip install --verbose -r requirements.txt
+RUN pip install -r requirements.txt
 
 # CI / CD - Copiando as chaves SSH para o container
 RUN mkdir /keys
