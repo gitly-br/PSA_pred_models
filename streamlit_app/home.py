@@ -105,15 +105,12 @@ with col1:
 
     # Exibe os dados apenas se existirem
     if st.session_state.data:
-        data_list = []
-        for json_response in st.session_state.data:
-            if json_response.get('status') == 'success':
-                data_list.append(json_response.get('data', {}))
-            else:
-                data_list.append(json_response.get('data', {}))
+        data_list_summary = {}
+        for json_response in st.session_state.data['data']:
+            data_list_summary[json_response['regiao']] = json_response['summary']
+        
+        
 
-        st.session_state.df = pd.DataFrame(data_list)
-        st.session_state.df.rename(columns={'region': 'regiao', 'proba': 'valor'}, inplace=True)
 
 with col2:
     with st.container(border=True):
@@ -122,7 +119,7 @@ with col2:
         f"""
         <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;margin-bottom: 10px;'>
             <h4>Amanhã</h4>
-            <div style='background-color: rgba{str(get_color(0.5))}; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+            <div style='background-color: rgba{str(get_color(data_list_summary['SA']['proba']))}; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
             </div>
         </div>
         """,
@@ -131,13 +128,13 @@ with col2:
 
 
 with col3:
-    st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5> Confiabilidade do modelo  {0.123*100:.1f}%</h5></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5> Confiabilidade do modelo  {data_list_summary['SA']['proba']*100:.1f}%</h5></div>", unsafe_allow_html=True)
     pass
 
 st.divider()
 st.markdown("<h3 style='color:green;'>Modelo de Bacias:</h3>", unsafe_allow_html=True)
 st.session_state.date_prev = st.segmented_control(
-    "",
+    "Seleção de previsão",
     ["Amanhã"],
     selection_mode="single",
     default="Amanhã",
@@ -182,15 +179,15 @@ with col_2:
     a1, a2 = st.columns([1, 1])
     with a1:
         with st.container(border=True):
-            plot_gauge(0.1, "Bacia do Tamanduateí Central", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['TAMCENTRAL']['proba'], "Bacia do Tamanduateí Central", {'l':10, 'b':20, 't':50})
     with a2:
         with st.container(border=True):
-            plot_gauge(0.30, "Sub-bacia do Guarará", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['GUARARA']['proba'], "Sub-bacia do Guarará", {'l':10, 'b':20, 't':50})
         
     b1, b2 = st.columns([1, 1])
     with b1:
         with st.container(border=True):
-            plot_gauge(0.50, "Bacia do Oratório", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['ORATORIO']['proba'], "Bacia do Oratório", {'l':10, 'b':20, 't':50})
     with b2:
         with st.container(border=True):
-            plot_gauge(0.90, "Bacia dos Meninos", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['MENINOS']['proba'], "Bacia dos Meninos", {'l':10, 'b':20, 't':50})
