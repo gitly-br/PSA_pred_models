@@ -11,23 +11,11 @@ from datetime import datetime, timedelta
 api_url = environ.get('API_URL___', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
-    # Conteúdo da primeira aba (Visualização)
-    responses = []
-    for i in range(1, 6):
-        api_url_i = f"{api_url}/modelo_{i}"
-        response_i = requests.post(api_url_i, json={'dt_request': dt_begin})
-        responses.append(response_i)
+        
+    api_url_i = f"{api_url}/home"
+    response_i = requests.post(api_url_i, json={'dt_request': dt_begin})
 
-    
-    for response in responses:
-        if response.status_code != 200:
-            st.error(f"Falha ao conectar à API: Código de status {response.status_code}")
-            st.stop()
-
-
-    json_responses = [response.json() for response in responses]
-
-    return json_responses
+    return response_i.json()
 
 # Função para verificar as credenciais
 
