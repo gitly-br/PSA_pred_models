@@ -47,62 +47,141 @@ if st.button("Atualizar"):
 # Exibe os dados apenas se existirem
 if st.session_state.data:
     data_list = []
-    for json_response in st.session_state.data:
-        if json_response.get('status') == 'success':
-            data_list.append(json_response.get('data', {}))
-        else:
-            data_list.append(json_response.get('data', {}))
+    for json_response in st.session_state.data['data']:
+        for model in json_response['detailed']:
+            data_list.append(model['result'])
 
     st.session_state.df = pd.DataFrame(data_list)
     st.session_state.df.rename(columns={'region': 'regiao', 'proba': 'valor'}, inplace=True)
 
 
-st.markdown('<br><h4>Santo André (24h)</h4>',unsafe_allow_html=True)
+col1, space, col2 = st.columns([10, 1, 10], vertical_alignment='center')
 
-for idx, row in st.session_state.df.iterrows():
-    if row['regiao'] == 'SA':
+with col1:
+    st.markdown('<br><h4>Santo André (24h)</h4>',unsafe_allow_html=True)
 
-        if row['status'] == 0:
-            st.markdown(
-                f"""<div style=' display: flex; align-items: center;'>
-                        <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                        <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
-                    </div>""",
-                unsafe_allow_html=True
-            )
-            break
-        else:
-            st.markdown(
-                f"""<div style=' display: flex; align-items: center;'>
-                        <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                        <div style='margin-left: 20px;'> - Chance de alagar: {row['valor']*100:.1f}% </div>
-                        <div> - Modelo: {row['model']}</div>
-                        <div> - Última atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
-                    </div>""",
-                unsafe_allow_html=True
-            )
+    for idx, row in st.session_state.df.iterrows():
+        if row['regiao'] == 'SA':
 
-st.markdown('<br><h4>Bacia Tamanduateí (24h)</h4>',unsafe_allow_html=True)
+            if row['status'] == 0:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+                break
+            else:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'> - Chance de alagar: {row['valor']*100:.1f}% </div>
+                            <div> - Modelo: {row['model']}</div>
+                            <div> - Última atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
 
-for idx, row in st.session_state.df.iterrows():
-    if row['regiao'] == 'tam':
+    st.markdown('<br><h4>Bacia Tamanduateí Central(24h)</h4>',unsafe_allow_html=True)
 
-        if row['status'] == 0:
-            st.markdown(
-                f"""<div style=' display: flex; align-items: center;'>
-                        <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                        <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
-                    </div>""",
-                unsafe_allow_html=True
-            )
-            break
-        else:
-            st.markdown(
-                f"""<div style=' display: flex; align-items: center;'>
-                        <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                        <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}% </div>
-                        <div> - Modelo: {row['model']}</div>
-                        <div> - Última atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
-                    </div>""",
-                unsafe_allow_html=True
-            )
+    for idx, row in st.session_state.df.iterrows():
+        if row['regiao'] == 'TAMCENTRAL':
+
+            if row['status'] == 0:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+                break
+            else:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}% </div>
+                            <div> - Modelo: {row['model']}</div>
+                            <div> - Última atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+
+    st.markdown('<br><h4>Bacia dos Meninos(24h)</h4>',unsafe_allow_html=True)
+
+    for idx, row in st.session_state.df.iterrows():
+        if row['regiao'] == 'MENINOS':
+
+            if row['status'] == 0:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+                break
+            else:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}% </div>
+                            <div> - Modelo: {row['model']}</div>
+                            <div> - Última atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+
+with col2:
+    st.markdown('<br><h4>Bacia do Oratório(24h)</h4>',unsafe_allow_html=True)
+
+    for idx, row in st.session_state.df.iterrows():
+        if row['regiao'] == 'ORATORIO':
+
+            if row['status'] == 0:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+                break
+            else:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}% </div>
+                            <div> - Modelo: {row['model']}</div>
+                            <div> - Última atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+
+    st.markdown('<br><h4>Sub-bacia do Guarará(24h)</h4>',unsafe_allow_html=True)
+
+    for idx, row in st.session_state.df.iterrows():
+        if row['regiao'] == 'GUARARA':
+
+            if row['status'] == 0:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+                break
+            else:
+                st.markdown(
+                    f"""<div style=' display: flex; align-items: center;'>
+                            <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+                            <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}% </div>
+                            <div> - Modelo: {row['model']}</div>
+                            <div> - Última atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+                        </div>""",
+                    unsafe_allow_html=True
+                )
+
+        
