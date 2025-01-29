@@ -57,7 +57,9 @@ async def inferencia_previsao(request, modelo:str, regiao: str, dt_request=None)
 
     return True, result
 
-async def inferencia_previsao_2(request, regiao: str, dt_request=None):
+async def inferencia_previsao_2(request, regiao: str, dt_request):
+
+    dt_inference = datetime.now()
 
     # Pega dados do modelo
 
@@ -95,7 +97,7 @@ async def inferencia_previsao_2(request, regiao: str, dt_request=None):
         # for weather_data in list_data:
 
         if weather_data[0] == False:
-            resp_list.append({'status' : 0, 'proba' : None, 'predict' : None, 'score' : None,'region' : regiao, 'lat' : model_infos[model].get('region_coord', [-23.699012, -46.4537949])[0], 'lon': model_infos[model].get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : 0, 'model' : model, 'obj_version':'1.0', 'dt_inference' : datetime.now()})
+            resp_list.append({'status' : 0, 'proba' : None, 'predict' : None, 'region' : regiao, 'model' : model, 'obj_version':'1.0', 'dt_inference' : dt_inference})
 
         loaded_model = joblib.load(f'/source/app/utils/{model}.joblib')
         
@@ -108,7 +110,7 @@ async def inferencia_previsao_2(request, regiao: str, dt_request=None):
         prediction = loaded_model.predict(input_data)
         proba = loaded_model.predict_proba(input_data)
         
-        result = {'status' : 1,'proba' : proba[0][1], 'predict' : int(prediction[0]), 'score' : 0.25, 'region' : regiao, 'lat' : model_infos[model].get('region_coord', [-23.699012, -46.4537949])[0], 'lon': model_infos[model].get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : model_infos[model].get('circle_rad', 100), 'model' : model, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
+        result = {'status' : 1,'proba' : proba[0][1], 'predict' : int(prediction[0]), 'region' : regiao, 'model' : model, 'obj_version':'1.0', 'dt_inference' : dt_inference}	
 
 
         success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
@@ -118,5 +120,42 @@ async def inferencia_previsao_2(request, regiao: str, dt_request=None):
         )
 
         resp_list.append({'modelo' : model, 'result' : result})
+
+    return True, resp_list
+
+
+async def inferencia_geral(request, regioes: list, dt_request=None):
+
+    resp_list = []
+
+    flag_has_prediction = False
+
+    for regiao in regioes:
+        success, resp = await inferencia_previsao_2(request, regiao, dt_request)
+
+
+        for r in resp:
+            if r['result']['status'] == 1:
+                flag_has_prediction = True
+
+        if  flag_has_prediction:
+            proba_list = []
+            for r in resp:
+                proba_list.append(r['result']['proba'] if r['result']['proba'] is not None else 0)
+
+            doc = {'obj_version': "2.0", 'dt_inference': datetime.now(), 'regiao' : regiao, 'detailed' : resp, 'summary' : {'predict' : 1, 'proba' : (sum(proba_list)/len(proba_list) if len(proba_list) > 0 else 0)}}
+            resp_list.append(doc)
+            success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
+                db_name='models_db',
+                col='inference_col',
+                doc=doc
+            )
+            
+
+        else:
+            doc = {'obj_version': "2.0", 'dt_inference': datetime.now(), 'regiao' : regiao, 'detailed' : None, 'summary' : None}
+            resp_list.append()
+
+            
 
     return True, resp_list
