@@ -71,11 +71,11 @@ st.markdown(
     f"""
     <div style='display: flex; justify-content: space-between; align-items: center;'>
         <div>
-            <h1 style='margin: 0;'>Predição de Inundação e Alagamentos</h1>
+            <h1 style='margin: 0;'>Sistema de Predição de Alagamentos e Inundações</h1>
         </div>
         <div style='text-align: right;'>
-            <p style='margin: 0;'>Último cálculo dos modelos: {st.session_state.predict_date} 00:00</p>
-            <p style='margin: 0;'>Próximo cálculo dos modelos: {st.session_state.next_predict_date} 00:00</p>
+            <p style='margin: 0;'>Data e hora da última atualização dos modelos: {st.session_state.predict_date} 00:00</p>
+            <p style='margin: 0;'>Data e hora da próxima dos modelos: {st.session_state.next_predict_date} 00:00</p>
         </div>
     </div>
     """,
@@ -85,12 +85,12 @@ st.markdown(
 st.markdown("<h3 style='color:green;'>Modelo de Santo André:</h3>", unsafe_allow_html=True)
 
 
-col1, space, col2, col3, space2 = st.columns([3, 1, 3, 6, 10], vertical_alignment='center')
+col1, space, col2, space2, col3 = st.columns([3, 1, 3, 1, 15], vertical_alignment='center')
 
 with col1:
 
     date_aux = st.date_input(
-        'Data', 
+        'Data Base', 
         value=datetime.now(), 
         min_value=datetime(2017, 10, 6),
         format="DD/MM/YYYY",
@@ -99,7 +99,7 @@ with col1:
     st.session_state.selected_date = date_aux
     
     # Botão para atualizar os dados
-    if st.button("Atualizar"):
+    if st.button("Atualizar Predição"):
         with st.spinner("Carregando dados..."):
             st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
 
@@ -118,7 +118,7 @@ with col2:
         st.markdown(
         f"""
         <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;margin-bottom: 10px;'>
-            <h4>Amanhã</h4>
+            <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; color: #333; margin: 10px 0; line-height: 1.2;'>Amanhã<br>{st.session_state.next_predict_date}</p>
             <div style='background-color: rgba{str(get_color(data_list_summary['SA']['proba']))}; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
             </div>
         </div>
@@ -128,8 +128,8 @@ with col2:
 
 
 with col3:
-    st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5> Confiabilidade do modelo  {data_list_summary['SA']['proba']*100:.1f}%</h5></div>", unsafe_allow_html=True)
-    pass
+    with st.container(border=True):
+        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{data_list_summary['SA']['proba']*100:.1f}% de Possibilidade de Alagamento ou Inundação em Santo André em<br>{st.session_state.next_predict_date}</h5></div>", unsafe_allow_html=True)
 
 st.divider()
 st.markdown("<h3 style='color:green;'>Modelo de Bacias:</h3>", unsafe_allow_html=True)
@@ -150,7 +150,7 @@ with col_1:
         geojson_data = json.load(f)
 
     # Criar o mapa
-    m = folium.Map(location=[-23.671165, -46.515248], zoom_start=12, height="82%", tiles="Cartodb Positron")	
+    m = folium.Map(location=[-23.671165, -46.515248], zoom_start=12, height="82%", tiles="Cartodb Positron", control_scale=True)	
 
     # Adicionar camada GeoJSON com popup
     folium.GeoJson(
@@ -171,10 +171,16 @@ with col_1:
     ).add_to(m)
 
     # Exibir no Streamlit
-    folium_static(m)
+    folium_static(m, width=None)
 
 with col_2:
     # Exibe a lista ao lado direito
+
+    with st.container(border=True):
+        st.markdown("""<div style='display: flex; justify-content: center; align-items: center;'>
+                            <h5 style='text-align: center;'>Possibilidade de Alagamento ou Inundação</h5>
+                        </div>""",
+                    unsafe_allow_html=True)
     
     a1, a2 = st.columns([1, 1])
     with a1:
