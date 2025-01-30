@@ -81,9 +81,9 @@ else:
         </style>""", unsafe_allow_html=True)
 
     st.sidebar.image("PSA.png")
-    st.sidebar.title("Sistema de Previsão de Alagamentos")
-    st.sidebar.markdown("[Formulário para registro de ocorrência](https://forms.gle/yUxpb68E5cjj1YdHA)")
-    st.sidebar.markdown("[Dúvidas](https://gitly.notion.site/Ajuda-PSA-Dashboard-185ad90ac24c802b80faee77754fb4cf?pvs=4)")
+    st.sidebar.markdown("<h2>Sistema de Predição de Alagamentos e Inundações</h2>", unsafe_allow_html=True)
+    st.sidebar.markdown("[Formulário para Registro de Ocorrências](https://forms.gle/yUxpb68E5cjj1YdHA)")
+    st.sidebar.markdown("[Ajuda](https://gitly.notion.site/Ajuda-PSA-Dashboard-185ad90ac24c802b80faee77754fb4cf?pvs=4)")
     st.sidebar.markdown(
         f"""
         <style>
