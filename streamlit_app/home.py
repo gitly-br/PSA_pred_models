@@ -16,10 +16,20 @@ st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamento
 def get_color(value):
     if value is None:
         return (0, 0, 0, 0)
-    if value <= 0.5:
+    if value < 0.45:
         return (182, 226, 161, abs(value - 0.5) + 0.4)
+    elif 0.45 <= value < 0.75 :
+        return (235, 189, 23, 255)
+    else :
+        return (253, 138, 138, 255)
+    
+def get_map_color(value):
+    if value >= 0.75:
+        return "red"
+    elif 0.75 > value >= 0.45:
+        return "orange"
     else:
-        return (253, 138, 138, abs(value - 0.5) + 0.4)
+        return "green"
 
 def plot_gauge(value, title, margin_dict:dict = {'l':10, 'b':20, 't':50}):
     if value >= 0.75:
@@ -158,14 +168,9 @@ with col_1:
         name="NOM_BACIA",
         tooltip=folium.GeoJsonTooltip(fields=["NOM_SUB_BA", "NOM_BACIA"]),
         popup=folium.GeoJsonPopup(fields=["NOM_SUB_BA", "NOM_BACIA"]),
-        style_function= lambda feature: {
-            "fillColor" : "green"
-            if "guarará" == feature['properties']['NOM_SUB_BA'].lower() else 
-            "orange" if "meninos" == feature["properties"]['NOM_BACIA'].lower() else
-            "blue" if "oratório" == feature["properties"]['NOM_BACIA'].lower() else
-            "#12b6fc" if "tamanduateí central" == feature["properties"]['NOM_BACIA'].lower() else
-            "yellow",
-            'color' : 'black',
+        style_function=lambda feature: {
+            "fillColor": get_map_color(data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba', 0)),
+            'color': 'black',
             'weight': 0.5
         }
     ).add_to(m)
