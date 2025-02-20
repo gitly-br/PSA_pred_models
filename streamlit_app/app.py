@@ -8,7 +8,7 @@ import folium
 import json
 from datetime import datetime, timedelta
 
-api_url = environ.get('API_URL', 'http://psa_models_back:8000')
+api_url = environ.get('API_URL_', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
@@ -25,10 +25,16 @@ def check_credentials(username, password):
     return username == "psa_defesa_civil" and password == "PSA@D3fes4"
 
 if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = datetime.now().date()
+    st.session_state.selected_date = datetime.now().date() - timedelta(days=1)
 
 st.session_state.predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
 st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=2)).strftime('%d/%m/%Y')
+
+@st.dialog("Links Úteis")
+def links_uteis():
+    st.markdown("[Defesa Civil - Santo André](https://portais.santoandre.sp.gov.br/defesacivil)")
+    st.markdown("[Centro de Resiliência](https://portais.santoandre.sp.gov.br/defesacivil/centro-de-resiliencia/)")
+    st.markdown("[Banco de Desenvolvimento da América Latina e Caribe - CAF](https://www.caf.com/pt/)")
 
 
 # Inicializa o estado da sessão
@@ -80,10 +86,32 @@ else:
         }
         </style>""", unsafe_allow_html=True)
 
-    st.sidebar.image("PSA.png")
-    st.sidebar.markdown("<h2>Sistema de Predição de Alagamentos e Inundações</h2>", unsafe_allow_html=True)
+    st.sidebar.markdown(f"""
+        <div style="text-align: center;">
+            <a href="https://portais.santoandre.sp.gov.br/defesacivil" target="_blank">
+            <img src="./app/static/PSA.png" width="150">
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
+    st.sidebar.markdown(
+        "<h2>Sistema de Predição de Alagamentos e Inundações</h2>", 
+        unsafe_allow_html=True
+    )
     st.sidebar.markdown("[Formulário para Registro de Ocorrências](https://forms.gle/yUxpb68E5cjj1YdHA)")
     st.sidebar.markdown("[Ajuda](https://gitly.notion.site/Ajuda-PSA-Dashboard-185ad90ac24c802b80faee77754fb4cf?pvs=4)")
+    st.sidebar.markdown(f"""
+        <div style="margin-bottom:20px; text-align: center; display: flex; justify-content: space-around; gap: 20px; align-items: center;">
+            <a href="https://www.caf.com/pt/" target="_blank">
+            <img src="./app/static/CAF.png" width="100">
+            </a>
+            <a href="https://portais.santoandre.sp.gov.br/defesacivil" target="_blank">
+            <img src="./app/static/logo-DFSA.png" width="100">
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.sidebar.button("Links Úteis", on_click=links_uteis, use_container_width=True)
+    
     st.sidebar.markdown(
         f"""
         <style>

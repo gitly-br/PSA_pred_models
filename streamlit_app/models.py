@@ -32,7 +32,7 @@ def get_color(value):
 
 date_aux = st.date_input(
         'Data', 
-        value=datetime.now(), 
+        value=datetime.now()-timedelta(days=1), 
         min_value=datetime(2017, 10, 6),
         format="DD/MM/YYYY",
     )
