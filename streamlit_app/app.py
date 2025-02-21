@@ -93,12 +93,6 @@ else:
             </a>
         </div>
         """, unsafe_allow_html=True)
-    st.sidebar.markdown(
-        "<h2>Sistema de Predição de Alagamentos e Inundações</h2>", 
-        unsafe_allow_html=True
-    )
-    st.sidebar.markdown("[Formulário para Registro de Ocorrências](https://forms.gle/yUxpb68E5cjj1YdHA)")
-    st.sidebar.markdown("[Ajuda](https://gitly.notion.site/Ajuda-PSA-Dashboard-185ad90ac24c802b80faee77754fb4cf?pvs=4)")
     st.sidebar.markdown(f"""
         <div style="margin-bottom:20px; text-align: center; display: flex; justify-content: space-around; gap: 20px; align-items: center;">
             <a href="https://www.caf.com/pt/">
@@ -109,6 +103,12 @@ else:
             </a>
         </div>
         """, unsafe_allow_html=True)
+    st.sidebar.markdown(
+        "<h2>Informações Gerais</h2>", 
+        unsafe_allow_html=True
+    )
+    st.sidebar.markdown("[Formulário para Registro de Ocorrências](https://forms.gle/yUxpb68E5cjj1YdHA)")
+    st.sidebar.markdown("[Ajuda](https://gitly.notion.site/Ajuda-PSA-Dashboard-185ad90ac24c802b80faee77754fb4cf?pvs=4)")
 
     st.sidebar.button("Links Úteis", on_click=links_uteis, use_container_width=True)
     
@@ -137,15 +137,15 @@ else:
             }}
 
             .text-container {{
-                font-size: 20px; /* Tamanho da fonte */
+                font-size: 22px; /* Tamanho da fonte */
                 font-weight: bold; /* Texto em negrito */
                 color: #000; /* Cor do texto */
             }}
         </style>
 
         <div data-testid="stSidebarNav" style="gap: 20px; display: flex; align-items: center; justify-content: center;">
-            <a href="https://www.gitly.com.br/"><img src="./app/static/gitly.png" width="100"></a>
-            <div class="text-container">V 2.0</div>
+            <a href="https://www.gitly.com.br/"><img src="./app/static/gitly.png" width="75"></a>
+            <div class="text-container">V 2.5</div>
         </div>
         """,
         unsafe_allow_html=True,
