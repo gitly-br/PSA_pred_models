@@ -8,7 +8,7 @@ import folium
 import json
 from datetime import datetime, timedelta
 
-api_url = environ.get('API_URL_', 'http://psa_models_back:8000')
+api_url = environ.get('API_URL', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
