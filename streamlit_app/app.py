@@ -145,7 +145,7 @@ else:
 
         <div data-testid="stSidebarNav" style="gap: 20px; display: flex; align-items: center; justify-content: center;">
             <a href="https://www.gitly.com.br/"><img src="./app/static/gitly.png" width="75"></a>
-            <div class="text-container">V 2.5</div>
+            <div class="text-container">V 2.2</div>
         </div>
         """,
         unsafe_allow_html=True,
