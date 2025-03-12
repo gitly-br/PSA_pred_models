@@ -6,3 +6,4 @@ matplotlib
 streamlit-autorefresh
 streamlit-folium
 plotly
+st-theme

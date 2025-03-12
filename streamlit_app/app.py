@@ -7,8 +7,9 @@ from streamlit_folium import folium_static
 import folium
 import json
 from datetime import datetime, timedelta
+from streamlit_theme import st_theme
 
-api_url = environ.get('API_URL', 'http://psa_models_back:8000')
+api_url = environ.get('API_URL_', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
@@ -69,6 +70,7 @@ else:
     pages = [
             st.Page("home.py", title="Home"),
             st.Page("models.py", title="Modelos Detalhados"),
+            st.Page("previsao.py", title="Previsão"),
     ]
 
     pg = st.navigation(pages)
@@ -86,23 +88,25 @@ else:
         }
         </style>""", unsafe_allow_html=True)
 
-    st.sidebar.markdown(f"""
-        <div style="text-align: center;">
-            <a href="https://portais.santoandre.sp.gov.br/defesacivil">
-            <img src="./app/static/PSA.png" width="150">
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
-    st.sidebar.markdown(f"""
-        <div style="margin-bottom:20px; text-align: center; display: flex; justify-content: space-around; gap: 20px; align-items: center;">
-            <a href="https://www.caf.com/pt/">
-            <img src="./app/static/CAF.png" width="100">
-            </a>
-            <a href="https://portais.santoandre.sp.gov.br/defesacivil">
-            <img src="./app/static/logo-DFSA.png" width="100">
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
+    # st.sidebar.markdown(f"""
+    #     <div style="text-align: center;">
+    #         <a href="https://portais.santoandre.sp.gov.br/defesacivil">
+    #         <img src="./app/static/PSA.png" width="150">
+    #         </a>
+    #     </div>
+    #     """, unsafe_allow_html=True)
+    # st.sidebar.markdown(f"""
+    #     <div style="margin-bottom:20px; text-align: center; display: flex; justify-content: space-around; gap: 20px; align-items: center;">
+    #         <a href="https://www.caf.com/pt/">
+    #         <img src="./app/static/CAF.png" width="100">
+    #         </a>
+    #         <a href="https://portais.santoandre.sp.gov.br/defesacivil">
+    #         <img src="./app/static/logo-DFSA.png" width="100">
+    #         </a>
+    #     </div>
+    #     """, unsafe_allow_html=True)
+    
+    st.sidebar.image("static/Group_Dark.png" if st_theme()['base'] == 'dark' else "static/Group_Custom.png")
     st.sidebar.markdown(
         "<h2>Informações Gerais</h2>", 
         unsafe_allow_html=True
@@ -139,7 +143,6 @@ else:
             .text-container {{
                 font-size: 22px; /* Tamanho da fonte */
                 font-weight: bold; /* Texto em negrito */
-                color: #000; /* Cor do texto */
             }}
         </style>
 
