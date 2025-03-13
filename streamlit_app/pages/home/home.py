@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import pandas as pd
 import json
 from streamlit_folium import folium_static
@@ -9,9 +9,13 @@ from os import environ
 from app import call_models
 from streamlit_autorefresh import st_autorefresh
 import plotly.graph_objects as go
+from pages.home.utils import get_map_color, get_flood_color, get_color, plot_gauge, week_day_portuguese
+from streamlit_theme import st_theme
 
 
 st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
+
+st.session_state.tema = st_theme()
 
 @st.cache_data
 def load_geojson(file_path):
@@ -22,71 +26,9 @@ def load_geojson(file_path):
 if 'map_theme' not in st.session_state:
     st.session_state.map_theme = 'Cartodb Positron'
 
-# Define as cores com base nos dados
-def get_color(value):
-    if value is None:
-        return (0, 0, 0, 0)
-    if value < 0.45:
-        return (182, 226, 161, abs(value - 0.5) + 0.4)
-    elif 0.45 <= value < 0.75 :
-        return (235, 189, 23, 255)
-    else :
-        return (253, 138, 138, 255)
-    
-def get_map_color(value):
-    if value is None:
-        return "white"
-    if value == "TAMCENTRAL":
-        return "purple"
-    elif value == "GUARARA":
-        return "teal"
-    elif value == "ORATORIO":
-        return "blue"
-    elif value == "MENINOS":
-        return "#575757"
-    else:
-        return "white"
-    
-def get_flood_color(value):
-    if value is None:
-        return "white"
-    if value >= 0.75:
-        return "red"
-    elif 0.75 > value >= 0.45:
-        return "orange"
-    else:
-        return "green"
-
-def plot_gauge(value, title, margin_dict:dict = {'l':10, 'b':20, 't':50}):
-    if value >= 0.75:
-        color = "red"
-    elif 0.75 > value >= 0.45:
-        color = "orange"
-    else:
-        color = "green"
-
-    fig = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = value,
-        number={'valueformat': '.0%'},  # Adiciona o símbolo de porcentagem
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': title},
-        gauge = {
-            'axis': {'range': [None, 1], 'tickformat': ".0%"},
-            'bar': {'color': color, 'thickness': 1, 'line' : {'width' : 1}},
-        }
-    ))
-    config = {'displayModeBar': False}
-
-    fig.update_layout(margin_autoexpand=True)
-    fig.update_layout(
-        height=140,  # Altura
-        margin=margin_dict  # Margens menores
-    )
-    st.plotly_chart(fig, use_container_width=True, **{'config':config})
 
 def change_theme():
-    if st.session_state.map_theme == 'Cartodb Positron':
+    if st.session_state.map_theme == 'OpenStreetMap':
         st.session_state.map_theme = 'OpenStreetMap'
     else:
         st.session_state.map_theme = 'Cartodb Positron'
@@ -155,8 +97,6 @@ with col1:
         for json_response in st.session_state.data['data']:
             data_list_summary[json_response['regiao']] = json_response['summary']
         
-        
-
 
 with col2:
     with st.container(border=True):
@@ -164,7 +104,7 @@ with col2:
         st.markdown(
         f"""
         <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;margin-bottom: 10px;'>
-            <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>Amanhã<br>{st.session_state.predict_date}</p>
+            <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>{week_day_portuguese[datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.predict_date}</p>
             <div style='background-color: rgba{str(get_color(data_list_summary['SA']['proba']))}; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
             </div>
         </div>
@@ -204,7 +144,7 @@ with col_1:
 
     # Criar o mapa
 
-    m = folium.Map(location=[-23.671165, -46.515248], zoom_start=12, height="82%", tiles=st.session_state.map_theme, control_scale=True)	
+    m = folium.Map(location=[-23.671165, -46.515248], zoom_start=12, control_scale=True)	
 
     # folium.GeoJson(
     #     geojson_eixos_data,
@@ -238,37 +178,48 @@ with col_1:
     #         'opacity': 0.5
     #     }
     # ).add_to(m)
-
+     
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Esri, Maxar, Earthstar Geographics",
+        name="Esri World Imagery",
+        show=False
+    ).add_to(m)
+    
     # Adicionar camada GeoJSON com popup
     folium.GeoJson(
         geojson_data,
-        name="NOM_BACIA",
+        name="Bacias Hidrográficas",
         tooltip=folium.GeoJsonTooltip(fields=["NOM_SUB_BA", "NOM_BACIA"]),
         popup=folium.GeoJsonPopup(fields=["NOM_SUB_BA", "NOM_BACIA"]),
         style_function=lambda feature: {
             "fillColor": get_map_color(feature['properties'].get('MODELO')),
+            "fillOpacity": 0.4,
             'color': 'black',
             'weight': 0.5
         }
     ).add_to(m)
 
+
     folium.GeoJson(
         geojson_alagaveis_data,
-        name="fid",
+        name="Áreas Alagáveis",
         tooltip=folium.GeoJsonTooltip(fields=["fid"]),
         popup=folium.GeoJsonPopup(fields=["fid"]),
         style_function=lambda feature: {
             "fillColor": get_flood_color(data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba')),
+            "fillOpacity": 0.7,
             'color': get_flood_color(data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba')),
-            'weight': (0.1 + data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba', 0)) * 5
+            'weight': (0.5 + data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba', 0)) * 4
         }
 
     ).add_to(m)
 
+    folium.LayerControl().add_to(m)
+
     # Exibir no Streamlit
-    folium_static(m, width=None)
+    folium_static(m, width=None, height=500*0.82)
     
-    st.button("Satélite", on_click=change_theme)
 
 with col_2:
     # Exibe a lista ao lado direito
@@ -282,15 +233,15 @@ with col_2:
     a1, a2 = st.columns([1, 1])
     with a1:
         with st.container(border=True):
-            plot_gauge(data_list_summary['TAMCENTRAL']['proba'], "Bacia do Tamanduateí Central", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['TAMCENTRAL']['proba'], "Bacia do Tamanduateí Central", "TAMCENTRAL", {'l':10, 'b':20, 't':50})
     with a2:
         with st.container(border=True):
-            plot_gauge(data_list_summary['GUARARA']['proba'], "Sub-bacia do Guarará", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['GUARARA']['proba'], "Sub-bacia do Guarará", "GUARARA", {'l':10, 'b':20, 't':50})
         
     b1, b2 = st.columns([1, 1])
     with b1:
         with st.container(border=True):
-            plot_gauge(data_list_summary['ORATORIO']['proba'], "Bacia do Oratório", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['ORATORIO']['proba'], "Bacia do Oratório", "ORATORIO", {'l':10, 'b':20, 't':50})
     with b2:
         with st.container(border=True):
-            plot_gauge(data_list_summary['MENINOS']['proba'], "Bacia dos Meninos", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['MENINOS']['proba'], "Bacia dos Meninos", "MENINOS", {'l':10, 'b':20, 't':50})

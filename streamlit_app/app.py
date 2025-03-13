@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 from streamlit_theme import st_theme
 
-api_url = environ.get('API_URL_', 'http://psa_models_back:8000')
+api_url = environ.get('API_URL', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
@@ -20,6 +20,8 @@ def call_models(dt_begin=None):
 
 # Função para verificar as credenciais
 
+if 'tema' not in st.session_state:
+    st.session_state.tema = st_theme()
 
 def check_credentials(username, password):
     # Substitua pela lógica de autenticação real
@@ -68,9 +70,8 @@ if not st.session_state.logged_in:
 else:
     
     pages = [
-            st.Page("home.py", title="Home"),
-            st.Page("models.py", title="Modelos Detalhados"),
-            st.Page("previsao.py", title="Previsão"),
+            st.Page("pages/home/home.py", title="Home"),
+            st.Page("pages/models/models.py", title="Modelos Detalhados")
     ]
 
     pg = st.navigation(pages)
@@ -106,7 +107,7 @@ else:
     #     </div>
     #     """, unsafe_allow_html=True)
     
-    st.sidebar.image("static/Group_Dark.png" if st_theme()['base'] == 'dark' else "static/Group_Custom.png")
+    st.sidebar.image("static/Group_Dark.png" if st.session_state.tema['base'] == 'dark' else "static/Group_Custom.png")
     st.sidebar.markdown(
         "<h2>Informações Gerais</h2>", 
         unsafe_allow_html=True
