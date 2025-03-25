@@ -1,5 +1,6 @@
 from datetime import datetime
 from app.utils.openweather import get_OW_mongo_data_and_agg
+from sanic.log import logger
 import joblib
 import pandas as pd
 
@@ -46,7 +47,19 @@ async def inferencia_previsao(request, modelo:str, regiao: str, dt_request=None)
     prediction = loaded_model.predict(input_data)
     proba = loaded_model.predict_proba(input_data)
     
-    result = {'status' : 1,'proba' : proba[0][1], 'predict' : int(prediction[0]), 'score' : 0.25, 'region' : regiao, 'lat' : model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[0], 'lon': model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[1], 'circle_rad' : model_infos[modelo].get('circle_rad', 100), 'model' : modelo, 'obj_version':'1.0', 'dt_inference' : datetime.now()}	
+    result = {
+            'status' : 1,
+            'proba' : proba[0][1], 
+            'predict' : int(prediction[0]), 
+            'score' : 0.25, 
+            'region' : regiao, 
+            'lat' : model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[0], 
+            'lon': model_infos[modelo].get('region_coord', [-23.699012, -46.4537949])[1],
+            'circle_rad' : model_infos[modelo].get('circle_rad', 100),
+            'model' : modelo, 
+            'obj_version':'1.0', 
+            'dt_inference' : datetime.now()
+          }	
 
 
     success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
@@ -104,13 +117,31 @@ async def inferencia_previsao_2(request, regiao: str, dt_request):
         day_row = weather_data[2].iloc[[1]]
             
         # Convert the row to a NumPy array
-        input_data = day_row.drop(columns=['dt']).values
+        input_data = day_row.drop(columns=['dt'])
+        raw_input_data = input_data.values
 
         # Make a prediction
-        prediction = loaded_model.predict(input_data)
-        proba = loaded_model.predict_proba(input_data)
+        prediction = loaded_model.predict(raw_input_data)
+        proba = loaded_model.predict_proba(raw_input_data)
+        shap_data = None
+
+        try:
+            loaded_explainer = joblib.load(f'/source/app/utils/{model}_explainer.joblib')
+            shap_values = loaded_explainer(raw_input_data)
+            shap_data = list(zip(shap_values.data[0], input_data.columns))
+        except FileNotFoundError:
+            logger.info(f"Modelo {model} não tem explainer! Seguindo...")
         
-        result = {'status' : 1,'proba' : proba[0][1], 'predict' : int(prediction[0]), 'region' : regiao, 'model' : model, 'obj_version':'1.0', 'dt_inference' : dt_inference}	
+        result = {
+                'status' : 1,
+                'proba' : proba[0][1],
+                'predict' : int(prediction[0]),
+                'region' : regiao,
+                'model' : model,
+                'obj_version':'1.1',
+                'dt_inference' : dt_inference,
+                'shap': shap_data if shap_data is not None else None
+                }	
 
 
         success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
