@@ -103,6 +103,7 @@ async def inferencia_previsao_2(request, regiao: str, dt_request):
                                         )
                 
                 list_data.append(weather_data)
+                rain_distribution = weather_data[-1]
 
         # Fazer inferencia e salvar em mongo
         # Load the model
@@ -122,6 +123,7 @@ async def inferencia_previsao_2(request, regiao: str, dt_request):
 
         # Make a prediction
         prediction = loaded_model.predict(raw_input_data)
+        predict_bin = int(prediction[0])
         proba = loaded_model.predict_proba(raw_input_data)
         shap_data = None
 
@@ -135,12 +137,18 @@ async def inferencia_previsao_2(request, regiao: str, dt_request):
         result = {
                 'status' : 1,
                 'proba' : proba[0][1],
-                'predict' : int(prediction[0]),
+                'predict' : predict_bin,
                 'region' : regiao,
                 'model' : model,
-                'obj_version':'1.1',
+                'obj_version':'1.2',
                 'dt_inference' : dt_inference,
-                'shap': shap_data if shap_data is not None else None
+                'shap': shap_data if shap_data is not None else None,
+                'rain_distribution': {
+                    'night': rain_distribution[0] if predict_bin else 0,
+                    'morning': rain_distribution[1] if predict_bin else 0,
+                    'afternoon': rain_distribution[2] if predict_bin else 0,
+                    'evening': rain_distribution[3] if predict_bin else 0,
+                    }
                 }	
 
 
@@ -174,7 +182,7 @@ async def inferencia_geral(request, regioes: list, dt_request=None):
             for r in resp:
                 proba_list.append(r['result']['proba'] if r['result']['proba'] is not None else 0)
 
-            doc = {'obj_version': "2.0", 'dt_inference': datetime.now(), 'regiao' : regiao, 'detailed' : resp, 'summary' : {'predict' : 1, 'proba' : (sum(proba_list)/len(proba_list) if len(proba_list) > 0 else 0)}}
+            doc = {'obj_version': "2.1", 'dt_inference': datetime.now(), 'regiao' : regiao, 'detailed' : resp, 'summary' : {'predict' : 1, 'proba' : (sum(proba_list)/len(proba_list) if len(proba_list) > 0 else 0)}}
             resp_list.append(doc)
             success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
                 db_name='models_db',

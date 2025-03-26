@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 import pandas as pd
+from sanic.log import logger
 
 from app.utils.aggregator import create_agg_dict
 
@@ -25,6 +26,21 @@ async def get_openweather_api_data(app, route, params=None):
         
         await asyncio.sleep(3600*1.45)
 
+async def get_rain_distribution(df, dt_request, feature="rain_3h"):
+    if feature == "rain_3h":
+        rain_total = df.iloc[1:9].copy()[feature].sum()
+        if rain_total == 0:
+            return [0, 0, 0, 0]
+        rain_night = (df.iloc[1:3].copy()[feature].sum()/rain_total)*100
+        rain_morning = (df.iloc[3:5].copy()[feature].sum()/rain_total)*100
+        rain_afternoon = (df.iloc[5:7].copy()[feature].sum()/rain_total)*100
+        rain_evening = (df.iloc[7:9].copy()[feature].sum()/rain_total)*100
+        #logger.info(f"\x1b[31mDT: {df.iloc[1:9].dt.value_counts()}\x1b[0m")
+        #logger.info(f"\x1b[31mRAIN MORNING: {rain_morning}%\x1b[0m")
+        #logger.info(f"\x1b[31mRAIN AFTERNOON: {rain_afternoon}%\x1b[0m")
+        #logger.info(f"\x1b[31mRAIN EVENING: {rain_evening}%\x1b[0m")
+        #logger.info(f"\x1b[31mRAIN TOTAL: {rain_total}\x1b[0m")
+        return rain_night, rain_morning, rain_afternoon, rain_evening
 
 async def get_OW_mongo_data_and_agg(request, agg_config, dt_request=None):
 
@@ -95,12 +111,10 @@ async def get_OW_mongo_data_and_agg(request, agg_config, dt_request=None):
     agg_config_final = {}
     for i, j in agg_config.items():
         agg_config_final[i] = (j['time'], tuple(j['aggs']))
+
+    rain_distribution = await get_rain_distribution(df, dt_request=dt_request)
     
     df_agg = df.groupby(pd.Grouper(key='dt', freq='D')).agg(
                                                   **create_agg_dict(agg_config_final, step=step)
                                                   ).reset_index()
-
-    
-
-
-    return True, flag_dump, df_agg
+    return True, flag_dump, df_agg, rain_distribution
