@@ -16,7 +16,7 @@ week_day_portuguese = {
 
 phenomenon_portuguese = {
     'temp': 'temperatura',
-    'pressure': 'pressão',
+    'pressure': 'pressão atmosférica',
     'humidity': 'umidade',
     'wind_speed': 'velocidade do Vento',
     'rain': 'chuva',
@@ -46,7 +46,7 @@ def get_shap_importance(region_models) -> str:
     phenomenon = features[0].lower()
     measure = features[-1].lower()
 
-    return f'A predição foi influenciada principalmente pela {measure_portuguese[measure]} de {phenomenon_portuguese[phenomenon]} dentro do modelo.'
+    return f'A "{measure_portuguese[measure]} de {phenomenon_portuguese[phenomenon]}" é a variável que mais influenciou esta precição'
 
 
 def get_rain_distribution(models_detailed):
@@ -80,7 +80,7 @@ def get_color_distribution(proba, rain_distribution):
 
     max_value = max(rain_distribution.values())
 
-    rain_distribution = {k: v*proba / max_value for k, v in rain_distribution.items()}
+    rain_distribution = {period: value*proba / max_value for period, value in rain_distribution.items()}
 
     for key, value in rain_distribution.items():
         if value < 0.45:

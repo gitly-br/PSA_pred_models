@@ -143,9 +143,9 @@ with col2:
 
 with col3:
     with st.container(border=True):
-        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{data_list_summary['SA']['proba']*100:.1f}% de Possibilidade de Alagamento ou Inundação em Santo André em {st.session_state.predict_date}.</h5></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{data_list_summary['SA']['proba']*100:.1f}% de Possibilidade de Alagamento ou Inundação</h5><p style='text-align: center; font-size: 18px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>Em Santo André em {st.session_state.predict_date}</p></div>", unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{get_shap_importance(data_list_detailed['SA'])} </h5></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><p style='text-align: center; font-size: 18px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;>Explicabilidade: {get_shap_importance(data_list_detailed['SA'])} </p></div>", unsafe_allow_html=True)
 
 
 st.divider()
