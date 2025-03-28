@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 from streamlit_theme import st_theme
 
-api_url = environ.get('API_URL', 'http://psa_models_back:8000')
+api_url = environ.get('API_URL_', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
@@ -17,6 +17,13 @@ def call_models(dt_begin=None):
     response_i = requests.post(api_url_i, json={'dt_request': dt_begin})
 
     return response_i.json()
+
+def get_forecast(dt_begin=None):
+        
+    api_url_i = f"{api_url}/forecast"
+    response_i = requests.get(api_url_i, headers={'dt_request': dt_begin})
+
+    return response_i.json()['data']
 
 # Função para verificar as credenciais
 
@@ -64,6 +71,7 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 st.success("Login realizado com sucesso")
                 st.session_state.data = call_models(datetime.now().strftime('%Y-%m-%d'))
+                st.session_state.forecast = get_forecast(datetime.now().strftime('%Y-%m-%d'))
                 st.rerun()
             else:
                 st.error("Usuário ou senha inválidos")

@@ -118,3 +118,80 @@ async def get_OW_mongo_data_and_agg(request, agg_config, dt_request=None):
                                                   **create_agg_dict(agg_config_final, step=step)
                                                   ).reset_index()
     return True, flag_dump, df_agg, rain_distribution
+
+def traduzir(value):
+    en_br_weather={
+        'light rain' : 'Chuva leve',
+        'moderate rain' : 'Chuva moderada',
+        'heavy rain' : 'Chuva forte',
+        'clear sky': 'Céu limpo',
+        'few clouds': 'Poucas nuvens',
+        'scattered clouds': 'Nuvens dispersas',
+        'broken clouds': 'Nuvens quebradas',
+        'overcast clouds': 'Nuvens nubladas',
+        'thunderstorm': 'Trovoada',
+        'mist': 'Névoa',
+        'snow': 'Neve'
+    }
+
+    return en_br_weather.get(value, value)
+
+
+async def get_OW_mongo_data_for_dash(request, dt_request):
+
+    if dt_request is None or dt_request > datetime(2024,11,24):
+        success, conn_prob, openw_data, err_msg = await request.app.ctx.mongo_obj.read_all(
+            db_name='api_data',
+            col='openweather_col',
+            sort=[('dt_request', -1)],
+            filter_={'dt_request' : {'$lte' : dt_request if dt_request is not None else datetime.now()}}
+        )
+
+        data = openw_data[0]['list']
+
+        flattened_data = []
+        for entry in data:
+            flat_entry = {
+                "dt": datetime.fromtimestamp(entry.get("dt"))-timedelta(hours=3),
+                "temp": entry["main"].get("temp"),
+                "feels_like": entry["main"].get("feels_like"),
+                "temp_min": entry["main"].get("temp_min"),
+                "temp_max": entry["main"].get("temp_max"),
+                "pressure": entry["main"].get("pressure"),
+                "sea_level": entry["main"].get("sea_level"),
+                "grnd_level": entry["main"].get("grnd_level"),
+                "humidity": entry["main"].get("humidity"),
+                "temp_kf": entry["main"].get("temp_kf"),
+                "weather_id": entry["weather"][0].get("id") if entry.get("weather") else None,
+                "weather_main": entry["weather"][0].get("main") if entry.get("weather") else None,
+                "weather_description": entry["weather"][0].get("description") if entry.get("weather") else None,
+                "weather_icon": entry["weather"][0].get("icon") if entry.get("weather") else None,
+                "clouds_all": entry["clouds"].get("all"),
+                "wind_speed": entry["wind"].get("speed"),
+                "wind_deg": entry["wind"].get("deg"),
+                "wind_gust": entry["wind"].get("gust"),
+                "visibility": entry.get("visibility"),
+                "pop": entry.get("pop"),
+                "rain_3h": entry["rain"].get("3h", 0) if "rain" in entry else 0,
+                "sys_pod": entry["sys"].get("pod"),
+                "dt_txt": datetime.fromisoformat(entry.get("dt_txt"))
+            }
+            flattened_data.append(flat_entry)
+
+    else:
+        success, conn_prob, openw_data, err_msg = await request.app.ctx.mongo_obj.read_all(db_name='api_data', col='openweather_dump_col', filter_={'dt_request' : {"$lte" : dt_request}},sort=[('dt_request', -1)])
+
+
+        flattened_data = openw_data[0]['list']
+
+    # Criar o DataFrame
+    df = pd.DataFrame(flattened_data)
+
+    # Criando um novo eixo X com df/hora e descrição do clima
+    df["dt_label"] = df["dt"].dt.strftime("%d/%m/%Y - %H:%M") + "<br>" + df["weather_description"].apply(str.lower).apply(traduzir) + "<br>" + df["wind_speed"].astype(str) + " m/s"
+
+    df["pop_percent"] = df["pop"] * 100
+
+    return df.to_dict(orient='records')
+
+

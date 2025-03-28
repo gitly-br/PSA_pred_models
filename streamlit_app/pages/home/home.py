@@ -6,10 +6,10 @@ from streamlit_folium import folium_static
 import folium
 import requests
 from os import environ
-from app import call_models
+from app import call_models, get_forecast
 from streamlit_autorefresh import st_autorefresh
 import plotly.graph_objects as go
-from pages.home.utils import get_map_color, get_flood_color, get_color, plot_gauge, week_day_portuguese
+from pages.home.utils import get_color_distribution, get_map_color, get_flood_color, get_color, get_rain_distribution, plot_gauge, plot_weather_forecast, week_day_portuguese, get_shap_importance
 from streamlit_theme import st_theme
 
 
@@ -72,8 +72,7 @@ st.markdown(
 
 st.markdown("<h3 style='color:rgba(219, 116, 7, 255);'>Modelo de Santo André:</h3>", unsafe_allow_html=True)
 
-
-col1, space, col2, space2, col3 = st.columns([3, 1, 3, 1, 15], vertical_alignment='center')
+col1, col2, space2, col3 = st.columns([3, 8, 1, 14], vertical_alignment='center')
 
 with col1:
 
@@ -90,22 +89,51 @@ with col1:
     if st.button("Atualizar Predição"):
         with st.spinner("Carregando dados..."):
             st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
+            st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
 
     # Exibe os dados apenas se existirem
     if st.session_state.data:
         data_list_summary = {}
+        data_list_detailed = {}
         for json_response in st.session_state.data['data']:
             data_list_summary[json_response['regiao']] = json_response['summary']
-        
+            data_list_detailed[json_response['regiao']] = json_response['detailed']
+
+st.session_state.rain_distribution = get_rain_distribution(data_list_detailed)
+proba_rain_distribution = get_color_distribution(0.90, st.session_state.rain_distribution["SA"])
 
 with col2:
     with st.container(border=True):
         # plot_gauge(0.123, "Amanhã", {'l':10, 'b':20, 't':50})
         st.markdown(
         f"""
-        <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;margin-bottom: 10px;'>
-            <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>{week_day_portuguese[datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.predict_date}</p>
-            <div style='background-color: rgba{str(get_color(data_list_summary['SA']['proba']))}; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+        <div style='background-color: rgba{str(get_color(0.9, 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
+            <div style='display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;'>
+                <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
+                    {week_day_portuguese[datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.predict_date}
+                </p>
+            </div>
+            <div style='display: flex; flex-direction: row; justify-content: space-evenly; gap: 20px;'>
+                <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
+                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Madrugada</p>
+                    <div style='background-color: rgba{str(proba_rain_distribution['madrugada'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    </div>
+                </div>
+                <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
+                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Manhã</p>
+                    <div style='background-color: rgba{str(proba_rain_distribution['manha'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    </div>
+                </div>
+                <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
+                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Tarde</p>
+                    <div style='background-color: rgba{str(proba_rain_distribution['tarde'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    </div>
+                </div>
+                <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
+                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Noite</p>
+                    <div style='background-color: rgba{str(proba_rain_distribution['noite'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    </div>
+                </div>
             </div>
         </div>
         """,
@@ -115,7 +143,10 @@ with col2:
 
 with col3:
     with st.container(border=True):
-        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{data_list_summary['SA']['proba']*100:.1f}% de Possibilidade de Alagamento ou Inundação em Santo André em<br>{st.session_state.predict_date}</h5></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{data_list_summary['SA']['proba']*100:.1f}% de Possibilidade de Alagamento ou Inundação em Santo André em {st.session_state.predict_date}.</h5></div>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{get_shap_importance(data_list_detailed['SA'])} </h5></div>", unsafe_allow_html=True)
+
 
 st.divider()
 st.markdown("<h3 style='color:rgba(219, 116, 7, 255);'>Modelo de Bacias:</h3>", unsafe_allow_html=True)
@@ -245,3 +276,5 @@ with col_2:
     with b2:
         with st.container(border=True):
             plot_gauge(data_list_summary['MENINOS']['proba'], "Bacia dos Meninos", "MENINOS", {'l':10, 'b':20, 't':50})
+
+plot_weather_forecast(st.session_state.forecast)
