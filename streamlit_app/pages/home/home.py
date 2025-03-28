@@ -100,14 +100,14 @@ with col1:
             data_list_detailed[json_response['regiao']] = json_response['detailed']
 
 st.session_state.rain_distribution = get_rain_distribution(data_list_detailed)
-proba_rain_distribution = get_color_distribution(0.90, st.session_state.rain_distribution["SA"])
+proba_rain_distribution = get_color_distribution(data_list_summary['SA']['proba'], st.session_state.rain_distribution["SA"])
 
 with col2:
     with st.container(border=True):
         # plot_gauge(0.123, "Amanhã", {'l':10, 'b':20, 't':50})
         st.markdown(
         f"""
-        <div style='background-color: rgba{str(get_color(0.9, 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
+        <div style='background-color: rgba{str(get_color(data_list_summary['SA']['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
             <div style='display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;'>
                 <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     {week_day_portuguese[datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.predict_date}
