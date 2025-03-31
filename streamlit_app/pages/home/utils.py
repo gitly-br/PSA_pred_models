@@ -36,7 +36,7 @@ def get_shap_importance(region_models) -> str:
     most_important_value = 0
 
     for model in region_models:
-        if model['result']['shap'] is not None:
+        if model['result'].get('shap') is not None:
             for value, feature in model['result']['shap']:
                 if abs(value) > most_important_value:
                     most_important = feature
@@ -61,7 +61,7 @@ def get_rain_distribution(models_detailed):
     for region_name, region_values in models_detailed.items():
         for model in region_values:
             if model['result'].get('rain_distribution') is not None:
-                rain_distribution[model['model']] = model['result'].get('rain_distribution')
+                rain_distribution[model['modelo']] = model['result'].get('rain_distribution')
 
     return rain_distribution
 
