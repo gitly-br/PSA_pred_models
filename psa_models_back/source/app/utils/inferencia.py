@@ -1,6 +1,7 @@
 from datetime import datetime
 from app.utils.openweather import get_OW_mongo_data_and_agg
 from sanic.log import logger
+from collections import Counter
 import joblib
 import pandas as pd
 
@@ -137,18 +138,13 @@ async def inferencia_previsao_2(request, regiao: str, dt_request):
         result = {
                 'status' : 1,
                 'proba' : proba[0][1],
+                'time_of_day': rain_distribution,
                 'predict' : predict_bin,
                 'region' : regiao,
                 'model' : model,
-                'obj_version':'1.2',
+                'obj_version':'1.3',
                 'dt_inference' : dt_inference,
                 'shap': shap_data if shap_data is not None else None,
-                'rain_distribution': {
-                    'night': rain_distribution[0] if predict_bin else 0,
-                    'morning': rain_distribution[1] if predict_bin else 0,
-                    'afternoon': rain_distribution[2] if predict_bin else 0,
-                    'evening': rain_distribution[3] if predict_bin else 0,
-                    }
                 }	
 
 
@@ -178,11 +174,36 @@ async def inferencia_geral(request, regioes: list, dt_request=None):
                 flag_has_prediction = True
 
         if  flag_has_prediction:
-            proba_list = []
+            predict_list = []
+            proba_true = []
+            proba_false = []
             for r in resp:
-                proba_list.append(r['result']['proba'] if r['result']['proba'] is not None else 0)
+                predict_list.append(r["result"]["predict"])
+                if r["result"]["predict"] == 1:
+                    proba_true.append(r["result"]["proba"])
+                else:
+                    proba_false.append(r["result"]["proba"])
+            predict_list = [r["result"]["predict"] for r in resp]
+            predict = Counter(predict_list).most_common(1)[0][0]
+            logger.info(f"Predict - {predict}")
+            if predict == 1:
+                proba = sum(proba_true)/len(proba_true)
+                time_of_day = resp[0]["result"]["time_of_day"]
+            else:
+                proba = sum(proba_false)/len(proba_false)
+                time_of_day = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
 
-            doc = {'obj_version': "2.1", 'dt_inference': datetime.now(), 'regiao' : regiao, 'detailed' : resp, 'summary' : {'predict' : 1, 'proba' : (sum(proba_list)/len(proba_list) if len(proba_list) > 0 else 0)}}
+            doc = {
+                    'obj_version': "2.2", 
+                    'dt_inference': datetime.now(), 
+                    'regiao' : regiao, 
+                    'detailed' : resp, 
+                    'summary' : {
+                        'predict' : predict, 
+                        'proba' : proba,
+                        'time_of_day': time_of_day
+                        }
+                    }
             resp_list.append(doc)
             success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
                 db_name='models_db',
