@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 from streamlit_theme import st_theme
 
-api_url = environ.get('API_URL_', 'http://psa_models_back:8000')
+api_url = environ.get('API_URL', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
@@ -22,7 +22,6 @@ def get_forecast(dt_begin=None):
         
     api_url_i = f"{api_url}/forecast"
     response_i = requests.get(api_url_i, headers={'dt_request': dt_begin})
-
     return response_i.json()['data']
 
 # Função para verificar as credenciais
@@ -157,7 +156,7 @@ else:
 
         <div data-testid="stSidebarNav" style="gap: 20px; display: flex; align-items: center; justify-content: center;">
             <a href="https://www.gitly.com.br/"><img src="./app/static/gitly.png" width="75"></a>
-            <div class="text-container">V 2.2</div>
+            <div class="text-container">V 2.5</div>
         </div>
         """,
         unsafe_allow_html=True,
