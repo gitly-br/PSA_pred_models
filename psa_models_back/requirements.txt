@@ -41,5 +41,6 @@ web-pdb==1.6.2
 pandas
 unicodedata2
 joblib
-scikit-learn
+scikit-learn==1.5.2
 lightgbm
+shap

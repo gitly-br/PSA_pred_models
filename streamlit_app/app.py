@@ -1,46 +1,50 @@
-from datetime import datetime, timedelta
+
 import streamlit as st
 import requests
 import pandas as pd
-from streamlit_autorefresh import st_autorefresh
 from os import environ
-
+from streamlit_folium import folium_static
+import folium
+import json
+from datetime import datetime, timedelta
+from streamlit_theme import st_theme
 
 api_url = environ.get('API_URL', 'http://psa_models_back:8000')
 
+def call_models(dt_begin=None):
+        
+    api_url_i = f"{api_url}/home"
+    response_i = requests.post(api_url_i, json={'dt_request': dt_begin})
+
+    return response_i.json()
+
+def get_forecast(dt_begin=None):
+        
+    api_url_i = f"{api_url}/forecast"
+    response_i = requests.get(api_url_i, headers={'dt_request': dt_begin})
+    return response_i.json()['data']
+
 # Função para verificar as credenciais
 
-st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
-
-st_autorefresh(interval=300000, key="datarefresh")
+if 'tema' not in st.session_state:
+    st.session_state.tema = st_theme()
 
 def check_credentials(username, password):
     # Substitua pela lógica de autenticação real
     return username == "psa_defesa_civil" and password == "PSA@D3fes4"
 
 if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = datetime.now().date()
+    st.session_state.selected_date = datetime.now().date() - timedelta(days=1)
 
 st.session_state.predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
+st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=2)).strftime('%d/%m/%Y')
 
-def call_models(dt_begin=None):
-    # Conteúdo da primeira aba (Visualização)
-    responses = []
-    for i in range(1, 6):
-        api_url_i = f"{api_url}/modelo_{i}"
-        response_i = requests.post(api_url_i, json={'dt_request': dt_begin})
-        responses.append(response_i)
+@st.dialog("Links Úteis")
+def links_uteis():
+    st.markdown("[Defesa Civil - Santo André](https://portais.santoandre.sp.gov.br/defesacivil)")
+    st.markdown("[Centro de Resiliência](https://portais.santoandre.sp.gov.br/defesacivil/centro-de-resiliencia/)")
+    st.markdown("[Banco de Desenvolvimento da América Latina e Caribe - CAF](https://www.caf.com/pt/)")
 
-    
-    for response in responses:
-        if response.status_code != 200:
-            st.error(f"Falha ao conectar à API: Código de status {response.status_code}")
-            st.stop()
-
-
-    json_responses = [response.json() for response in responses]
-
-    return json_responses
 
 # Inicializa o estado da sessão
 if 'logged_in' not in st.session_state:
@@ -51,7 +55,8 @@ if 'data' not in st.session_state:
 
 # Tela de login
 if not st.session_state.logged_in:
-
+    
+    st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
     col1, col2, col3 = st.columns([3, 3, 3])
     
     with col2:
@@ -65,136 +70,124 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 st.success("Login realizado com sucesso")
                 st.session_state.data = call_models(datetime.now().strftime('%Y-%m-%d'))
+                st.session_state.forecast = get_forecast(datetime.now().strftime('%Y-%m-%d'))
                 st.rerun()
             else:
                 st.error("Usuário ou senha inválidos")
 else:
     
-    st.sidebar.image("PSA.png")
-    st.sidebar.title("Sistema de Previsão de Alagamentos")
-    st.sidebar.markdown("[Formulário para registro de ocorrência](https://forms.gle/yUxpb68E5cjj1YdHA)")
-    
-    st.sidebar.markdown("")
-    
-    # Título principal
-    st.title("Predição de Alagamentos")
-    col1, space, col2 = st.columns([5, 1, 6])
+    pages = [
+            st.Page("pages/home/home.py", title="Home"),
+            st.Page("pages/models/models.py", title="Modelos Detalhados")
+    ]
 
-    with col1:
+    pg = st.navigation(pages)
+    pg.run()
 
-        date_aux = st.date_input(
-            'Data', 
-            value=datetime.now(), 
-            min_value=datetime(2017, 10, 6),
-            format="DD/MM/YYYY",
-        )
+    # Remove espaço em branco no topo
+    st.markdown("""
+        <style>
+        header.stAppHeader {
+            background-color: transparent;
+        }
+        section.stMain .block-container {8
+            padding-top: 0rem;
+            z-index: 1;
+        }
+        </style>""", unsafe_allow_html=True)
+
+    # st.sidebar.markdown(f"""
+    #     <div style="text-align: center;">
+    #         <a href="https://portais.santoandre.sp.gov.br/defesacivil">
+    #         <img src="./app/static/PSA.png" width="150">
+    #         </a>
+    #     </div>
+    #     """, unsafe_allow_html=True)
+    # st.sidebar.markdown(f"""
+    #     <div style="margin-bottom:20px; text-align: center; display: flex; justify-content: space-around; gap: 20px; align-items: center;">
+    #         <a href="https://www.caf.com/pt/">
+    #         <img src="./app/static/CAF.png" width="100">
+    #         </a>
+    #         <a href="https://portais.santoandre.sp.gov.br/defesacivil">
+    #         <img src="./app/static/logo-DFSA.png" width="100">
+    #         </a>
+    #     </div>
+    #     """, unsafe_allow_html=True)
+    
+    st.sidebar.image("static/Group_Dark.png" if st.session_state.tema['base'] == 'dark' else "static/Group_Custom.png")
+    st.sidebar.markdown(
+        "<h2>Informações Gerais</h2>", 
+        unsafe_allow_html=True
+    )
+    st.sidebar.markdown("[Formulário para Registro de Ocorrências](https://forms.gle/yUxpb68E5cjj1YdHA)")
+    st.sidebar.markdown("[Ajuda](https://gitly.notion.site/Ajuda-PSA-Dashboard-185ad90ac24c802b80faee77754fb4cf?pvs=4)")
+
+    st.sidebar.button("Links Úteis", on_click=links_uteis, use_container_width=True)
+    
+    
+    ### DENTRO DE STYLE PARA CASO PRECISE IMPROVISAR FOOTER
+    # [data-testid="stSidebarNav"] + div {{
+    #     position: relative;
+    #     bottom: 0;
+    #     height: 10%;
+    #     display: flex;
+    #     flex-direction: row; /* Organiza imagem e texto lado a lado */
+    #     align-items: center; /* Centraliza verticalmente */
+    #     gap: 10px; /* Espaço entre a imagem e o texto */
+    # }}
+    st.sidebar.markdown(
+        f"""
+        <style>
+
+            .image-container {{
+                width: 80px; /* Largura da imagem */
+                height: 80px; /* Altura da imagem */
+                background-image: url('logo_transparent_cropado.png'); /* Substitua pelo caminho do seu arquivo */
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-position: center;
+            }}
+
+            .text-container {{
+                font-size: 22px; /* Tamanho da fonte */
+                font-weight: bold; /* Texto em negrito */
+            }}
+        </style>
+
+        <div data-testid="stSidebarNav" style="gap: 20px; display: flex; align-items: center; justify-content: center;">
+            <a href="https://www.gitly.com.br/"><img src="./app/static/gitly.png" width="75"></a>
+            <div class="text-container">V 2.5</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    
+    )
         
-        st.session_state.selected_date = date_aux
-        
-        # Botão para atualizar os dados
-        if st.button("Atualizar"):
-            with st.spinner("Carregando dados..."):
-                st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
 
-        # Exibe os dados apenas se existirem
-        if st.session_state.data:
-            data_list = []
-            for json_response in st.session_state.data:
-                if json_response.get('status') == 'success':
-                    data_list.append(json_response.get('data', {}))
-                else:
-                    data_list.append(json_response.get('data', {}))
+        # st.markdown('<br><h4>Bacia Tamanduateí (24h)</h4>',unsafe_allow_html=True)
 
-            df = pd.DataFrame(data_list)
-            df.rename(columns={'region': 'regiao', 'proba': 'valor'}, inplace=True)
+        # for idx, row in df.iterrows():
+        #     if row['regiao'] == 'tam':
 
-            # Define as cores com base nos dados
-            def get_color(value):
-                if value is None:
-                    return (0, 0, 0, 0)
-                if value <= 0.5:
-                    return (182, 226, 161, abs(value - 0.5) + 0.4)
-                else:
-                    return (253, 138, 138, abs(value - 0.5) + 0.4)
-
-            df_map = df.copy()
-            df_map['cor'] = df_map['valor'].apply(get_color)
-
-            new_row = {
-                'circle_rad': 0, 
-                'valor': 0, 
-                'cor': (0, 0, 0, 0), 
-                'lat': -23.656825, 
-                'lon': -46.533353, 
-                'status': 1
-            }
-            df_map = pd.concat([df_map, pd.DataFrame([new_row])], ignore_index=True)
-
-            df_maps = df_map[df_map['status'] == 1]
-
-    with col2:
-        st.markdown("<h2>Período considerado na predição</h2>", unsafe_allow_html=True)
-        st.text(f"De {st.session_state.predict_date} 00:00  -  {st.session_state.predict_date} 23:59")
-    
-    col_1, space_, col_2 = st.columns([9, 1, 6])
-
-    with col_1:
-
-            # Plota o mapa
-            st.map(df_maps, latitude="lat", longitude="lon",
-                   size="circle_rad", color="cor", height=600, zoom=13)
-
-    with col_2:
-        # Exibe a lista ao lado direito
-        st.header("Região Considerada no Modelo")
-
-        st.markdown('<h4>Santo André (24h)</h4>',unsafe_allow_html=True)
-        for idx, row in df.iterrows():
-            if row['regiao'] == 'SA':
-                if row['status'] == 0:
-                    st.markdown(
-                        f"""<div style=' display: flex; align-items: center;'>
-                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                                <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
-                            </div>""",
-                        unsafe_allow_html=True
-                    )
-                    break
-                else:
-                    st.markdown(
-                        f"""<div style=' display: flex; align-items: center;'>
-                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                                <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}%</div>
-                                <div>Modelo: {row['model']}</div>
-                                <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
-                            </div>""",
-                        unsafe_allow_html=True
-                    )
-
-        st.markdown('<br><h4>Bacia Tamanduateí (24h)</h4>',unsafe_allow_html=True)
-
-        for idx, row in df.iterrows():
-            if row['regiao'] == 'tam':
-
-                if row['status'] == 0:
-                    st.markdown(
-                        f"""<div style=' display: flex; align-items: center;'>
-                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                                <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
-                            </div>""",
-                        unsafe_allow_html=True
-                    )
-                    break
-                else:
-                    st.markdown(
-                        f"""<div style=' display: flex; align-items: center;'>
-                                <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-                                <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}%</div>
-                                <div>Modelo: {row['model']}</div>
-                                <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
-                            </div>""",
-                        unsafe_allow_html=True
-                    )
+        #         if row['status'] == 0:
+        #             st.markdown(
+        #                 f"""<div style=' display: flex; align-items: center;'>
+        #                         <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+        #                         <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+        #                     </div>""",
+        #                 unsafe_allow_html=True
+        #             )
+        #             break
+        #         else:
+        #             st.markdown(
+        #                 f"""<div style=' display: flex; align-items: center;'>
+        #                         <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+        #                         <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}%</div>
+        #                         <div>Modelo: {row['model']}</div>
+        #                         <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+        #                     </div>""",
+        #                 unsafe_allow_html=True
+        #             )
 
 # footer="""<style>
 # a:link , a:visited{
