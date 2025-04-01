@@ -49,20 +49,9 @@ def get_shap_importance(region_models) -> str:
     return f'A "{measure_portuguese[measure]} de {phenomenon_portuguese[phenomenon]}" é a variável que mais influenciou esta precição'
 
 
-def get_rain_distribution(models_detailed):
-    rain_distribution = {
-        "SA" : {'madrugada' : 30, 'manha' : 60, 'tarde' : 10, 'noite' : 0},
-        "MENINOS": {'madrugada' : 0, 'manha' : 0, 'tarde' : 0, 'noite' : 0},
-        "ORATORIO": {'madrugada' : 0, 'manha' : 0, 'tarde' : 0, 'noite' : 0},
-        "GUARARA": {'madrugada' : 0, 'manha' : 0, 'tarde' : 0, 'noite' : 0},
-        "TAMCENTRAL": {'madrugada' : 0, 'manha' : 0, 'tarde' : 0, 'noite' : 0},
-    }
-
-    for region_name, region_values in models_detailed.items():
-        for model in region_values:
-            if model['result'].get('rain_distribution') is not None:
-                rain_distribution[model['modelo']] = model['result'].get('rain_distribution')
-
+def get_rain_distribution(models_summary):
+    rain_distribution = models_summary["SA"]["time_of_day"]
+    print(rain_distribution)
     return rain_distribution
 
 # Define as cores com base nos dados
@@ -77,20 +66,18 @@ def get_color(value, alpha=1):
         return (253, 138, 138, alpha)
     
 def get_color_distribution(proba, rain_distribution):
-
+    rain_colors = {}
     max_value = max(rain_distribution.values())
 
-    rain_distribution = {period: value*proba / max_value for period, value in rain_distribution.items()}
-
     for key, value in rain_distribution.items():
-        if value < 0.45:
-            rain_distribution[key] = (182, 226, 161, 1)
-        elif 0.45 <= value < 0.75:
-            rain_distribution[key] = (235, 189, 23, 1)
+        if value < 45:
+            rain_colors[key] = (182, 226, 161, 1)
+        elif 45 <= value < 75:
+            rain_colors[key] = (235, 189, 23, 1)
         else:
-            rain_distribution[key] = (253, 138, 138, 1)
+            rain_colors[key] = (253, 138, 138, 1)
     
-    return rain_distribution
+    return rain_colors
     
 def get_map_color(value):
     if value is None:

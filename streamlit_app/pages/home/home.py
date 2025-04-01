@@ -99,8 +99,8 @@ with col1:
             data_list_summary[json_response['regiao']] = json_response['summary']
             data_list_detailed[json_response['regiao']] = json_response['detailed']
 
-st.session_state.rain_distribution = get_rain_distribution(data_list_detailed)
-proba_rain_distribution = get_color_distribution(data_list_summary['SA']['proba'], st.session_state.rain_distribution["SA"])
+st.session_state.rain_distribution = get_rain_distribution(data_list_summary)
+proba_rain_distribution = get_color_distribution(data_list_summary['SA']['proba'], st.session_state.rain_distribution)
 
 with col2:
     with st.container(border=True):
@@ -116,22 +116,22 @@ with col2:
             <div style='display: flex; flex-direction: row; justify-content: space-evenly; gap: 20px;'>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Madrugada</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['madrugada'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['night'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Manhã</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['manha'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['morning'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Tarde</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['tarde'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['afternoon'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Noite</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['noite'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['evening'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
             </div>
