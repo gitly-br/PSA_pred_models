@@ -152,13 +152,11 @@ st.divider()
 st.markdown("<h3 style='color:rgba(219, 116, 7, 255);'>Modelo de Bacias:</h3>", unsafe_allow_html=True)
 
 # Seleção de data
-today_date:str  = datetime.now().strftime('%d/%m/%Y')
-
 st.session_state.date_prev = st.segmented_control(
     "Seleção de previsão",
-    [today_date],
+    [st.session_state.predict_date],
     selection_mode="single",
-    default=today_date,
+    default=st.session_state.predict_date,
     label_visibility='collapsed'
 )
 
