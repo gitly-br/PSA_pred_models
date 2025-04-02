@@ -69,8 +69,8 @@ if not st.session_state.logged_in:
             if check_credentials(username, password):
                 st.session_state.logged_in = True
                 st.success("Login realizado com sucesso")
-                st.session_state.data = call_models(datetime.now().strftime('%Y-%m-%d'))
-                st.session_state.forecast = get_forecast(datetime.now().strftime('%Y-%m-%d'))
+                st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
+                st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
                 st.rerun()
             else:
                 st.error("Usuário ou senha inválidos")
