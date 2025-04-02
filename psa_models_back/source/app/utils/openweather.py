@@ -29,11 +29,11 @@ async def get_openweather_api_data(app, route, params=None):
 async def get_rain_distribution(df, dt_request, feature="rain_3h"):
     rain_distribution = {}
     if feature == "rain_3h":
-        rain_total = df.iloc[1:10].copy()[feature].sum()
-        rain_night = (df.iloc[2:4].copy()[feature].sum()/rain_total)*100
-        rain_morning = (df.iloc[4:6].copy()[feature].sum()/rain_total)*100
-        rain_afternoon = (df.iloc[6:8].copy()[feature].sum()/rain_total)*100
-        rain_evening = (df.iloc[8:10].copy()[feature].sum()/rain_total)*100
+        rain_total = df.iloc[2:10].copy()[feature].sum()
+        rain_night = (df.iloc[2:4].copy()[feature].sum()/rain_total)
+        rain_morning = (df.iloc[4:6].copy()[feature].sum()/rain_total)
+        rain_afternoon = (df.iloc[6:8].copy()[feature].sum()/rain_total)
+        rain_evening = (df.iloc[8:10].copy()[feature].sum()/rain_total)
         #logger.info(f"\x1b[31mDT: {df.iloc[2:4].dt.value_counts()}\x1b[0m")
         #logger.info(f"\x1b[31mDT: {df.iloc[4:6].dt.value_counts()}\x1b[0m")
         #logger.info(f"\x1b[31mDT: {df.iloc[6:8].dt.value_counts()}\x1b[0m")
