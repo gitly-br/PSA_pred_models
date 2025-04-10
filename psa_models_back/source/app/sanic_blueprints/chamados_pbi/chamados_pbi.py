@@ -33,7 +33,7 @@ async def get_csv(request):
 
     # AWS S3 configuration
     S3_BUCKET_NAME = request.app.ctx.sett['MINIO_STORAGE']['CREDENTIALS']['BUCKET_NAME']
-    S3_FILE_KEY = 'Ocorrências.csv'
+    S3_FILE_KEY = 'Ocorrencias.csv'
 
     try:
         # Initialize S3 client
