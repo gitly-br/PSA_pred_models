@@ -275,4 +275,5 @@ with col_2:
         with st.container(border=True):
             plot_gauge(data_list_summary['MENINOS']['proba'], "Bacia dos Meninos", "MENINOS", {'l':10, 'b':20, 't':50})
 
+
 plot_weather_forecast(st.session_state.forecast)

@@ -190,7 +190,7 @@ def plot_weather_forecast(df_json):
 
     # Adicionando a temperatura como Scatter
     fig.add_trace(
-        go.Scattergl(
+        go.Scatter(
             x=df["dt_label"],  
             y=df["temp"],
             name="Temperatura",
@@ -208,7 +208,7 @@ def plot_weather_forecast(df_json):
 
     # Configurando eixos Y
     fig.update_yaxes(title_text="<b>Temperatura (°C)</b>", secondary_y=False, range=[df["temp"].min() - 2, df["temp"].max() + 2])  # Dynamic Range
-    fig.update_yaxes(title_text="<b>Volume de chuva (mm)</b>", secondary_y=True, range=[0, df["rain_3h"].max() * 1.2])  # Dynamic Range
+    fig.update_yaxes(title_text="<b>Volume de chuva (mm)</b>", secondary_y=True, range=[0, df["rain_3h"].max() * 1.2], showgrid=False)  # Dynamic Range
 
     # Configuração final do layout
     fig.update_layout(
