@@ -51,7 +51,6 @@ def get_shap_importance(region_models) -> str:
 
 def get_rain_distribution(models_summary):
     rain_distribution = models_summary["SA"]["time_of_day"]
-    print(rain_distribution)
     return rain_distribution
 
 # Define as cores com base nos dados
@@ -70,9 +69,9 @@ def get_color_distribution(proba, rain_distribution):
     max_value = max(rain_distribution.values())
 
     for key, value in rain_distribution.items():
-        if value < 45:
+        if value < 0.45:
             rain_colors[key] = (182, 226, 161, 1)
-        elif 45 <= value < 75:
+        elif 0.45 <= value < 0.75:
             rain_colors[key] = (235, 189, 23, 1)
         else:
             rain_colors[key] = (253, 138, 138, 1)
