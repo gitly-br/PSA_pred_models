@@ -5,14 +5,14 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 const config: Config = {
-  title: 'Se não mudar, mamou',
-  favicon: 'img/firelink.png',
+  title: 'Gitly PSA',
+  favicon: 'img/gitly_logo.png',
 
-  url: 'https://firelink-library.github.io',
-  baseUrl: '/docusaurus-template',
+  url: 'https://gitly-br.github.io',
+  baseUrl: '/PSA_pred_models',
 
-  organizationName: 'Firelink Library',
-  projectName: 'docusaurus-template',
+  organizationName: 'Gitly',
+  projectName: 'PSA_pred_models',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -55,23 +55,23 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/gitly_social_card.png',
     navbar: {
-      title: 'Template docusaurus',
+      title: 'Gitly PSA',
       logo: {
-        alt: 'Logo Firelink Lib.',
-        src: 'img/firelink.png',
+        alt: 'Gitly logo',
+        src: 'img/gitly_logo.png',
       },
       items: [
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Tutorial',
+          label: 'Docs',
         },
         {
-          href: 'https://github.com/firelink-library/docusaurus-template',
-          label: 'GitHub',
+          href: 'https://github.com/gitly-br/PSA_pred_models',
+          label: 'Repositório',
           position: 'right',
         },
       ],
@@ -79,7 +79,7 @@ const config: Config = {
     footer: {
       style: 'dark',
       links: [],
-      copyright: `Copyright © ${new Date().getFullYear()} Firelink Library.
+      copyright: `Copyright © ${new Date().getFullYear()} Gitly.
           Built with Docusaurus.`,
     },
     prism: {
