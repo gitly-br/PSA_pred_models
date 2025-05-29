@@ -3,7 +3,7 @@ name: Deploy docusaurus to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - refactor
     
 permissions:
   contents: write
