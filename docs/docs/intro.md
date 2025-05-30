@@ -3,7 +3,7 @@ sidebar_position: 1
 slug: /
 ---
 
-# Introdução
+# Introdução oi
 
 Este é apenas um template para você poder criar um repositório de conteúdo
 rapidamente e com uma configuração opinionada do Docusaurus.
