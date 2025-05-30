@@ -1,0 +1,9 @@
+# Each top-level key is a unique “source id”
+openweather:
+  type: api
+  dedup_key: dt
+  cities:
+    - name: "São Paulo"
+      lat: -23.67
+      lon: -46.52
+      ttl_days: 7
