@@ -1,2 +1,4 @@
-"""Central place for magic numbers and default values (Stage 0 placeholder)."""
-# Will hold: DB names, TTL defaults, max-retry counts, etc.
+"""Global defaults used across the Harvest service."""
+from __future__ import annotations
+
+DEFAULT_CONFIG_FILE = "sample_configs.yml"
