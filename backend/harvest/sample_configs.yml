@@ -1,21 +1,13 @@
-# Each top-level key is a unique “source id”
 openweather:
   type: api
   dedup_key: dt
+  dedup_window_minutes: 60   # duplicates within same hour
   cities:
+    - name: "São Paulo"
+      lat: -23.55
+      lon: -46.63
+      ttl_days: 7
     - name: "Santo André"
       lat: -23.67
-      lon: -46.52
+      lon: -46.53
       ttl_days: 7
-    - name: Blumenau
-      lat: -22.91
-      lon: -43.17
-      ttl_days: 7
-
-inmet:
-  type: api
-  dedup_key: timestamp
-  cities:
-    - name: "Santo André"
-      station_id: 83781
-      ttl_days: 3

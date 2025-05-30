@@ -1,14 +1,29 @@
-"""Tiny helpers that are safe for Stage 1."""
-
+"""Shared helpers."""
 from __future__ import annotations
+from unidecode import unidecode
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
 
-
-def resolve_config(path: str | None) -> Path:
-    """Return absolute Path to the YAML config (or default)."""
-    from .constants import DEFAULT_CONFIG_FILE
-
-    p = Path(path or DEFAULT_CONFIG_FILE).expanduser()
+def resolve_config(path: str | None, default_name: str = "sample_configs.yml") -> Path:
+    p = Path(path or default_name).expanduser()
     if not p.is_file():
         raise FileNotFoundError(p)
     return p.resolve()
+
+def slugify_city(city: str) -> str:
+    """São Paulo → sao_paulo, Santo André → santo_andre"""
+    return (
+        unidecode(city)
+        .lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+    )
+
+def bucketize(ts: datetime, window: timedelta) -> datetime:
+    """Floor ts to the start-of-window (UTC)."""
+    if window.total_seconds() == 0:
+        return ts
+    seconds = int(window.total_seconds())
+    floored = ts.replace(tzinfo=timezone.utc)
+    floored_epoch = int(floored.timestamp()) // seconds * seconds
+    return datetime.fromtimestamp(floored_epoch, tz=timezone.utc)
