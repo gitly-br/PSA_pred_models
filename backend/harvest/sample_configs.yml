@@ -1,13 +1,5 @@
 openweather:
-  type: api
-  dedup_key: dt
-  dedup_window_minutes: 60   # duplicates within same hour
-  cities:
-    - name: "São Paulo"
-      lat: -23.55
-      lon: -46.63
-      ttl_days: 7
     - name: "Santo André"
-      lat: -23.67
-      lon: -46.53
+      lat: -23.667548
+      lon: -46.528934
       ttl_days: 7
