@@ -11,13 +11,14 @@ class HarvestError(Exception):
 class SourceBase(ABC):
     """All concrete sources must implement this interface."""
 
-    def __init__(self, config, *, city: str) -> None:
+    def __init__(self, config, *, city: str, region: str = "all") -> None:
         self.config = config
         self.city = city
+        self.region = region
 
     @property
-    def name(self) -> str:  # convenience
-        return self.config.source_id
+    def type(self) -> str:  # convenience
+        return self.config.type
 
     # ──────────────────────────────────────────────────────────────
     @abstractmethod

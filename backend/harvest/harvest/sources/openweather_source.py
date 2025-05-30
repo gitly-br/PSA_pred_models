@@ -1,6 +1,6 @@
 from __future__ import annotations
 import datetime as dt
-from typing import Any, Iterable
+from typing import Any
 
 import httpx
 from httpx import HTTPStatusError
@@ -11,8 +11,8 @@ from harvest.utils import bucketize
 import os
 
 
-class ApiSource(SourceBase):
-    async def harvest(self) -> Iterable[dict[str, Any]]:
+class OpenWeatherSource(SourceBase):
+    async def harvest(self) -> dict[str, Any]:
         key = os.getenv(OPENWX_KEY_ENV)
         if not key:
             raise HarvestError("OPENWEATHER_API_KEY not set")
@@ -29,7 +29,10 @@ class ApiSource(SourceBase):
                 resp = await client.get(url)
                 resp.raise_for_status()
             except HTTPStatusError as exc:
-                raise HarvestError(f"HTTP {exc.response.status_code} for {self.name}") from exc
+                raise HarvestError(f"""
+                                   HTTP {exc.response.status_code} 
+                                   for {self.name}
+                                   """) from exc
 
         payload = resp.json()
         dt_request = dt.datetime.now(dt.timezone.utc)
@@ -37,14 +40,13 @@ class ApiSource(SourceBase):
             dt_request, dt.timedelta(minutes=self.config.dedup_window_minutes)
         )
 
-        docs = []
-        for entry in payload["list"]:
-            doc = {
-                **entry,
-                "city": self.city,
-                "source": self.name,
-                "dt_request": dt_request,
-                "bucket_ts": bucket_ts,
-            }
-            docs.append(doc)
-        return docs
+        print(payload)
+        doc = {
+            "city": self.city,
+            "source": self.name,
+            "dt_request": dt_request,
+            "bucket_ts": bucket_ts,
+            "forecasts": payload["list"]
+        }
+
+        return doc

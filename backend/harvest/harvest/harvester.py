@@ -3,11 +3,6 @@ from collections import defaultdict
 from typing import Mapping, Iterable, Any
 
 from harvest.utils import bucketize
-from harvest.constants import (
-    DEFAULT_TTL_DAYS,
-    window_to_timedelta,
-)
-from harvest.mongo_client import MongoClientWrapper
 from harvest.config_loader import SourceConfig
 from harvest.sources.api_source import ApiSource
 from harvest.sources.source_base import SourceBase, HarvestError
@@ -18,15 +13,15 @@ class Harvester:
         self,
         configs: Iterable[SourceConfig],
         city: str,
-        mongo: MongoClientWrapper,
     ) -> None:
         self.city = city
-        self.mongo = mongo
         self.configs = [c for c in configs if c.city == city]
-        self.sources: list[SourceBase] = [self._build_source(c) for c in self.configs]
+        self.sources: list[SourceBase] = [
+            self._build_source(c) for c in self.configs
+        ]
 
     def _build_source(self, cfg: SourceConfig) -> SourceBase:
-        if cfg.type == "api":
+        if cfg.type == cfg.type:
             return ApiSource(cfg, city=cfg.city)
         raise NotImplementedError(cfg.type)
 
