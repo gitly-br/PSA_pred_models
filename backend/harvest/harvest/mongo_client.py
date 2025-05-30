@@ -7,7 +7,6 @@ from harvest.constants import (
     DEFAULT_MONGO_URI,
     DEFAULT_MONGO_DB,
     DEFAULT_TTL_DAYS,
-    window_to_timedelta,
 )
 from .utils import slugify_city
 
@@ -26,39 +25,28 @@ class MongoClientWrapper:
         self,
         collection,
         dedup_key: str,
-        window_minutes: int,
         ttl_days: int | None = None,
     ):
         # UNIQUE on (dedup_key, bucket_ts)
-        await collection.create_index(
-            [(dedup_key, 1), ("bucket_ts", 1)],
-            unique=True,
-            name="dedup_idx",
-            background=True,
-        )
-
-        # TTL on dt_request
         expire_after = (ttl_days or DEFAULT_TTL_DAYS) * 86400
         await collection.create_index(
-            [("dt_request", 1)],
-            name="ttl_idx",
+            [(dedup_key, 1)],
+            unique=True,
+            name="dt_idx",
             expireAfterSeconds=expire_after,
             background=True,
         )
 
     # ------------------------------------------------------------------ #
-    async def insert_many_safe(
-        self, collection, docs: Iterable[dict[str, Any]]
-    ) -> tuple[int, int]:
-        """Returns (inserted, skipped)."""
-        inserted = skipped = 0
-        for doc in docs:
-            try:
-                await collection.insert_one(doc)
-                inserted += 1
-            except DuplicateKeyError:
-                skipped += 1
-        return inserted, skipped
+    async def insert_one_safe(
+        self, collection, payload: dict[str, Any]
+    ) -> int:
+        """Returns 0 (success)/1 (failure)."""
+        try:
+            await collection.insert_one(payload)
+        except DuplicateKeyError:
+            return 1
+        return 0
 
     async def close(self):
         self.client.close()

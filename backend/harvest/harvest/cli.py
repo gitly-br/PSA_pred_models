@@ -9,6 +9,10 @@ from pprint import pprint
 
 from harvest.utils import resolve_config
 from harvest.config_loader import ConfigLoader
+from harvest.mongo_client import MongoClientWrapper
+from harvest.harvester import Harvester
+from harvest.constants import MONGO_URI_ENV, MONGO_DB_ENV, DEFAULT_MONGO_URI, DEFAULT_MONGO_DB
+
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Run harvest for one city.")
@@ -25,8 +29,17 @@ async def main() -> None:
 
     configs = ConfigLoader(cfg_path).load()
 
-    print(configs)
+    mongo_uri = os.getenv(MONGO_URI_ENV, DEFAULT_MONGO_URI)
+    mongo_db = os.getenv(MONGO_DB_ENV, DEFAULT_MONGO_DB)
 
+    mongo = MongoClientWrapper(uri=mongo_uri, db_name=mongo_db)
+    harv = Harvester(configs, city=args.city, mongo=mongo)
+
+    for config in harv.configs:
+        print(config)
+    
+    summary = await harv.run_all()
+    pprint(summary)
 
 
 if __name__ == "__main__":

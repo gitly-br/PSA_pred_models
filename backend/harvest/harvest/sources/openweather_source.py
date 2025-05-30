@@ -7,7 +7,6 @@ from httpx import HTTPStatusError
 
 from harvest.sources.source_base import SourceBase, HarvestError
 from harvest.constants import OPENWX_KEY_ENV
-from harvest.utils import bucketize
 import os
 
 
@@ -35,17 +34,14 @@ class OpenWeatherSource(SourceBase):
                                    """) from exc
 
         payload = resp.json()
-        dt_request = dt.datetime.now(dt.timezone.utc)
-        bucket_ts = bucketize(
-            dt_request, dt.timedelta(minutes=self.config.dedup_window_minutes)
-        )
+        dt_request = dt.datetime.now(dt.timezone.utc).replace(minute=0,
+                                                              second=0,
+                                                              microsecond=0)
 
-        print(payload)
         doc = {
             "city": self.city,
-            "source": self.name,
+            "source": self.type,
             "dt_request": dt_request,
-            "bucket_ts": bucket_ts,
             "forecasts": payload["list"]
         }
 
