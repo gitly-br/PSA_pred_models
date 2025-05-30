@@ -1,4 +1,6 @@
--r requirements.txt   # <-- inherit everything from runtime
+-r requirements.txt
 
 pytest>=8.0
 pytest-asyncio>=0.23
+pytest-httpx>=0.29
+mongomock>=4.1
