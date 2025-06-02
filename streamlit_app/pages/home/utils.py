@@ -46,7 +46,7 @@ def get_shap_importance(region_models) -> str:
     phenomenon = features[0].lower()
     measure = features[-1].lower()
 
-    return f'A "{measure_portuguese[measure]} de {phenomenon_portuguese[phenomenon]}" é a variável que mais influenciou esta precipitação'
+    return f'A "{measure_portuguese[measure]} de {phenomenon_portuguese[phenomenon]}" é a variável que mais influenciou esta previsão'
 
 
 def get_rain_distribution(models_summary):
