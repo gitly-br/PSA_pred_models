@@ -107,7 +107,7 @@ with col2:
         # plot_gauge(0.123, "Amanhã", {'l':10, 'b':20, 't':50})
         st.markdown(
         f"""
-        <div style='background-color: rgba{str(get_color(data_list_summary['SA']['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
+        <div style='background-color: rgba{str(get_color(data_list_summary['SA']['proba'], 0.3) if data_list_summary['SA']['predict'] == 1 else (171, 171, 171, 0.45))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
             <div style='display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;'>
                 <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     {week_day_portuguese[datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.predict_date}
@@ -116,22 +116,22 @@ with col2:
             <div style='display: flex; flex-direction: row; justify-content: space-evenly; gap: 20px;'>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Madrugada</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['night'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['night'] if data_list_summary['SA']['predict'] == 1 else (171, 171, 171, 0.60))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Manhã</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['morning'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['morning'] if data_list_summary['SA']['predict'] == 1 else (171, 171, 171, 0.60))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Tarde</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['afternoon'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['afternoon'] if data_list_summary['SA']['predict'] == 1 else (171, 171, 171, 0.60))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
                     <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px;'>Noite</p>
-                    <div style='background-color: rgba{str(proba_rain_distribution['evening'])}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <div style='background-color: rgba{str(proba_rain_distribution['evening'] if data_list_summary['SA']['predict'] == 1 else (171, 171, 171, 0.60))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
             </div>
@@ -143,9 +143,14 @@ with col2:
 
 with col3:
     with st.container(border=True):
-        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{data_list_summary['SA']['proba']*100:.1f}% de Possibilidade de Alagamento ou Inundação</h5><p style='text-align: center; font-size: 18px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>Em Santo André em {st.session_state.predict_date}</p></div>", unsafe_allow_html=True)
-    with st.container(border=True):
-        st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><p style='text-align: center; font-size: 18px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;>Explicabilidade: {get_shap_importance(data_list_detailed['SA'])} </p></div>", unsafe_allow_html=True)
+        if data_list_summary['SA']['predict'] == 1:
+            st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>{data_list_summary['SA']['proba']*100:.1f}% de Possibilidade de Alagamento ou Inundação</h5><p style='text-align: center; font-size: 18px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>Em Santo André em {st.session_state.predict_date}</p></div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><h5 style='text-align: center;'>Sem previsão de alagamento ou inundação</h5><p style='text-align: center; font-size: 18px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>Em Santo André em {st.session_state.predict_date}</p></div>", unsafe_allow_html=True)
+
+    if data_list_summary['SA']['predict'] == 1:
+        with st.container(border=True):
+            st.markdown(f"<div style=display: flex; justify-content: center; align-items: center;'><p style='text-align: center; font-size: 18px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;>Explicabilidade: {get_shap_importance(data_list_detailed['SA'])} </p></div>", unsafe_allow_html=True)
 
 
 st.divider()
@@ -262,18 +267,18 @@ with col_2:
     a1, a2 = st.columns([1, 1])
     with a1:
         with st.container(border=True):
-            plot_gauge(data_list_summary['TAMCENTRAL']['proba'], "Bacia do Tamanduateí Central", "TAMCENTRAL", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['TAMCENTRAL']['proba'], "Bacia do Tamanduateí Central", "TAMCENTRAL", {'l':10, 'b':20, 't':50}, data_list_summary['SA']['predict'] == 1)
     with a2:
         with st.container(border=True):
-            plot_gauge(data_list_summary['GUARARA']['proba'], "Sub-bacia do Guarará", "GUARARA", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['GUARARA']['proba'], "Sub-bacia do Guarará", "GUARARA", {'l':10, 'b':20, 't':50}, data_list_summary['SA']['predict'] == 1)
         
     b1, b2 = st.columns([1, 1])
     with b1:
         with st.container(border=True):
-            plot_gauge(data_list_summary['ORATORIO']['proba'], "Bacia do Oratório", "ORATORIO", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['ORATORIO']['proba'], "Bacia do Oratório", "ORATORIO", {'l':10, 'b':20, 't':50}, data_list_summary['SA']['predict'] == 1)
     with b2:
         with st.container(border=True):
-            plot_gauge(data_list_summary['MENINOS']['proba'], "Bacia dos Meninos", "MENINOS", {'l':10, 'b':20, 't':50})
+            plot_gauge(data_list_summary['MENINOS']['proba'], "Bacia dos Meninos", "MENINOS", {'l':10, 'b':20, 't':50}, data_list_summary['SA']['predict'] == 1)
 
 
 plot_weather_forecast(st.session_state.forecast)
