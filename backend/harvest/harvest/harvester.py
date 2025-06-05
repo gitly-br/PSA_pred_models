@@ -103,7 +103,6 @@ class Harvester:
                     summary[src.type]["inserted"] += 1
             except HarvestError as exc:
                 summary[src.type]["failed"] += 1
-                print(f"⚠️  {src.type} failed: {exc}")
                 continue
 
         return summary
