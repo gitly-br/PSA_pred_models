@@ -1,5 +1,0 @@
-openweather:
-    - name: "Santo André"
-      lat: -23.667548
-      lon: -46.528934
-      ttl_days: 7
