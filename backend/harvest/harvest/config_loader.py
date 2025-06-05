@@ -9,7 +9,8 @@ class SourceConfig:
     Data class representing the configuration for a single data source.
     """
     type: str
-    region_name: str
+    region: str
+    subregion: str
     ttl_days: int
     url: str
     args: dict[str, Any]
@@ -66,7 +67,7 @@ class ConfigLoader:
             if not type_definition:
                 print(f"""
                       Warning: Type definition for '{src_type}' not found.
-                      Skipping source '{src.get('region_name')}'.""")
+                      Skipping source '{src.get('region')}'.""")
                 continue
 
             required_args = type_definition.get("required_args", [])
@@ -76,14 +77,15 @@ class ConfigLoader:
             missing_args = [arg for arg in required_args if arg not in args]
             if missing_args:
                 print(f"""
-                      Warning: Source '{src.get('region_name')}' is missing
+                      Warning: Source '{src.get('region')}' is missing
                       required args {missing_args}. Skipping.""")
                 continue
 
             out.append(
                 SourceConfig(
                     type=src_type,
-                    region_name=src.get("region_name"),
+                    region=src.get("region"),
+                    subregion=src.get("subregion", "all"),
                     ttl_days=src.get("ttl_days"),
                     url=url,
                     args=args,

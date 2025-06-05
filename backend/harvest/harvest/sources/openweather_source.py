@@ -73,7 +73,8 @@ class OpenWeatherSource(SourceBase):
             minute=0, second=0, microsecond=0
         )
         payload["dt_request"] = dt_request
-        payload["region_name"] = self.region
+        payload["region"] = self.region
+        payload["subregion"] = self.subregion
         payload["type"] = self.type
 
         # 5) Return dict

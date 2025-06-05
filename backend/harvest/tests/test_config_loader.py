@@ -49,7 +49,8 @@ async def test_single_valid_source(mongo_wrapper):
     # Insert válido em 'sources'
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Santo André",
+        "region": "Santo André",
+        "subregion": "all",
         "ttl_days": 5,
         "args": {"api_key": "XYZ123"}
     })
@@ -61,7 +62,8 @@ async def test_single_valid_source(mongo_wrapper):
     cfg = configs[0]
     assert isinstance(cfg, SourceConfig)
     assert cfg.type == "weather"
-    assert cfg.region_name == "Santo André"
+    assert cfg.region== "Santo André"
+    assert cfg.subregion== "all"
     assert cfg.ttl_days == 5
     assert cfg.url == "http://api.example.com"
     assert cfg.args == {"api_key": "XYZ123"}
@@ -74,7 +76,7 @@ async def test_unknown_type(mongo_wrapper, capsys):
     """
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "nonexistent",
-        "region_name": "Cidade X",
+        "region": "Cidade X",
         "ttl_days": 3,
         "args": {"some_arg": "value"}
     })
@@ -100,7 +102,8 @@ async def test_missing_required_arg(mongo_wrapper, capsys):
     })
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Rio de Janeiro",
+        "region": "Rio de Janeiro",
+        "subregion": "all",
         "ttl_days": 7,
         "args": {}  # faltando 'api_key'
     })
@@ -126,7 +129,7 @@ async def test_extra_args(mongo_wrapper):
     })
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Belo Horizonte",
+        "region": "Belo Horizonte",
         "ttl_days": 10,
         "args": {"api_key": "ABC", "extra1": "val1", "extra2": "val2"}
     })
@@ -152,21 +155,22 @@ async def test_mixed_records(mongo_wrapper, capsys):
     # Fonte válida
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Campinas",
+        "region": "Campinas",
+        "subregion": "all",
         "ttl_days": 4,
         "args": {"api_key": "KEY1"}
     })
     # Fonte com tipo inexistente
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "no_type",
-        "region_name": "Vitória",
+        "region": "Vitória",
         "ttl_days": 2,
         "args": {}
     })
     # Fonte faltando required_arg
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Fortaleza",
+        "region": "Fortaleza",
         "ttl_days": 6,
         "args": {}  # sem 'api_key'
     })
@@ -180,7 +184,7 @@ async def test_mixed_records(mongo_wrapper, capsys):
     assert "Warning: Source 'Fortaleza' is missing required args ['api_key']." in out
 
     assert len(configs) == 1
-    assert configs[0].region_name == "Campinas"
+    assert configs[0].region == "Campinas"
 
 @pytest.mark.asyncio
 async def test_required_arg_none(mongo_wrapper):
@@ -196,7 +200,7 @@ async def test_required_arg_none(mongo_wrapper):
     })
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Juiz de Fora",
+        "region": "Juiz de Fora",
         "ttl_days": 8,
         "args": {"api_key": None}
     })
@@ -207,7 +211,7 @@ async def test_required_arg_none(mongo_wrapper):
     # Deve retornar um SourceConfig mesmo que api_key seja None
     assert len(configs) == 1
     cfg = configs[0]
-    assert cfg.region_name == "Juiz de Fora"
+    assert cfg.region == "Juiz de Fora"
     assert cfg.args == {"api_key": None}
 
 @pytest.mark.asyncio
@@ -222,7 +226,7 @@ async def test_ttl_override(mongo_wrapper):
     })
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Porto Alegre",
+        "region": "Porto Alegre",
         "ttl_days": 12,
         "args": {}
     })
@@ -246,7 +250,7 @@ async def test_concurrent_loads(mongo_wrapper):
     })
     await mongo_wrapper.config_db["sources"].insert_one({
         "type": "weather",
-        "region_name": "Brasília",
+        "region": "Brasília",
         "ttl_days": 9,
         "args": {"api_key": "Z99"}
     })
@@ -258,4 +262,4 @@ async def test_concurrent_loads(mongo_wrapper):
 
     assert results1 == results2
     assert len(results1) == 1
-    assert results1[0].region_name == "Brasília"
+    assert results1[0].region == "Brasília"
