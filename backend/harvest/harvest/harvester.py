@@ -30,28 +30,44 @@ class Harvester:
         raise NotImplementedError(cfg.type)
 
     # ------------------------------------------------------------------ #
-    async def run_all(self) -> dict[str, str]:
+    async def run_all(self) -> dict[str, dict[str, int]]:
         """
         Returns {source_id: {"inserted": X, "skipped": Y, "failed": 0/1}}
         """
 
-        summary = {}
+        summary: dict[str, dict[str, int]] = {}
         for src in self.sources:
             try:
                 payload = await src.harvest()
                 coll = await self.mongo.get_collection(src.type, self.city)
+
                 await self.mongo.ensure_indexes(
                     coll,
-                    dedup_key="dt",
+                    dedup_key="dt_request",
                     ttl_days=src.config.ttl_days,
                 )
+
                 result = await self.mongo.insert_one_safe(coll, payload)
                 if result:
-                    summary[src.type] = "skipped"
-                else: 
-                    summary[src.type] = "inserted"
+                    # inserção duplicada → pulou
+                    summary[src.type] = {
+                        "inserted": 0,
+                        "skipped": 1,
+                        "failed": 0,
+                    }
+                else:
+                    # inseriu com sucesso
+                    summary[src.type] = {
+                        "inserted": 1,
+                        "skipped": 0,
+                        "failed": 0,
+                    }
             except HarvestError as exc:
-                summary[src.type]["failed"] = 1
+                summary[src.type] = {
+                    "inserted": 0,
+                    "skipped": 0,
+                    "failed": 1,
+                }
                 print(f"⚠️  {src.type} failed: {exc}")
 
         return summary
