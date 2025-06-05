@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable
 import asyncio
 
 @dataclass(slots=True, frozen=True)
@@ -24,7 +24,7 @@ class ConfigLoader:
         to access configuration collections.
 
     Methods:
-        load() -> list[SourceConfig]:
+        load() -> Iterable[SourceConfig]:
             Load and validate all sources, returning a list of SourceConfig
             instances.
     """
@@ -48,17 +48,17 @@ class ConfigLoader:
                 type_dict[type_name] = doc
         return type_dict
 
-    async def load(self) -> list[SourceConfig]:
+    async def load(self) -> Iterable[SourceConfig]:
         """
         Load and validate all sources from the database.
 
         Returns:
-            list[SourceConfig]: A list of validated SourceConfig objects.
+            Iterable[SourceConfig]: A list of validated SourceConfig objects.
         """
         source_list = await self._get_sources()
         type_dict = await self._get_types()
 
-        out: list[SourceConfig] = []
+        out: Iterable[SourceConfig] = []
 
         for src in source_list:
             src_type = src.get("type")
