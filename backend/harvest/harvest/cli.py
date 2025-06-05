@@ -1,45 +1,73 @@
-#!/usr/bin/env python3
-"""Harvest CLI – Stage 2."""
-from __future__ import annotations
-import argparse
-import asyncio
-from dotenv import load_dotenv
-import os
-from pprint import pprint
+"""
+Simple CLI entry point for the Harvester module.
 
-from harvest.utils import resolve_config
-from harvest.config_loader import ConfigLoader
+This script:
+  1. Instantiates a MongoClientWrapper pointing to your MongoDB instance.
+  2. Creates a Harvester using that Mongo client.
+  3. Runs the Harvester to read all registered sources and persist data.
+  4. Uses a default TTL of 7 days for all indexes (config can override per-source).
+"""
+
+import asyncio
+import logging
+import os
+
 from harvest.mongo_client import MongoClientWrapper
 from harvest.harvester import Harvester
-from harvest.constants import MONGO_URI_ENV, MONGO_DB_ENV, DEFAULT_MONGO_URI, DEFAULT_MONGO_DB
+
+# Default constants
+DEFAULT_MONGO_URI = "mongodb://localhost:27017"
+DEFAULT_CONFIG_DB = "harvest_config"
+DEFAULT_DATA_DB = "harvest_data"
+DEFAULT_TTL_DAYS = 7
 
 
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Run harvest for one city.")
-    p.add_argument("--city", required=True, help="City name (exactly as in config)")
-    p.add_argument("--config", help="Path to YAML configs (default sample_configs.yml)")
-    return p.parse_args()
+async def main():
+    # Configure basic logging to show INFO and above.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s"
+    )
+    logger = logging.getLogger(__name__)
 
+    # Read environment variables or fall back to defaults
+    mongo_uri = os.getenv("MONGO_URI", DEFAULT_MONGO_URI)
+    config_db_name = os.getenv("CONFIG_DB_NAME", DEFAULT_CONFIG_DB)
+    data_db_name = os.getenv("DATA_DB_NAME", DEFAULT_DATA_DB)
+    ttl_days = int(os.getenv("DEFAULT_TTL_DAYS", DEFAULT_TTL_DAYS))
 
-async def main() -> None:
-    load_dotenv()  # pick up .env values
+    logger.info("Starting Harvester CLI")
+    logger.info(f"Mongo URI: {mongo_uri}")
+    logger.info(f"Config DB: {config_db_name}, Data DB: {data_db_name}")
+    logger.info(f"Default TTL: {ttl_days} days")
 
-    args = parse_args()
-    cfg_path = resolve_config(args.config)
+    # 1) Instantiate MongoClientWrapper
+    mongo = MongoClientWrapper(
+        uri=mongo_uri,
+        config_db_name=config_db_name,
+        data_db_name=data_db_name
+    )
 
-    configs = ConfigLoader(cfg_path).load()
+    try:
+        # 2) Instantiate the Harvester
+        harvester = Harvester(mongo=mongo)
 
-    mongo_uri = os.getenv(MONGO_URI_ENV, DEFAULT_MONGO_URI)
-    mongo_db = os.getenv(MONGO_DB_ENV, DEFAULT_MONGO_DB)
+        # 3) Run the harvest process
+        summary = await harvester.harvest()
 
-    mongo = MongoClientWrapper(uri=mongo_uri, db_name=mongo_db)
-    harv = Harvester(configs, city=args.city, mongo=mongo)
+        # 4) Print a human-readable summary of results
+        print("\n=== HARVEST SUMMARY ===")
+        for src_type, counters in summary.items():
+            inserted = counters.get("inserted", 0)
+            skipped = counters.get("skipped", 0)
+            failed = counters.get("failed", 0)
+            print(f"{src_type}: inserted={inserted}, skipped={skipped}, failed={failed}")
 
-    for config in harv.configs:
-        print(config)
-    
-    summary = await harv.run_all()
-    pprint(summary)
+    except Exception as e:
+        logger.error(f"Unexpected error during harvesting: {e}")
+    finally:
+        # Always close the Mongo client on exit
+        await mongo.close()
 
 
 if __name__ == "__main__":
