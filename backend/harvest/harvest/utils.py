@@ -10,13 +10,14 @@ def resolve_config(path: str | None, default_name: str = "sample_configs.yml") -
         raise FileNotFoundError(p)
     return p.resolve()
 
-def slugify_city(city: str) -> str:
+def slugify(s: str) -> str:
     """São Paulo → sao_paulo, Santo André → santo_andre"""
     return (
-        unidecode(city)
+        unidecode(s)
         .lower()
         .replace(" ", "_")
         .replace("-", "_")
+        .replace(".", "")
     )
 
 def bucketize(ts: datetime, window: timedelta) -> datetime:
