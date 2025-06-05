@@ -37,7 +37,13 @@ class SourceBase(ABC):
     def region(self) -> str:
         """Convenience property to get the source type (same as
         src_config.type)."""
-        return self.src_config.region_name
+        return self.src_config.region
+
+    @property
+    def subregion(self) -> str:
+        """Convenience property to get the source type (same as
+        src_config.type)."""
+        return self.src_config.subregion
 
     @abstractmethod
     async def harvest(self) -> Iterable[dict[str, Any]]:

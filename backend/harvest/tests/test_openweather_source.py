@@ -68,7 +68,8 @@ def dummy_config(monkeypatch):
     monkeypatch.setenv("OPENWEATHER_API_KEY", "DUMMY_KEY")
     return SourceConfig(
         type="openweather",
-        region_name="TestRegion",
+        region="TestRegion",
+        subregion="all",
         ttl_days=1,
         url="https://api.openweathermap.org/data/2.5/onecall",
         args={"lat": "-23.6", "lon": "-46.5", "exclude": "minutely,daily"}
@@ -84,7 +85,8 @@ def test_instantiating_sourcebase_raises():
 
     cfg = SourceConfig(
         type="dummy",
-        region_name="X",
+        region="X",
+        subregion="XY",
         ttl_days=1,
         url="http://example.com",
         args={}
@@ -107,7 +109,8 @@ async def test_dummy_subclass_type_and_region():
 
     cfg = SourceConfig(
         type="dummytype",
-        region_name="DummyRegion",
+        region="DummyRegion",
+        subregion="DummySubRegion",
         ttl_days=1,
         url="http://example.com",
         args={}
@@ -115,6 +118,7 @@ async def test_dummy_subclass_type_and_region():
     src = DummySource(cfg, timeout=1)
     assert src.type == "dummytype"
     assert src.region == "DummyRegion"
+    assert src.subregion == "DummySubRegion"
 
 
 # ----------------------------------------------------------------------
@@ -182,7 +186,7 @@ async def test_query_string_construction(monkeypatch, dummy_config):
 async def test_successful_response_contains_all_fields(monkeypatch, dummy_config):
     """
     Simulate JSON containing lat, lon, timezone, hourly plus extras.
-    Verify returned dict includes those fields + dt_request, region_name, type.
+    Verify returned dict includes those fields + dt_request, region, type.
     """
 
     async def handler(request: httpx.Request) -> httpx.Response:
@@ -216,7 +220,8 @@ async def test_successful_response_contains_all_fields(monkeypatch, dummy_config
     assert dr.tzinfo is not None
     assert dr.minute == 0 and dr.second == 0 and dr.microsecond == 0
 
-    assert result["region_name"] == "TestRegion"
+    assert result["region"] == "TestRegion"
+    assert result["subregion"] == "all"
     assert result["type"] == "openweather"
 
 
@@ -387,7 +392,8 @@ async def test_args_with_none_are_skipped(monkeypatch):
 
     cfg = SourceConfig(
         type="openweather",
-        region_name="XRegion",
+        region="XRegion",
+        subregion="YSubRegion",
         ttl_days=1,
         url="https://api.openweathermap.org/data/2.5/onecall",
         args={"lat": "-23.6", "lon": None}
