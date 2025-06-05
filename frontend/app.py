@@ -45,6 +45,14 @@ def links_uteis():
     st.markdown("[Centro de Resiliência](https://portais.santoandre.sp.gov.br/defesacivil/centro-de-resiliencia/)")
     st.markdown("[Banco de Desenvolvimento da América Latina e Caribe - CAF](https://www.caf.com/pt/)")
 
+@st.dialog("Carregando...")
+def loading_dialog():
+    with st.spinner("Carregando dados, aguarde..."):
+        st.session_state.logged_in = True
+        st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
+        st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+    st.rerun()
+
 
 # Inicializa o estado da sessão
 if 'logged_in' not in st.session_state:
@@ -67,11 +75,10 @@ if not st.session_state.logged_in:
 
         if st.button("Entrar"):
             if check_credentials(username, password):
-                st.session_state.logged_in = True
                 st.success("Login realizado com sucesso")
-                st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
-                st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
-                st.rerun()
+                loading_dialog()
+                    
+                
             else:
                 st.error("Usuário ou senha inválidos")
 else:

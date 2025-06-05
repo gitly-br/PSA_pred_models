@@ -46,7 +46,7 @@ def get_shap_importance(region_models) -> str:
     phenomenon = features[0].lower()
     measure = features[-1].lower()
 
-    return f'A "{measure_portuguese[measure]} de {phenomenon_portuguese[phenomenon]}" é a variável que mais influenciou esta precição'
+    return f'A "{measure_portuguese[measure]} de {phenomenon_portuguese[phenomenon]}" é a variável que mais influenciou esta previsão'
 
 
 def get_rain_distribution(models_summary):
@@ -117,17 +117,17 @@ def get_flood_color(value):
         return "#31993a"
 
 
-def plot_gauge(value, title, model: str ,margin_dict:dict = {'l':10, 'b':20, 't':50}):
+def plot_gauge(value, title, model: str ,margin_dict:dict = {'l':10, 'b':20, 't':50}, is_rain: bool = False):
     
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
-        value = value,
+        value = value if is_rain else 0,
         number={'valueformat': '.0%', 'font' : {'color' : 'black' if st.session_state.tema['base'] == 'light' else 'white'}},  # Adiciona o símbolo de porcentagem
         domain = {'x': [0, 1], 'y': [0, 1]},
         title = {'text': title, 'font' : {'color' : 'black' if st.session_state.tema['base'] == 'light' else 'white'}},
         gauge = {
             'axis': {'range': [None, 1], 'tickformat': ".0%", 'tickfont' : {'color' : 'black' if st.session_state.tema['base'] == 'light' else 'white'}},
-            'bar': {'color': get_flood_color(value), 'thickness': 1, 'line' : {'width' : 1}},
+            'bar': {'color': get_flood_color(value) if is_rain else "grey", 'thickness': 1, 'line' : {'width' : 1}},
             'bgcolor' : 'white' if st.session_state.tema['base'] == 'light' else 'black',
             
         }
