@@ -81,7 +81,7 @@ class Harvester:
         }
 
         for src in self.sources:
-            region_slug = slugify(src.region+src.subregion)
+            region_slug = slugify(f"{src.region} {src.subregion}")
             coll_name = f"{src.type}_{region_slug}"
 
             if src.type not in summary:
