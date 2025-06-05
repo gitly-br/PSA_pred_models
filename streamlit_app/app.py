@@ -7,9 +7,16 @@ from streamlit_folium import folium_static
 import folium
 import json
 from datetime import datetime, timedelta
+from authenticator import authenticator
 from streamlit_theme import st_theme
 
-api_url = environ.get('API_URL', 'http://psa_models_back:8000')
+try:
+    st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
+except:
+    pass
+
+
+api_url = environ.get('API_URLaaaaa', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
@@ -26,12 +33,12 @@ def get_forecast(dt_begin=None):
 
 # Função para verificar as credenciais
 
-if 'tema' not in st.session_state:
+if 'tema' not in st.session_state or st.session_state.tema is None:
     st.session_state.tema = st_theme()
 
-def check_credentials(username, password):
-    # Substitua pela lógica de autenticação real
-    return username == "psa_defesa_civil" and password == "PSA@D3fes4"
+# def check_credentials(username, password):
+#     # Substitua pela lógica de autenticação real
+#     return username in ["psa_defesa_civil", 'admin'] and password in ["PSA@D3fes4", 'admin123']
 
 if 'selected_date' not in st.session_state:
     st.session_state.selected_date = datetime.now().date() - timedelta(days=1)
@@ -48,49 +55,28 @@ def links_uteis():
 @st.dialog("Carregando...")
 def loading_dialog():
     with st.spinner("Carregando dados, aguarde..."):
-        st.session_state.logged_in = True
         st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
         st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
-    st.rerun()
 
-
-# Inicializa o estado da sessão
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
 
 if 'data' not in st.session_state:
     st.session_state.data = None  # Armazena os dados retornados da API
 
-# Tela de login
-if not st.session_state.logged_in:
-    
-    st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
-    col1, col2, col3 = st.columns([3, 3, 3])
-    
-    with col2:
-        st.title("Login")
 
-        username = st.text_input("Usuário")
-        password = st.text_input("Senha", type='password')
+if 'authentication_status' not in st.session_state:
+    st.session_state.authentication_status = None  # Armazena o status de autenticação
+if 'logout' not in st.session_state:
+    st.session_state.logout = None  # Armazena o status de autenticação
 
-        if st.button("Entrar"):
-            if check_credentials(username, password):
-                st.success("Login realizado com sucesso")
-                loading_dialog()
-                    
-                
-            else:
-                st.error("Usuário ou senha inválidos")
-else:
+# --- widget login -------------
+try:
+    authenticator.login("main")
+except Exception as e:
+    st.error(e)
+
+if st.session_state.authentication_status:
     
-    pages = [
-            st.Page("pages/home/home.py", title="Home"),
-            st.Page("pages/models/models.py", title="Modelos Detalhados"),
-            st.Page("pages/chamados/chamados.py", title="Mapa de Ocorrências"),
-    ]
-
-    pg = st.navigation(pages)
-    pg.run()
+    authenticator.logout(button_name="Logout", location="sidebar")
 
     # Remove espaço em branco no topo
     st.markdown("""
@@ -143,6 +129,7 @@ else:
     #     align-items: center; /* Centraliza verticalmente */
     #     gap: 10px; /* Espaço entre a imagem e o texto */
     # }}
+
     st.sidebar.markdown(
         f"""
         <style>
@@ -170,32 +157,41 @@ else:
         unsafe_allow_html=True,
     
     )
+
+    pages = [
+            st.Page("pages/home/home.py", title="Home"),
+            st.Page("pages/models/models.py", title="Modelos Detalhados"),
+            st.Page("pages/chamados/chamados.py", title="Mapa de Ocorrências"),
+    ]
+
+    pg = st.navigation(pages)
+    pg.run()
         
 
-        # st.markdown('<br><h4>Bacia Tamanduateí (24h)</h4>',unsafe_allow_html=True)
+    # st.markdown('<br><h4>Bacia Tamanduateí (24h)</h4>',unsafe_allow_html=True)
 
-        # for idx, row in df.iterrows():
-        #     if row['regiao'] == 'tam':
+    # for idx, row in df.iterrows():
+    #     if row['regiao'] == 'tam':
 
-        #         if row['status'] == 0:
-        #             st.markdown(
-        #                 f"""<div style=' display: flex; align-items: center;'>
-        #                         <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-        #                         <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
-        #                     </div>""",
-        #                 unsafe_allow_html=True
-        #             )
-        #             break
-        #         else:
-        #             st.markdown(
-        #                 f"""<div style=' display: flex; align-items: center;'>
-        #                         <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
-        #                         <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}%</div>
-        #                         <div>Modelo: {row['model']}</div>
-        #                         <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
-        #                     </div>""",
-        #                 unsafe_allow_html=True
-        #             )
+    #         if row['status'] == 0:
+    #             st.markdown(
+    #                 f"""<div style=' display: flex; align-items: center;'>
+    #                         <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+    #                         <div style='margin-left: 20px;'>Sem previsão de chuvas moderadas ou fortes</div>
+    #                     </div>""",
+    #                 unsafe_allow_html=True
+    #             )
+    #             break
+    #         else:
+    #             st.markdown(
+    #                 f"""<div style=' display: flex; align-items: center;'>
+    #                         <div style='background-color:rgba{str(get_color(row['valor']))}; width:20px; height:20px; border-radius:50%;'></div>
+    #                         <div style='margin-left: 20px;'>Chance de alagar: {row['valor']*100:.1f}%</div>
+    #                         <div>Modelo: {row['model']}</div>
+    #                         <div>Ultima atualização: {(datetime.fromisoformat(row['dt_inference'].replace('Z','')) - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')}</div>
+    #                     </div>""",
+    #                 unsafe_allow_html=True
+    #             )
 
 # footer="""<style>
 # a:link , a:visited{

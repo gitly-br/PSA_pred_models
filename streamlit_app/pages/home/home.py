@@ -11,9 +11,13 @@ from streamlit_autorefresh import st_autorefresh
 import plotly.graph_objects as go
 from pages.home.utils import get_color_distribution, get_map_color, get_flood_color, get_color, get_rain_distribution, plot_gauge, plot_weather_forecast, week_day_portuguese, get_shap_importance
 from streamlit_theme import st_theme
+from authenticator import authenticator
 
+try:
+    st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
+except:
+    pass
 
-st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
 
 st.session_state.tema = st_theme()
 
@@ -241,10 +245,10 @@ with col_1:
         tooltip=folium.GeoJsonTooltip(fields=["fid"]),
         popup=folium.GeoJsonPopup(fields=["fid"]),
         style_function=lambda feature: {
-            "fillColor": get_flood_color(data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba')),
+            "fillColor": get_flood_color(data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba'))  if data_list_summary['SA']['predict'] == 1 else "grey",
             "fillOpacity": 0.7,
-            'color': get_flood_color(data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba')),
-            'weight': (0.5 + data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba', 0)) * 4
+            'color': get_flood_color(data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba')) if data_list_summary['SA']['predict'] == 1 else "grey",
+            'weight': (0.5 + data_list_summary.get(feature['properties'].get('MODELO', ""), {}).get('proba', 0)) * 4 if data_list_summary['SA']['predict'] == 1 else 1
         }
 
     ).add_to(m)
