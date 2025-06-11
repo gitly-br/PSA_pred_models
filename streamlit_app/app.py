@@ -16,7 +16,7 @@ except:
     pass
 
 
-api_url = environ.get('API_URLaaaaa', 'http://psa_models_back:8000')
+api_url = environ.get('API_URL', 'http://psa_models_back:8000')
 
 def call_models(dt_begin=None):
         
@@ -57,6 +57,7 @@ def loading_dialog():
     with st.spinner("Carregando dados, aguarde..."):
         st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
         st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+        st.rerun()
 
 
 if 'data' not in st.session_state:
@@ -76,7 +77,18 @@ except Exception as e:
 
 if st.session_state.authentication_status:
     
-    authenticator.logout(button_name="Logout", location="sidebar")
+    # if 'data' not in st.session_state or st.session_state.data is None:
+    #     with loading_dialog():
+    #         st.success("Login bem-sucedido!")
+
+    pages = [
+            st.Page("pages/home/home.py", title="Home"),
+            st.Page("pages/models/models.py", title="Modelos Detalhados"),
+            st.Page("pages/chamados/chamados.py", title="Mapa de Ocorrências"),
+    ]
+
+    pg = st.navigation(pages)
+    pg.run()
 
     # Remove espaço em branco no topo
     st.markdown("""
@@ -149,7 +161,7 @@ if st.session_state.authentication_status:
             }}
         </style>
 
-        <div data-testid="stSidebarNav" style="gap: 20px; display: flex; align-items: center; justify-content: center;">
+        <div data-testid="stSidebarNav" style="gap: 20px; display: flex; align-items: center; justify-content: center;margin-bottom: 20px;">
             <a href="https://www.gitly.com.br/"><img src="./app/static/gitly.png" width="75"></a>
             <div class="text-container">V 2.7</div>
         </div>
@@ -158,14 +170,7 @@ if st.session_state.authentication_status:
     
     )
 
-    pages = [
-            st.Page("pages/home/home.py", title="Home"),
-            st.Page("pages/models/models.py", title="Modelos Detalhados"),
-            st.Page("pages/chamados/chamados.py", title="Mapa de Ocorrências"),
-    ]
-
-    pg = st.navigation(pages)
-    pg.run()
+    authenticator.logout(button_name="Logout", location="sidebar")
         
 
     # st.markdown('<br><h4>Bacia Tamanduateí (24h)</h4>',unsafe_allow_html=True)
