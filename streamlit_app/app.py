@@ -163,7 +163,7 @@ if st.session_state.authentication_status:
 
         <div data-testid="stSidebarNav" style="gap: 20px; display: flex; align-items: center; justify-content: center;margin-bottom: 20px;">
             <a href="https://www.gitly.com.br/"><img src="./app/static/gitly.png" width="75"></a>
-            <div class="text-container">V 2.7</div>
+            <div class="text-container">V 2.9</div>
         </div>
         """,
         unsafe_allow_html=True,
