@@ -114,47 +114,49 @@ async def inferencia_previsao_2(request, regiao: str, dt_request):
         if weather_data[0] == False:
             resp_list.append({'status' : 0, 'proba' : None, 'predict' : None, 'region' : regiao, 'model' : model, 'obj_version':'1.0', 'dt_inference' : dt_inference})
 
-        loaded_model = joblib.load(f'/source/app/utils/{model}.joblib')
         
-        day_row = weather_data[2].iloc[[1]]
+        else:
+            loaded_model = joblib.load(f'/source/app/utils/{model}.joblib')
             
-        # Convert the row to a NumPy array
-        input_data = day_row.drop(columns=['dt'])
-        raw_input_data = input_data.values
+            day_row = weather_data[2].iloc[[1]]
+                
+            # Convert the row to a NumPy array
+            input_data = day_row.drop(columns=['dt'])
+            raw_input_data = input_data.values
 
-        # Make a prediction
-        prediction = loaded_model.predict(raw_input_data)
-        predict_bin = int(prediction[0])
-        proba = loaded_model.predict_proba(raw_input_data)
-        shap_data = None
+            # Make a prediction
+            prediction = loaded_model.predict(raw_input_data)
+            predict_bin = int(prediction[0])
+            proba = loaded_model.predict_proba(raw_input_data)
+            shap_data = None
 
-        try:
-            loaded_explainer = joblib.load(f'/source/app/utils/{model}_explainer.joblib')
-            shap_values = loaded_explainer(raw_input_data)
-            shap_data = list(zip(shap_values.data[0], input_data.columns))
-        except FileNotFoundError:
-            logger.info(f"Modelo {model} não tem explainer! Seguindo...")
-        
-        result = {
-                'status' : 1,
-                'proba' : proba[0][1],
-                'time_of_day': rain_distribution,
-                'predict' : predict_bin,
-                'region' : regiao,
-                'model' : model,
-                'obj_version':'1.3',
-                'dt_inference' : dt_inference,
-                'shap': shap_data if shap_data is not None else None,
-                }	
+            try:
+                loaded_explainer = joblib.load(f'/source/app/utils/{model}_explainer.joblib')
+                shap_values = loaded_explainer(raw_input_data)
+                shap_data = list(zip(shap_values.data[0], input_data.columns))
+            except FileNotFoundError:
+                logger.info(f"Modelo {model} não tem explainer! Seguindo...")
+            
+            result = {
+                    'status' : 1,
+                    'proba' : proba[0][1],
+                    'time_of_day': rain_distribution,
+                    'predict' : predict_bin,
+                    'region' : regiao,
+                    'model' : model,
+                    'obj_version':'1.3',
+                    'dt_inference' : dt_inference,
+                    'shap': shap_data if shap_data is not None else None,
+                    }	
 
 
-        success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
-            db_name='models_db',
-            col='inference_col',
-            doc=result
-        )
+            success, conn_error, err_msg = await request.app.ctx.mongo_obj.write_one(
+                db_name='models_db',
+                col='inference_col',
+                doc=result
+            )
 
-        resp_list.append({'modelo' : model, 'result' : result})
+            resp_list.append({'modelo' : model, 'result' : result})
 
     return True, resp_list
 
@@ -170,7 +172,7 @@ async def inferencia_geral(request, regioes: list, dt_request=None):
 
 
         for r in resp:
-            if r['result']['status'] == 1:
+            if r.get('result', {}).get('status') == 1:
                 flag_has_prediction = True
 
         if  flag_has_prediction:
@@ -214,7 +216,7 @@ async def inferencia_geral(request, regioes: list, dt_request=None):
 
         else:
             doc = {'obj_version': "2.0", 'dt_inference': datetime.now(), 'regiao' : regiao, 'detailed' : None, 'summary' : None}
-            resp_list.append()
+            resp_list.append(doc)
 
             
 
