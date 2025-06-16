@@ -10,26 +10,36 @@ from datetime import datetime, timedelta
 from authenticator import authenticator
 from streamlit_theme import st_theme
 
+api_url = environ.get('API_URL', 'http://psa_models_back:8000')
+
+def call_models(dt_begin=None):
+    api_url_i = f"{api_url}/home"
+    response_i = requests.post(api_url_i, json={'dt_request': dt_begin})
+    return response_i.json()
+
+def get_forecast(dt_begin=None):
+    api_url_i = f"{api_url}/forecast"
+    response_i = requests.get(api_url_i, headers={'dt_request': dt_begin})
+    return response_i.json()['data']
+
+@st.dialog("Links Úteis")
+def links_uteis():
+    st.markdown("[Defesa Civil - Santo André](https://portais.santoandre.sp.gov.br/defesacivil)")
+    st.markdown("[Centro de Resiliência](https://portais.santoandre.sp.gov.br/defesacivil/centro-de-resiliencia/)")
+    st.markdown("[Banco de Desenvolvimento da América Latina e Caribe - CAF](https://www.caf.com/pt/)")
+
+@st.dialog("Carregando...")
+def loading_dialog():
+    with st.spinner("Carregando dados, aguarde..."):
+        st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
+        st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+        st.rerun()
+
 try:
     st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
 except:
     pass
 
-
-api_url = environ.get('API_URL', 'http://psa_models_back:8000')
-
-def call_models(dt_begin=None):
-        
-    api_url_i = f"{api_url}/home"
-    response_i = requests.post(api_url_i, json={'dt_request': dt_begin})
-
-    return response_i.json()
-
-def get_forecast(dt_begin=None):
-        
-    api_url_i = f"{api_url}/forecast"
-    response_i = requests.get(api_url_i, headers={'dt_request': dt_begin})
-    return response_i.json()['data']
 
 # Função para verificar as credenciais
 
@@ -45,20 +55,6 @@ if 'selected_date' not in st.session_state:
 
 st.session_state.predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
 st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=2)).strftime('%d/%m/%Y')
-
-@st.dialog("Links Úteis")
-def links_uteis():
-    st.markdown("[Defesa Civil - Santo André](https://portais.santoandre.sp.gov.br/defesacivil)")
-    st.markdown("[Centro de Resiliência](https://portais.santoandre.sp.gov.br/defesacivil/centro-de-resiliencia/)")
-    st.markdown("[Banco de Desenvolvimento da América Latina e Caribe - CAF](https://www.caf.com/pt/)")
-
-@st.dialog("Carregando...")
-def loading_dialog():
-    with st.spinner("Carregando dados, aguarde..."):
-        st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
-        st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
-        st.rerun()
-
 
 if 'data' not in st.session_state:
     st.session_state.data = None  # Armazena os dados retornados da API
