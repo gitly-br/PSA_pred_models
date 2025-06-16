@@ -104,10 +104,14 @@ async def get_OW_mongo_data_and_agg(request, agg_config, dt_request=None):
 
     # Criar o DataFrame
     df = pd.DataFrame(flattened_data)
+    rain_total = df.iloc[2:10].copy()["rain_3h"].sum()
 
     # Verificar se tem chuva
+    # Verificar precipitação em 3h -- TESTAR COM VALORES DIFERENTES
     if not flag_dump:
         if not (500 in df['weather_id'].values or 501 in df['weather_id'].values or 502 in df['weather_id'].values or 503 in df['weather_id'].values or 504 in df['weather_id'].values or 521 in df['weather_id'].values or 522 in df['weather_id'].values or 312 in df['weather_id'].values or 314 in df['weather_id'].values or 201 in df['weather_id'].values or 202 in df['weather_id'].values or 232 in df['weather_id'].values):
+            return False, None
+        if rain_total < 6.5:
             return False, None
         
     # if flag_dump:
