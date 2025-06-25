@@ -15,6 +15,3 @@ __pycache__/
 
 # dotenv files
 .env
-
-#logfile 
-log.txt
