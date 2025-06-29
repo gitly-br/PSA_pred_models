@@ -8,7 +8,8 @@ async def grab_from_gdrive(file_id, filename):
   url = f"https://drive.google.com/uc?id={file_id}"
   output = os.path.join('.', filename)
   if not(os.path.isfile(output)):
-    gdown.download(url, output=output, quiet=True)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, lambda: gdown.download(url, output=output, quiet=True))
 
 class ModelPredictor:
     def __init__(self, models_config: list, forecasts: dict[str, pd.DataFrame]):
