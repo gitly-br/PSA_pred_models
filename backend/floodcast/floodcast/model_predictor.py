@@ -16,7 +16,7 @@ class ModelPredictor:
         self.models_config = models_config
         self.forecasts = forecasts
 
-    async def _process_single_model(self, model_config: dict):
+    async def _process_single_model(self, model_config: dict) -> dict | None:
         model_name = model_config.get("name", "unknown_model")
         region = model_config.get("region", "unknown_region")
         subregion = model_config.get("subregion", "unknown_subregion")
@@ -25,13 +25,13 @@ class ModelPredictor:
 
         if not source_collection or not pipeline_file_id:
             print(f"Skipping model {model_name}: Missing source collection or pipeline file ID.")
-            return
+            return None
 
         print(f"\nProcessing model: {model_name} (Region: {region}, Subregion: {subregion})")
 
         if source_collection not in self.forecasts:
             print(f"Skipping model {model_name}: Forecast data not available for source {source_collection}.")
-            return
+            return None
 
         hourly_df = self.forecasts[source_collection]
 
@@ -42,31 +42,46 @@ class ModelPredictor:
             
             if not os.path.exists(pipeline_filename):
                 print(f"Error: Pipeline file {pipeline_filename} not downloaded for model {model_name}.")
-                return
+                return None
 
             pipeline = joblib.load(pipeline_filename)
         except Exception as e:
             print(f"Error loading pipeline for {model_name}: {e}")
-            return
+            return None
 
         # Run the pipeline and make prediction
         print(f"Running pipeline for {model_name}...")
         try:
-            prediction = int(pipeline.predict(hourly_df)[0])
+            prediction_value = int(pipeline.predict(hourly_df)[0])
+            proba_value = None
             if hasattr(pipeline, 'predict_proba'):
-                proba = pipeline.predict_proba(hourly_df)[0][1] # Probability of the positive class
-                print(f"Prediction for {model_name}: {prediction} (Proba: {proba:.4f})")
+                proba_value = float(pipeline.predict_proba(hourly_df)[0][1]) # Probability of the positive class
+                print(f"Prediction for {model_name}: {prediction_value} (Proba: {proba_value:.4f})")
             else:
-                print(f"Prediction for {model_name}: {prediction}")
+                print(f"Prediction for {model_name}: {prediction_value}")
+            
+            result = {
+                "model_name": model_name,
+                "region": region,
+                "subregion": subregion,
+                "predict": prediction_value
+            }
+            if proba_value is not None:
+                result["proba"] = proba_value
+            return result
+
         except Exception as e:
             print(f"Error during prediction for {model_name}: {e}")
-            return
+            return None
 
-        # Clean up the downloaded pipeline file
-        os.remove(pipeline_filename)
-        print(f"Cleaned up {pipeline_filename}")
+        finally:
+            # Clean up the downloaded pipeline file
+            if os.path.exists(pipeline_filename):
+                os.remove(pipeline_filename)
+                print(f"Cleaned up {pipeline_filename}")
 
-    async def run_predictions(self):
+    async def run_predictions(self) -> list[dict]:
         print("\nRunning predictions for all models...")
         tasks = [self._process_single_model(model_config) for model_config in self.models_config]
-        await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
+        return [r for r in results if r is not None]
