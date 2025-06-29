@@ -23,8 +23,6 @@ class InferenceWriter:
         dt_inference = self._get_current_rounded_hour()
 
         results_by_subregion = defaultdict(lambda: {"predicts": [], "probas": [], "models": {}})
-        all_region_predicts = []
-        all_region_probas = []
 
         for pred in all_predictions:
             subregion = pred.get("subregion", "unknown_subregion")
@@ -42,11 +40,6 @@ class InferenceWriter:
             results_by_subregion[subregion]["predicts"].append(predict_value)
             if proba_value is not None:
                 results_by_subregion[subregion]["probas"].append(proba_value)
-            
-            # Collect for 'all' region aggregation
-            all_region_predicts.append(predict_value)
-            if proba_value is not None:
-                all_region_probas.append(proba_value)
 
         # Finalize results for each subregion and 'all'
         final_results = {}
@@ -60,16 +53,6 @@ class InferenceWriter:
                 "models": data["models"]
             }
         
-        # Add 'all' region aggregation
-        all_predict = int(sum(all_region_predicts) / len(all_region_predicts)) if all_region_predicts else 0
-        all_proba = sum(all_region_probas) / len(all_region_probas) if all_region_probas else None
-        
-        final_results["all"] = {
-            "predict": all_predict,
-            "proba": all_proba,
-            "models": {model_name: data["models"][model_name] for subregion, data in results_by_subregion.items() for model_name in data["models"]}
-        }
-
         inference_object = {
             "obj_version": "0.1",
             "dt_inference": dt_inference,
