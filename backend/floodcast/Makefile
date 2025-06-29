@@ -2,7 +2,7 @@ IMAGE_NAME := floodcast-app
 
 .PHONY: build run clean fclean
 
-build:
+build: clean
 	@echo "Building Docker image $(IMAGE_NAME) with BuildKit..."
 	DOCKER_BUILDKIT=1 docker build -t $(IMAGE_NAME) .
 	@echo "Build complete."
