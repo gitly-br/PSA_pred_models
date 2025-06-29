@@ -15,7 +15,7 @@ class InferenceWriter:
 
     async def _build_inference_object(self, all_predictions: list[dict]) -> dict:
         if not all_predictions:
-            raise ValueError("No predictions provided to build inference object.")
+            raise ValueError("--- No predictions provided to build inference object.")
 
         # Assuming all predictions belong to the same region for a single inference object
         # This can be refined if multi-region inference objects are needed later.
@@ -93,10 +93,10 @@ class InferenceWriter:
         })
 
         if existing_record:
-            print(f"Inference record for {region} at {dt_inference_hour} already exists. Skipping write.")
+            print(f"**** Inference record for {region} at {dt_inference_hour} already exists. Skipping write.")
         else:
             try:
                 await collection.insert_one(inference_object)
-                print(f"Successfully wrote inference record for {region} at {dt_inference_hour} to MongoDB.")
+                print(f"++++ Successfully wrote inference record for {region} at {dt_inference_hour} to MongoDB.")
             except Exception as e:
-                print(f"Error writing inference record to MongoDB: {e}")
+                print(f"---- Error writing inference record to MongoDB: {e}")

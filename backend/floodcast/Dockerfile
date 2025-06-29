@@ -6,6 +6,9 @@ COPY requirements.txt .
 # Install Python dependencies efficiently
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy cookies.txt for gdown
+COPY cookies.txt /root/.cache/gdown/
+
 # Copy the rest of the application code
 COPY . .
 

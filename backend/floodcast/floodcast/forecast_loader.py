@@ -15,15 +15,14 @@ class ForecastLoader:
         return sources
 
     async def load_forecasts(self) -> dict[str, pd.DataFrame]:
-        print("Loading forecasts for unique sources...")
         forecasts = {}
         for source in self.unique_sources:
             try:
                 hourly_forecast_list = await get_latest_hourly_data(source)
                 forecasts[source] = pd.DataFrame(hourly_forecast_list)
-                print(f"Successfully loaded forecast for source: {source}")
+                print(f"++++ Successfully loaded forecast for source: {source}")
             except RuntimeError as e:
-                print(f"Error loading forecast for source {source}: {e}")
+                print(f"---- Error loading forecast for source {source}: {e}")
             except Exception as e:
-                print(f"An unexpected error occurred while loading forecast for source {source}: {e}")
+                print(f"---- An unexpected error occurred while loading forecast for source {source}: {e}")
         return forecasts
