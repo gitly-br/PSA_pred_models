@@ -63,6 +63,11 @@ class OpenWeatherSource(SourceBase):
 
         # 4) Prepare the final payload
         payload: dict[str, Any] = resp.json()
+        for hourly_forecast in payload.get("hourly"):
+            if "rain" in hourly_forecast:
+                hourly_forecast["rain"] = hourly_forecast["rain"]["1h"]
+            else:
+                hourly_forecast["rain"] = 0
         mandatory = ["lat", "lon", "timezone", "hourly"]
         missing = [field for field in mandatory if field not in payload]
         if missing:
