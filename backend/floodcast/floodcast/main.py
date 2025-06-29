@@ -6,6 +6,7 @@ from .custom_transformers import WindowAgg, DropColumnsTransformer
 from .mongo_loader import get_models_config
 from .forecast_loader import ForecastLoader
 from .model_predictor import ModelPredictor
+from .inference_writer import InferenceWriter
 
 
 async def main():
@@ -21,7 +22,11 @@ async def main():
 
     # Step 3: Run predictions for all models
     model_predictor = ModelPredictor(models_config, forecasts)
-    await model_predictor.run_predictions()
+    all_predictions = await model_predictor.run_predictions()
+
+    # Step 4: Write inference results to MongoDB
+    inference_writer = InferenceWriter()
+    await inference_writer.write_inference_object(all_predictions)
 
 
 if __name__ == "__main__":
