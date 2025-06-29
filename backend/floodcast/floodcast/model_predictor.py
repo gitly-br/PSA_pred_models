@@ -16,6 +16,16 @@ class ModelPredictor:
         self.models_config = models_config
         self.forecasts = forecasts
 
+    async def _get_rain_distribution(self, df):
+        distribution = {"today": {}}
+        distribution["today"]["total"] = df.iloc[:24].rain.sum()
+        distribution["tomorrow"] = df.iloc[24:48].rain.sum()
+        distribution["today"]["night"] = df.iloc[:6].rain.sum()
+        distribution["today"]["morning"] = df.iloc[6:12].rain.sum()
+        distribution["today"]["afternoon"] = df.iloc[12:18].rain.sum()
+        distribution["today"]["evening"] = df.iloc[18:24].rain.sum()
+        return distribution
+
     async def _process_single_model(self, model_config: dict) -> dict | None:
         model_name = model_config.get("name", "unknown_model")
         region = model_config.get("region", "unknown_region")
@@ -35,6 +45,7 @@ class ModelPredictor:
             return None
 
         hourly_df = self.forecasts[source_collection]
+        rain_distribution = await self._get_rain_distribution(hourly_df)
 
         # Download and load the pipeline
         pipeline_filename = f"pipeline_{region}_{subregion}_{model_name}.joblib"
@@ -81,7 +92,8 @@ class ModelPredictor:
                 "region": region,
                 "subregion": subregion,
                 "predict": prediction_value,
-                "shap_explanation": explainer_values
+                "shap_explanation": explainer_values,
+                "rain_distribution": rain_distribution
             }
             if proba_value is not None:
                 result["proba"] = proba_value

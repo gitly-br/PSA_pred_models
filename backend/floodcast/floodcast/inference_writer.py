@@ -4,7 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from collections import defaultdict
 
 FEATURE_DICT = {
-    "rain": "chuva",
+    "rain": "precipitação",
     "temp": "temperatura",
     "wind_speed": "velocidade do vento",
     "dew_point": "ponto de orvalho"
@@ -21,6 +21,19 @@ class InferenceWriter:
         self.db_name = "floodcast_db"
         self.collection_name = "inference"
 
+    def _calculate_distribution(self, rain_distribution: dict, proba: float) -> dict:
+        distribution = {}
+        value_total = rain_distribution["today"]["total"]
+        value_night = rain_distribution["today"]["night"]
+        value_morning = rain_distribution["today"]["morning"]
+        value_afternoon = rain_distribution["today"]["afternoon"]
+        value_evening = rain_distribution["today"]["evening"]
+        distribution["night"] = (value_night / value_total) * proba
+        distribution["morning"] = (value_morning / value_total) * proba
+        distribution["afternoon"] = (value_afternoon / value_total) * proba
+        distribution["evening"] = (value_evening / value_total) * proba
+        return distribution
+
     def _get_explanation(self, shap_values: list[tuple]) -> str:
         most_important_feature = shap_values[0][0]
         split_feature_name = most_important_feature.split("_")
@@ -34,7 +47,7 @@ class InferenceWriter:
             agg_translated = AGG_DICT[agg]
         else:
             agg_translated = agg
-        return f"O modelo detectou uma {agg_translated} de {feature_translated} anormal entre {start}h e {end}h"
+        return f"O modelo deu mais importância para a {agg_translated} de {feature_translated} entre {start}h e {end}h"
 
     def _get_current_rounded_hour(self) -> datetime:
         now_utc = datetime.now(pytz.utc)
@@ -57,6 +70,7 @@ class InferenceWriter:
             predict_value = pred.get("predict")
             proba_value = pred.get("proba")
             shap_explanation = pred.get("shap_explanation")
+            rain_distribution = pred.get("rain_distribution")
 
             # Store individual model results
             model_result = {"predict": predict_value}
@@ -80,16 +94,23 @@ class InferenceWriter:
             # TODO: Isso aqui esta porco!! Arrumar para uma logica decente depois
             subregion_shap = data["shaps"][0]
 
-            if subregion_predict == 0:
-                # explanation = "Há previsão de chuva, mas o modelo não detectou nenhuma condição preocupante na previsão."
-                explanation = self._get_explanation(subregion_shap)
+            if rain_distribution.get("today").get("total") < 3.5:
+                explanation = "Não há chuva significativa prevista para as próximas 24h"
+                rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
+                subregion_proba = 0
+                subregion_predict = 0
+            elif subregion_predict == 0:
+                explanation = "Há previsão de chuva, mas o modelo não detectou nenhuma condição preocupante na previsão."
+                rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
             else:
                 explanation = self._get_explanation(subregion_shap)
+                rain_today = self._calculate_distribution(rain_distribution, subregion_proba)
             
             final_results[subregion] = {
                 "predict": subregion_predict,
                 "proba": subregion_proba,
                 "explanation": explanation,
+                "rain_today": rain_today,
                 "models": data["models"]
             }
         

@@ -34,7 +34,7 @@ class WindowAgg(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         X = X.reset_index(drop=True)
-        n_blocks = len(X) // self.BLOCK
+        n_blocks = 1
         if n_blocks == 0:
             raise ValueError("Precisamos de pelo menos 24 linhas.")
 
