@@ -22,6 +22,7 @@ class ModelPredictor:
         subregion = model_config.get("subregion", "unknown_subregion")
         source_collection = model_config.get("source")
         pipeline_file_id = model_config.get("files", {}).get("pipeline")
+        explainer_file_id = model_config.get("files", {}).get("explainer")
 
         if not source_collection or not pipeline_file_id:
             print(f"---- Skipping model {model_name}: Missing source collection or pipeline file ID.")
@@ -35,7 +36,7 @@ class ModelPredictor:
 
         hourly_df = self.forecasts[source_collection]
 
-        # Download and load the feature engineering pipeline
+        # Download and load the pipeline
         pipeline_filename = f"pipeline_{region}_{subregion}_{model_name}.joblib"
         try:
             await grab_from_gdrive(pipeline_file_id, pipeline_filename)
@@ -48,6 +49,19 @@ class ModelPredictor:
             print(f"---- Error loading pipeline for {model_name}: {e}")
             return None
 
+        # Download and load the explainer
+        explainer_filename = f"explainer_{region}_{subregion}_{model_name}.joblib"
+        try:
+            await grab_from_gdrive(explainer_file_id, explainer_filename)
+            if not os.path.exists(explainer_filename):
+                print(f"---- Error: Explainer file {explainer_filename} not downloaded for model {region}/{subregion}/{model_name}.")
+                return None
+
+            explainer = joblib.load(explainer_filename)
+        except Exception as e:
+            print(f"---- Error loading explainer for {region}/{subregion}/{model_name}: {e}")
+            return None
+
         try:
             prediction_value = int(pipeline.predict(hourly_df)[0])
             proba_value = None
@@ -56,12 +70,18 @@ class ModelPredictor:
                 print(f"++++ Prediction for {region}/{subregion}/{model_name}: {prediction_value} (Proba: {proba_value:.2f})")
             else:
                 print(f"**** Prediction for {region}/{subregion}/{model_name}: {prediction_value}")
-            
+            hourly_agg = pipeline.named_steps["aggregator"].transform(hourly_df)
+            hourly_pp = pipeline.named_steps["dt_dropper"].transform(hourly_agg)
+            shap_values = explainer.shap_values(hourly_pp)
+            column_names = hourly_pp.columns
+            shap_converted = [float(x) for x in shap_values[0]]
+            explainer_values = sorted(list(zip(column_names, shap_converted)), key=lambda x: x[1], reverse=True)
             result = {
                 "model_name": model_name,
                 "region": region,
                 "subregion": subregion,
-                "predict": prediction_value
+                "predict": prediction_value,
+                "shap_explanation": explainer_values
             }
             if proba_value is not None:
                 result["proba"] = proba_value
