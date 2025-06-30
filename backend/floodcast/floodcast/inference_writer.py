@@ -60,7 +60,9 @@ class InferenceWriter:
         # Assuming all predictions belong to the same region for a single inference object
         # This can be refined if multi-region inference objects are needed later.
         top_level_region = all_predictions[0].get("region", "unknown_region")
-        dt_inference = self._get_current_rounded_hour()
+        sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+        dt_inference = datetime.now(sao_paulo_tz)
+        dt_key = datetime(dt_inference.year, dt_inference.month, dt_inference.day, tzinfo=sao_paulo_tz)
 
         results_by_subregion = defaultdict(lambda: {"predicts": [], "probas": [], "shaps": [], "models": {}})
 
@@ -117,30 +119,33 @@ class InferenceWriter:
         inference_object = {
             "obj_version": "0.2",
             "dt_inference": dt_inference,
+            "dt_key": dt_key,
             "region": top_level_region,
+            "timezone": "America/Sao_Paulo",
+            "timezone_offset": int(dt_inference.utcoffset().total_seconds()),
             "results": final_results
         }
         return inference_object
 
     async def write_inference_object(self, all_predictions: list[dict]):
         inference_object = await self._build_inference_object(all_predictions)
-        dt_inference_hour = inference_object["dt_inference"]
+        dt_key = inference_object["dt_key"]
         region = inference_object["region"]
 
         client = AsyncIOMotorClient(self.mongo_uri)
         collection = client[self.db_name][self.collection_name]
 
-        # Check for duplicates for the current hour and region
+        # Check for duplicates for the current day and region
         existing_record = await collection.find_one({
-            "dt_inference": dt_inference_hour,
+            "dt_key": dt_key,
             "region": region
         })
 
         if existing_record:
-            print(f"**** Inference record for {region} at {dt_inference_hour} already exists. Skipping write.")
+            print(f"**** Inference record for {region} on {dt_key.date()} already exists. Skipping write.")
         else:
             try:
                 await collection.insert_one(inference_object)
-                print(f"++++ Successfully wrote inference record for {region} at {dt_inference_hour} to MongoDB.")
+                print(f"++++ Successfully wrote inference record for {region} on {dt_key.date()} to MongoDB.")
             except Exception as e:
                 print(f"---- Error writing inference record to MongoDB: {e}")
