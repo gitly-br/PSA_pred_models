@@ -100,8 +100,8 @@ class InferenceWriter:
                 # TODO: Isso aqui esta porco!! Arrumar para uma logica decente depois
                 subregion_shap = data["shaps"][0]
 
-                if rain_distribution.get("today").get("total") < 3.5:
-                    explanation = "Não há chuva significativa prevista para as próximas 24h"
+                if rain_distribution.get(day).get("total") < 3.5:
+                    explanation = "Não há precipitação significativa prevista para o período"
                     rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
                     subregion_proba = 0
                     subregion_predict = 0
@@ -124,12 +124,14 @@ class InferenceWriter:
             all_model_result = final_results_by_day[day].get("all")
             if all_model_result and all_model_result["predict"] == 0:
                 all_explanation = all_model_result["explanation"]
+                all_proba = all_model_result["proba"]
                 all_rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
 
                 for subregion, result in final_results_by_day[day].items():
                     if subregion != "all":
                         result["predict"] = 0
-                        result["explanation"] = all_explanation
+                        result["proba"] = 0
+                        result["explanation"] = all_proba
                         result["rain_today"] = all_rain_today
         
         inference_object = {
