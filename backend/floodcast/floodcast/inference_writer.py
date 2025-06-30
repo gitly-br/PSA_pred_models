@@ -1,7 +1,11 @@
+import os
 from datetime import datetime
 import pytz
 from motor.motor_asyncio import AsyncIOMotorClient
 from collections import defaultdict
+from dotenv import load_dotenv
+
+load_dotenv()
 
 FEATURE_DICT = {
     "rain": "precipitação",
@@ -17,7 +21,7 @@ AGG_DICT = {
 
 class InferenceWriter:
     def __init__(self):
-        self.mongo_uri = "mongodb://host.docker.internal:27017"
+        self.mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
         self.db_name = "floodcast_db"
         self.collection_name = "inference"
 

@@ -1,9 +1,13 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+import os
 from datetime import datetime, timedelta
 import pytz
+from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # === Configuration ===
-MONGO_URI = "mongodb://host.docker.internal:27017"
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 HARVEST_DB_NAME = "harvest_data"
 MODEL_DB_NAME = "floodcast_db"
 MODEL_COLLECTION_NAME = "models"
