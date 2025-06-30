@@ -34,28 +34,18 @@ class WindowAgg(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         X = X.reset_index(drop=True)
-        n_blocks = 1
-        if n_blocks == 0:
-            raise ValueError("Precisamos de pelo menos 24 linhas.")
-
+        agg_start = self.agg_config.get("start")
+        for feature in self.agg_config:
+            for agg, config in self.agg_config[feature].items():
+                if 'start' in config:
+                    agg_start = config['start']
         rows     = []
         dt_bases = []
         # gera blocos completos
-        for b in range(n_blocks):
-            start = b * self.BLOCK
-            block = X.iloc[start : start + self.BLOCK]
-            dt_bases.append(block["dt"].iloc[0])
-            # ** aqui passamos X e start para o _agg_block **
-            rows.append(self._agg_block(X, start))
-
-        # bloco final parcial opcional
-        if not self.drop_partial:
-            tail = len(X) % self.BLOCK
-            if tail:
-                start = n_blocks * self.BLOCK
-                block = X.iloc[start:]
-                dt_bases.append(block["dt"].iloc[0])
-                rows.append(self._agg_block(X, start))
+        block = X.iloc[agg_start : agg_start + 24]
+        dt_bases.append(block["dt"].iloc[0])
+        # ** aqui passamos X e start para o _agg_block **
+        rows.append(self._agg_block(X, 0))
 
         df_feat = pd.DataFrame(rows)
         df_feat["dt"] = pd.to_datetime(dt_bases)
@@ -81,16 +71,7 @@ class WindowAgg(BaseEstimator, TransformerMixin):
                     start = p["start"]
 
                     # janela absoluta
-                    win_start = block_start + start
-                    win_end   = win_start + self.BLOCK
-                    if win_end > len(arr_full):
-                        if self.drop_partial:
-                            continue
-                        win_end = len(arr_full)
-
-                    segment = arr_full[win_start:win_end]
-                    if segment.size == 0:
-                        continue
+                    segment = arr_full[block_start:block_start + 24]
                     # reshape em janelas de 'step'
                     n_win = len(segment) // step
                     seg   = segment[: n_win * step].reshape(n_win, step)

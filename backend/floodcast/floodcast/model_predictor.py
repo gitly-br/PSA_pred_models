@@ -93,7 +93,8 @@ class ModelPredictor:
                 "subregion": subregion,
                 "predict": prediction_value,
                 "shap_explanation": explainer_values,
-                "rain_distribution": rain_distribution
+                "rain_distribution": rain_distribution,
+                "day": model_config.get("day")
             }
             if proba_value is not None:
                 result["proba"] = proba_value
