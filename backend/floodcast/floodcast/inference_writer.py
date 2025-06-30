@@ -64,9 +64,12 @@ class InferenceWriter:
         dt_inference = datetime.now(sao_paulo_tz)
         dt_key = datetime(dt_inference.year, dt_inference.month, dt_inference.day, tzinfo=sao_paulo_tz)
 
-        results_by_subregion = defaultdict(lambda: {"predicts": [], "probas": [], "shaps": [], "models": {}})
+        results_by_day_and_subregion = defaultdict(lambda: defaultdict(lambda: {"predicts": [], "probas": [], "shaps": [], "models": {}}))
 
         for pred in all_predictions:
+            day = pred.get("day")
+            if not day:
+                raise ValueError("--- Prediction object missing 'day' key.")
             subregion = pred.get("subregion", "unknown_subregion")
             model_name = pred.get("model_name", "unknown_model")
             predict_value = pred.get("predict")
@@ -79,42 +82,55 @@ class InferenceWriter:
             model_result["shap"] = shap_explanation
             if proba_value is not None:
                 model_result["proba"] = proba_value
-            results_by_subregion[subregion]["models"][model_name] = model_result
+            results_by_day_and_subregion[day][subregion]["models"][model_name] = model_result
 
             # Collect for subregion aggregation
-            results_by_subregion[subregion]["predicts"].append(predict_value)
+            results_by_day_and_subregion[day][subregion]["predicts"].append(predict_value)
             if shap_explanation is not None:
-                results_by_subregion[subregion]["shaps"].append(shap_explanation)
+                results_by_day_and_subregion[day][subregion]["shaps"].append(shap_explanation)
             if proba_value is not None:
-                results_by_subregion[subregion]["probas"].append(proba_value)
+                results_by_day_and_subregion[day][subregion]["probas"].append(proba_value)
 
         # Finalize results for each subregion and 'all'
-        final_results = {}
-        for subregion, data in results_by_subregion.items():
-            subregion_predict = int(sum(data["predicts"]) / len(data["predicts"])) if data["predicts"] else 0
-            subregion_proba = sum(data["probas"]) / len(data["probas"]) if data["probas"] else None
-            # TODO: Isso aqui esta porco!! Arrumar para uma logica decente depois
-            subregion_shap = data["shaps"][0]
+        final_results_by_day = defaultdict(dict)
+        for day, subregions_data in results_by_day_and_subregion.items():
+            for subregion, data in subregions_data.items():
+                subregion_predict = int(sum(data["predicts"]) / len(data["predicts"])) if data["predicts"] else 0
+                subregion_proba = sum(data["probas"]) / len(data["probas"]) if data["probas"] else None
+                # TODO: Isso aqui esta porco!! Arrumar para uma logica decente depois
+                subregion_shap = data["shaps"][0]
 
-            if rain_distribution.get("today").get("total") < 3.5:
-                explanation = "Não há chuva significativa prevista para as próximas 24h"
-                rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
-                subregion_proba = 0
-                subregion_predict = 0
-            elif subregion_predict == 0:
-                explanation = "Há previsão de chuva, mas o modelo não detectou nenhuma condição preocupante na previsão."
-                rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
-            else:
-                explanation = self._get_explanation(subregion_shap)
-                rain_today = self._calculate_distribution(rain_distribution, subregion_proba)
+                if rain_distribution.get("today").get("total") < 3.5:
+                    explanation = "Não há chuva significativa prevista para as próximas 24h"
+                    rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
+                    subregion_proba = 0
+                    subregion_predict = 0
+                elif subregion_predict == 0:
+                    explanation = "Há previsão de chuva, mas o modelo não detectou nenhuma condição preocupante na previsão."
+                    rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
+                else:
+                    explanation = self._get_explanation(subregion_shap)
+                    rain_today = self._calculate_distribution(rain_distribution, subregion_proba)
+                
+                final_results_by_day[day][subregion] = {
+                    "predict": subregion_predict,
+                    "proba": subregion_proba,
+                    "explanation": explanation,
+                    "rain_today": rain_today,
+                    "models": data["models"]
+                }
             
-            final_results[subregion] = {
-                "predict": subregion_predict,
-                "proba": subregion_proba,
-                "explanation": explanation,
-                "rain_today": rain_today,
-                "models": data["models"]
-            }
+            # Coercion logic for 'all' model
+            all_model_result = final_results_by_day[day].get("all")
+            if all_model_result and all_model_result["predict"] == 0:
+                all_explanation = all_model_result["explanation"]
+                all_rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
+
+                for subregion, result in final_results_by_day[day].items():
+                    if subregion != "all":
+                        result["predict"] = 0
+                        result["explanation"] = all_explanation
+                        result["rain_today"] = all_rain_today
         
         inference_object = {
             "obj_version": "0.2",
@@ -123,7 +139,7 @@ class InferenceWriter:
             "region": top_level_region,
             "timezone": "America/Sao_Paulo",
             "timezone_offset": int(dt_inference.utcoffset().total_seconds()),
-            "results": final_results
+            "results": final_results_by_day
         }
         return inference_object
 
