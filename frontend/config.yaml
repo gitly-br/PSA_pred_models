@@ -1,0 +1,10 @@
+credentials:
+  usernames:
+    admin:
+      email: admin@example.com
+      name: Admin User
+      password: admin
+cookie:
+  expiry_days: 30
+  key: cd40af4eef17513406f1ad24f12f80e2 # Change this to a strong, unique secret key
+  name: my_app_cookie
