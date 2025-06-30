@@ -4,12 +4,22 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from app.common.utils.log_config import setup_logger
 import os
 from datetime import datetime
+from bson.decimal128 import Decimal128
 
 bp_region = Blueprint('region', url_prefix='/region')
 
 # Configure logging
 env = os.environ.get('env', 'dev')
 success_log, logger = setup_logger(env=env, name_process="region_blueprint")
+
+def convert_decimal128_to_float(obj):
+    if isinstance(obj, Decimal128):
+        return float(str(obj))
+    if isinstance(obj, dict):
+        return {k: convert_decimal128_to_float(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [convert_decimal128_to_float(elem) for elem in obj]
+    return obj
 
 @bp_region.listener('before_server_start')
 async def setup_db(app, loop):
@@ -35,6 +45,10 @@ async def get_region_inference(request, region_name):
             # Convert datetime objects to string for JSON serialization
             if 'dt_inference' in latest_inference and isinstance(latest_inference['dt_inference'], datetime):
                 latest_inference['dt_inference'] = latest_inference['dt_inference'].isoformat()
+            
+            # Convert Decimal128 to float recursively
+            latest_inference['results'] = convert_decimal128_to_float(latest_inference['results'])
+            
             return json(latest_inference['results'], ensure_ascii=False)
         else:
             return json({'error': 'Region not found'}, status=404)
