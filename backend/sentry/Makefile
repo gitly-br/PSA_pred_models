@@ -1,5 +1,5 @@
-IMAGE_NAME := floodcast-app
-CONTAINER_NAME := floodcast-app
+IMAGE_NAME := sentry
+CONTAINER_NAME := sentry-app
 
 .PHONY: build run stop logs clean fclean test
 
@@ -15,8 +15,9 @@ run: build stop
 
 stop:
 	@echo "Stopping Docker container $(CONTAINER_NAME)..."
-	docker stop $(CONTAINER_NAME)
+	-docker stop $(CONTAINER_NAME) 2>/dev/null || true
 	@echo "Container stopped."
+
 
 logs:
 	@echo "Showing logs for Docker container $(CONTAINER_NAME)..."
