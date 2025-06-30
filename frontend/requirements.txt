@@ -1,0 +1,12 @@
+streamlit
+requests
+pandas
+geopandas
+matplotlib
+streamlit-autorefresh
+streamlit-folium
+plotly
+
+streamlit_js_eval
+pyyaml
+streamlit-authenticator
