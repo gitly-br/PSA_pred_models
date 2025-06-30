@@ -17,13 +17,17 @@ class ModelPredictor:
         self.forecasts = forecasts
 
     async def _get_rain_distribution(self, df):
-        distribution = {"today": {}}
+        distribution = {"today": {}, "tomorrow": {}}
         distribution["today"]["total"] = df.iloc[:24].rain.sum()
-        distribution["tomorrow"] = df.iloc[24:48].rain.sum()
+        distribution["tomorrow"]["total"] = df.iloc[24:48].rain.sum()
         distribution["today"]["night"] = df.iloc[:6].rain.sum()
         distribution["today"]["morning"] = df.iloc[6:12].rain.sum()
         distribution["today"]["afternoon"] = df.iloc[12:18].rain.sum()
         distribution["today"]["evening"] = df.iloc[18:24].rain.sum()
+        distribution["tomorrow"]["night"] = df.iloc[24:30].rain.sum()
+        distribution["tomorrow"]["morning"] = df.iloc[30:36].rain.sum()
+        distribution["tomorrow"]["afternoon"] = df.iloc[36:42].rain.sum()
+        distribution["tomorrow"]["evening"] = df.iloc[42:48].rain.sum()
         return distribution
 
     async def _process_single_model(self, model_config: dict) -> dict | None:
