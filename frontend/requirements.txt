@@ -6,7 +6,7 @@ matplotlib
 streamlit-autorefresh
 streamlit-folium
 plotly
-
+st-theme
 streamlit_js_eval
 pyyaml
 streamlit-authenticator
