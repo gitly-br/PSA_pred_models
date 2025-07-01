@@ -1,4 +1,3 @@
-
 import streamlit as st
 import requests
 import pandas as pd
@@ -7,12 +6,13 @@ from streamlit_folium import folium_static
 import folium
 import json
 from datetime import datetime, timedelta
-from datetime import datetime, timedelta
+from authenticator import authenticator
+from streamlit_theme import st_theme
 
 api_url = environ.get('API_URL', 'http://localhost:8000')
 
-def call_region_api(region="santoandre"):
-    api_url_i = f"{api_url}/region/{region}"
+def get_forecast():
+    api_url_i = f"{api_url}/region/santoandre"
     response_i = requests.get(api_url_i)
     return response_i.json()
 
@@ -25,39 +25,48 @@ def links_uteis():
 @st.dialog("Carregando...")
 def loading_dialog():
     with st.spinner("Carregando dados, aguarde..."):
-        st.session_state.data = call_region_api()
+        st.session_state.data = get_forecast()
         st.rerun()
 
 try:
     st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
-except:
-    pass
+except Exception as e:
+    print(f"Error: {e}")
 
 
 # Função para verificar as credenciais
 
-# if 'tema' not in st.session_state or st.session_state.tema is None:
-#     st.session_state.tema = st_theme()
-
-# def check_credentials(username, password):
-#     # Substitua pela lógica de autenticação real
-#     return username in ["psa_defesa_civil", 'admin'] and password in ["PSA@D3fes4", 'admin123']
+if 'tema' not in st.session_state or st.session_state.tema is None:
+    st.session_state.tema = st_theme()
 
 if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = datetime.now().date() - timedelta(days=1)
+    st.session_state.selected_date = datetime.now().date()
 
-st.session_state.predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
-st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=2)).strftime('%d/%m/%Y')
+st.session_state.predict_date = st.session_state.selected_date.strftime('%d/%m/%Y')
+st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
 
 if 'data' not in st.session_state:
-    st.session_state.data = None  # Armazena os dados retornados da API
+    st.session_state.data = get_forecast()
 
+if 'authentication_status' not in st.session_state:
+    st.session_state.authentication_status = None  # Armazena o status de autenticação
+if 'logout' not in st.session_state:
+    st.session_state.logout = None  # Armazena o status de autenticação
+
+# --- widget login -------------
+try:
+    authenticator.login("main")
+except Exception as e:
+    st.error(e)
+
+if st.session_state.authentication_status:
     pages = [
             st.Page("pages/home/home.py", title="Home"),
-            st.Page("pages/models/models.py", title="Modelos Detalhados"),
+            # st.Page("pages/models/models.py", title="Modelos Detalhados"),
             st.Page("pages/chamados/chamados.py", title="Mapa de Ocorrências"),
     ]
 
+    # SIDEBAR START
     pg = st.navigation(pages)
     pg.run()
 
@@ -73,25 +82,7 @@ if 'data' not in st.session_state:
         }
         </style>""", unsafe_allow_html=True)
 
-    # st.sidebar.markdown(f"""
-    #     <div style="text-align: center;">
-    #         <a href="https://portais.santoandre.sp.gov.br/defesacivil">
-    #         <img src="./app/static/PSA.png" width="150">
-    #         </a>
-    #     </div>
-    #     """, unsafe_allow_html=True)
-    # st.sidebar.markdown(f"""
-    #     <div style="margin-bottom:20px; text-align: center; display: flex; justify-content: space-around; gap: 20px; align-items: center;">
-    #         <a href="https://www.caf.com/pt/">
-    #         <img src="./app/static/CAF.png" width="100">
-    #         </a>
-    #         <a href="https://portais.santoandre.sp.gov.br/defesacivil">
-    #         <img src="./app/static/logo-DFSA.png" width="100">
-    #         </a>
-    #     </div>
-    #     """, unsafe_allow_html=True)
-    
-    st.sidebar.image("static/Group_Dark.png" if st.session_state.tema['base'] == 'dark' else "static/Group_Custom.png")
+    st.sidebar.image("static/Group_Custom.png")
     st.sidebar.markdown(
         "<h2>Informações Gerais</h2>", 
         unsafe_allow_html=True
@@ -100,19 +91,6 @@ if 'data' not in st.session_state:
     st.sidebar.markdown("[Ajuda](https://gitly.notion.site/Ajuda-PSA-Dashboard-185ad90ac24c802b80faee77754fb4cf?pvs=4)")
 
     st.sidebar.button("Links Úteis", on_click=links_uteis, use_container_width=True)
-    
-    
-    ### DENTRO DE STYLE PARA CASO PRECISE IMPROVISAR FOOTER
-    # [data-testid="stSidebarNav"] + div {{
-    #     position: relative;
-    #     bottom: 0;
-    #     height: 10%;
-    #     display: flex;
-    #     flex-direction: row; /* Organiza imagem e texto lado a lado */
-    #     align-items: center; /* Centraliza verticalmente */
-    #     gap: 10px; /* Espaço entre a imagem e o texto */
-    # }}
-
     st.sidebar.markdown(
         f"""
         <style>
@@ -140,3 +118,7 @@ if 'data' not in st.session_state:
         unsafe_allow_html=True,
     
     )
+
+    authenticator.logout(button_name="Logout", location="sidebar")
+    # SIDEBAR STOP
+        

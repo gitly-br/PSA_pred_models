@@ -13,7 +13,7 @@
             "properties": {
                 "ID": 247.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Almada"
@@ -1265,7 +1265,7 @@
             "properties": {
                 "ID": 238.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Alzira Franco"
@@ -2125,7 +2125,7 @@
             "properties": {
                 "ID": 245.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "André Ramalho"
@@ -2961,7 +2961,7 @@
             "properties": {
                 "ID": 225.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Apiaí"
@@ -5973,7 +5973,7 @@
             "properties": {
                 "ID": 211.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Araçatuba/Itororó"
@@ -7053,7 +7053,7 @@
             "properties": {
                 "ID": 241.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Área Industrial 1"
@@ -7745,7 +7745,7 @@
             "properties": {
                 "ID": 230.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Área Industrial 2"
@@ -8241,7 +8241,7 @@
             "properties": {
                 "ID": 219.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Bacia do Meio"
@@ -8797,7 +8797,7 @@
             "properties": {
                 "ID": 220.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Bahamas"
@@ -9213,7 +9213,7 @@
             "properties": {
                 "ID": 235.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Beraldo"
@@ -10037,7 +10037,7 @@
             "properties": {
                 "ID": 237.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Campestre"
@@ -10721,7 +10721,7 @@
             "properties": {
                 "ID": 240.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Cândido Camargo"
@@ -11637,7 +11637,7 @@
             "properties": {
                 "ID": 239.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Capuava"
@@ -12225,7 +12225,7 @@
             "properties": {
                 "ID": 243.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Carapetuba"
@@ -13417,7 +13417,7 @@
             "properties": {
                 "ID": 224.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Cassaquera"
@@ -15741,7 +15741,7 @@
             "properties": {
                 "ID": 244.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Cemitério"
@@ -16593,7 +16593,7 @@
             "properties": {
                 "ID": 227.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Comprido"
@@ -17589,7 +17589,7 @@
             "properties": {
                 "ID": 213.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Contra-vertente Beraldo"
@@ -24088,7 +24088,7 @@
             "properties": {
                 "ID": 234.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Felipe Camarão"
@@ -24472,7 +24472,7 @@
             "properties": {
                 "ID": 233.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Foz Oratório"
@@ -25296,7 +25296,7 @@
             "properties": {
                 "ID": 214.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Grã-Bretanha"
@@ -25808,7 +25808,7 @@
             "properties": {
                 "ID": 248.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Guaixaya"
@@ -27244,7 +27244,7 @@
             "properties": {
                 "ID": 226.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "GUARARA",
+                "MODELO": "guarara",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Guarará"
@@ -32652,7 +32652,7 @@
             "properties": {
                 "ID": 229.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Guaratinguetá"
@@ -33224,7 +33224,7 @@
             "properties": {
                 "ID": 231.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Haia"
@@ -33732,7 +33732,7 @@
             "properties": {
                 "ID": 246.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Itamarati"
@@ -34540,7 +34540,7 @@
             "properties": {
                 "ID": 223.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Itrapoá"
@@ -36540,7 +36540,7 @@
             "properties": {
                 "ID": 232.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Jundiaí"
@@ -37424,7 +37424,7 @@
             "properties": {
                 "ID": 216.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Las Palmas"
@@ -38036,7 +38036,7 @@
             "properties": {
                 "ID": 218.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Lavapés"
@@ -38840,7 +38840,7 @@
             "properties": {
                 "ID": 215.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Lions"
@@ -39372,7 +39372,7 @@
             "properties": {
                 "ID": 221.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Maria Quitéria"
@@ -40080,7 +40080,7 @@
             "properties": {
                 "ID": 212.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Monte Alto"
@@ -41557,7 +41557,7 @@
             "properties": {
                 "ID": 236.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Pederneiras"
@@ -245297,7 +245297,7 @@
             "properties": {
                 "ID": 228.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Sorocaba"
@@ -246289,7 +246289,7 @@
             "properties": {
                 "ID": 210.0,
                 "NOM_BACIA": "Meninos",
-                "MODELO" : "MENINOS",
+                "MODELO" : "meninos",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Taióca"
@@ -248425,7 +248425,7 @@
             "properties": {
                 "ID": 222.0,
                 "NOM_BACIA": "Oratório",
-                "MODELO": "ORATORIO",
+                "MODELO": "oratorio",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Taubaté"
@@ -249333,7 +249333,7 @@
             "properties": {
                 "ID": 242.0,
                 "NOM_BACIA": "Tamanduateí Central",
-                "MODELO": "TAMCENTRAL",
+                "MODELO": "tamanduatei",
                 "UGRHIS": "UGRHIs 6 - Alto Tietê",
                 "NOM_MACRO": "Bacia Tamanduateí",
                 "NOM_SUB_BA": "Utinga"
