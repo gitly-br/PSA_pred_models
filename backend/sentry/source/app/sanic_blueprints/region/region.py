@@ -34,13 +34,21 @@ async def close_db(app, loop):
 async def get_region_inference(request, region_name):
     try:
         collection = request.app.ctx.db.inference
-        # Get the current date
-        today = datetime.now().date()
-        # Get the start and end of the day
-        start_of_day = datetime.combine(today, time.min)
-        end_of_day = datetime.combine(today, time.max)
+        date_str = request.args.get('date')
+        
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return json({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+        else:
+            target_date = datetime.now().date()
 
-        # Find the inference for the given region and current date
+        # Get the start and end of the day for the target date
+        start_of_day = datetime.combine(target_date, time.min)
+        end_of_day = datetime.combine(target_date, time.max)
+
+        # Find the inference for the given region and date
         inference = await collection.find_one(
             {
                 'region': region_name, 
@@ -63,7 +71,7 @@ async def get_region_inference(request, region_name):
             
             return json(inference['results'], ensure_ascii=False)
         else:
-            return json({'error': f'Inference not found for region {region_name} on date {today}'}, status=404)
+            return json({'error': f'Inference not found for region {region_name} on date {target_date}'}, status=404)
     except Exception as e:
         logger.error(f"Error fetching data for region {region_name}: {e}")
         return json({'error': 'An internal error occurred'}, status=500)
