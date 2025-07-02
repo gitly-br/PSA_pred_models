@@ -11,7 +11,7 @@ class SourceConfig:
     type: str
     region: str
     subregion: str
-    ttl_days: int
+    ttl_days: int | None
     url: str
     args: dict[str, Any]
 

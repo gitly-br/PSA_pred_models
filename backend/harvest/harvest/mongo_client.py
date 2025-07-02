@@ -6,7 +6,7 @@ from pymongo.errors import DuplicateKeyError, OperationFailure
 DEFAULT_MONGO_URI = "mongodb://localhost:27017"
 DEFAULT_CONFIG_DB = "harvest_config"
 DEFAULT_DATA_DB = "harvest_data"
-DEFAULT_TTL_DAYS = 7  # fallback TTL
+
 
 class MongoClientWrapper:
     """
@@ -62,8 +62,6 @@ class MongoClientWrapper:
         ttl_days: int | None = None,
     ):
         """Create unique and TTL indexes on the collection."""
-        expire_after = (ttl_days or DEFAULT_TTL_DAYS) * 86400
-
         unique_index_name = f"{dedup_key}_unique_idx"
         try:
             await collection.create_index(
@@ -79,11 +77,14 @@ class MongoClientWrapper:
             else:
                 raise
 
+        if not ttl_days or ttl_days <= 0:
+            return
+
         ttl_index_name = "dt_request_ttl_idx"
         try:
             await collection.create_index(
                 [("dt_request", 1)],
-                expireAfterSeconds=expire_after,
+                expireAfterSeconds=ttl_days * 86400,
                 name=ttl_index_name,
                 background=True,
             )
