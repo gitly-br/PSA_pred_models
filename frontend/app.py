@@ -18,7 +18,7 @@ def get_forecast(date: str=""):
         api_url_i = f"{api_url}/region/santoandre?date={date}"
 
     response_i = requests.get(api_url_i)
-    return response_i.json()
+    return response_i
 
 def get_forecast_input(date: str=""):
     if date is "":
@@ -59,7 +59,11 @@ st.session_state.predict_date = st.session_state.selected_date.strftime('%d/%m/%
 st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
 
 if 'data' not in st.session_state:
-    st.session_state.data = get_forecast()
+    response = get_forecast()
+    if response.status_code == 200:
+        st.session_state.data = response.json()
+    else:
+        st.session_state.data = None
 
 if 'authentication_status' not in st.session_state:
     st.session_state.authentication_status = None  # Armazena o status de autenticação

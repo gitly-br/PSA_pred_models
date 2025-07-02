@@ -21,6 +21,14 @@ except:
 
 st.session_state.tema = st_theme()
 
+@st.dialog("Erro")
+def not_found_dialog():
+    st.error("Não há resultados para a data selecionada")
+
+@st.dialog("Erro")
+def generic_error_dialog():
+    st.error("Houve um erro ao coletar os resultados")
+
 @st.cache_data
 def load_geojson(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
@@ -38,7 +46,16 @@ def change_theme():
         st.session_state.map_theme = 'Cartodb Positron'
 
 def on_date_change():
-    st.session_state.data = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+    st.session_state.previous_selected_date = st.session_state.selected_date
+    response = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+    if response.status_code == 404:
+        not_found_dialog()
+        st.session_state.selected_date = st.session_state.previous_selected_date
+    elif response.status_code != 200:
+        generic_error_dialog()
+        st.session_state.selected_date = st.session_state.previous_selected_date
+    else:
+        st.session_state.data = response.json()
 
 # Remove espaço em branco no topo
 st.markdown("""
