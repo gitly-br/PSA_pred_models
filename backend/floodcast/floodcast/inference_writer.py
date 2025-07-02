@@ -129,13 +129,13 @@ class InferenceWriter:
             if all_model_result and all_model_result["predict"] == 0:
                 all_explanation = all_model_result["explanation"]
                 all_proba = all_model_result["proba"]
-                all_rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
+                all_rain_today = {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}
 
                 for subregion, result in final_results_by_day[day].items():
                     if subregion != "all":
                         result["predict"] = 0
-                        result["proba"] = 0
-                        result["explanation"] = all_proba
+                        result["proba"] *= all_proba 
+                        result["explanation"] = all_explanation
                         result["rain_today"] = all_rain_today
         
         inference_object = {
