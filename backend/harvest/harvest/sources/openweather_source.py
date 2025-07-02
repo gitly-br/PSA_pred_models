@@ -52,7 +52,7 @@ class OpenWeatherSource(SourceBase):
                     (
                         f"HTTP {exc.response.status_code}"
                         f" for source '{self.type}', region '{self.region}'"
-                        f" message: '{exc.response.json().get("message")}'"
+                        f" message: '{exc.response.json().get('message')}'"
                     )
                 ) from exc
             except httpx.RequestError as exc:
