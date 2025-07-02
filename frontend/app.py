@@ -39,6 +39,7 @@ def links_uteis():
 def loading_dialog():
     with st.spinner("Carregando dados, aguarde..."):
         st.session_state.data = get_forecast()
+        st.session_state.data_input = get_forecast_input()
         st.rerun()
 
 try:
@@ -66,6 +67,10 @@ if 'data' not in st.session_state:
     else:
         st.session_state.data = None
         st.session_state.fallback = True
+
+if 'data_input' not in st.session_state:
+    response = get_forecast_input()
+    st.session_state.data_input = response
 
 if 'authentication_status' not in st.session_state:
     st.session_state.authentication_status = None  # Armazena o status de autenticação

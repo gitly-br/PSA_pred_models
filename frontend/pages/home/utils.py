@@ -131,59 +131,43 @@ def plot_gauge(value, title, model: str ,margin_dict:dict = {'l':10, 'b':20, 't'
 
 
 
-def plot_weather_forecast(df_json):
-
+def plot_weather_forecast(hourly_data):
     # Transforma o JSON em DataFrame
-    df_aux = pd.DataFrame(df_json)
+    for i in range(len(hourly_data)):
+        hourly_data[i]["dt_label"] = f"{i:02}h"
+    df_hourly = pd.DataFrame(hourly_data).head(24)
 
-    # Seleciona os primeiros 24 registros e ordena pelo campo 'dt' em ordem crescente
-    df = df_aux.sort_values(by="dt").head(9)
-    df['pop'] = df['pop'].astype('float')
-    df['normalized_pop'] = df['pop'] * df['rain_3h'].max()
+    df_hourly['pop'] = df_hourly['pop'].astype('float')
+    df_hourly['normalized_pop'] = df_hourly['pop'] * df_hourly['rain'].max()
 
     # Criando a figura com eixo Y secundário
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-
     # Adicionando a chuva como barra
     fig.add_trace(
         go.Bar(
-            x=df["dt_label"],
-            y=df["rain_3h"],
-            name="Chuva acum. 3h",
+            x=df_hourly["dt_label"],
+            y=df_hourly["rain"],
+            name="Precipitação horária",
             # marker_color=,
             marker={"color" : 'rgba(0, 0, 255, 0.5)'},
-            hovertemplate="<b>Chuva acum. 3h:</b> %{y:.1f} mm<extra></extra>",
-            text=df["pop_percent"].astype(str) + "%<br>" + df["rain_3h"].astype(str) + " mm",  # Exibe o valor numérico
+            hovertemplate="<b>Precipitação:</b> %{y:.1f} mm<extra></extra>",
+            text=df_hourly["pop"].astype(str) + "%<br>" + df_hourly["rain"].astype(str) + " mm",  # Exibe o valor numérico
             textposition="outside",  # Posiciona o texto acima da barra
             texttemplate="%{text}",
         ),
         secondary_y=True,
     )
 
-    # Adicionando a probabilidade de precipitação como uma barra mais fina
-    # fig.add_trace(
-    #     go.Bar(
-    #         x=df["dt_label"],
-    #         y=df["normalized_pop"],
-    #         name="Probabilidade de chuva",
-    #         marker={"color" : 'rgba(0, 0, 255, 0.2)'},
-    #         hovertemplate="<b>Probabilidade de chuva:</b> %{text}<extra></extra>",
-    #         text=df["pop_percent"].astype(str)+"%",  # Exibe o valor numérico
-    #         textposition="outside",  # Posiciona o texto acima da barra
-    #     ),
-    #     secondary_y=True,
-    # )
-
     # Adicionando a temperatura como Scatter
     fig.add_trace(
         go.Scatter(
-            x=df["dt_label"],  
-            y=df["temp"],
+            x=df_hourly["dt_label"],  
+            y=df_hourly["temp"],
             name="Temperatura",
             mode='lines+markers+text',  # Adicionando o texto diretamente no Scatter
             hovertemplate="<b>Temperatura:</b> %{y:.1f}°C <extra></extra>",
-            text=df["temp"],  # Exibe o valor numérico
+            text=df_hourly["temp"],  # Exibe o valor numérico
             textposition="top center",  # Posiciona o texto acima
             texttemplate="%{text:.1f}°C",  # Formato do texto
             marker=dict(size=8, color='red'),  # Para destacar melhor
@@ -194,8 +178,8 @@ def plot_weather_forecast(df_json):
 
 
     # Configurando eixos Y
-    fig.update_yaxes(title_text="<b>Temperatura (°C)</b>", secondary_y=False, range=[df["temp"].min() - 2, df["temp"].max() + 2])  # Dynamic Range
-    fig.update_yaxes(title_text="<b>Volume de chuva (mm)</b>", secondary_y=True, range=[0, df["rain_3h"].max() * 1.2], showgrid=False)  # Dynamic Range
+    fig.update_yaxes(title_text="<b>Temperatura (°C)</b>", secondary_y=False, range=[df_hourly["temp"].min() - 2, df_hourly["temp"].max() + 2])  # Dynamic Range
+    fig.update_yaxes(title_text="<b>Volume de chuva (mm)</b>", secondary_y=True, range=[0, df_hourly["rain"].max() * 1.2], showgrid=False)  # Dynamic Range
 
     # Configuração final do layout
     fig.update_layout(
@@ -206,8 +190,8 @@ def plot_weather_forecast(df_json):
             title="<b></b>",
             tickangle=0,  # rotulo na horizontal
             tickmode="array",
-            tickvals=df["dt_label"],
-            ticktext=df["dt_label"]
+            tickvals=df_hourly["dt_label"],
+            ticktext=df_hourly["dt_label"]
         ),
     )
 
