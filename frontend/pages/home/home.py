@@ -6,7 +6,7 @@ from streamlit_folium import folium_static
 import folium
 import requests
 from os import environ
-from app import get_forecast
+from app import get_forecast, get_forecast_input
 from streamlit_autorefresh import st_autorefresh
 import plotly.graph_objects as go
 from pages.home.utils import get_color_distribution, get_map_color, get_flood_color, get_color, plot_gauge, plot_weather_forecast, week_day_portuguese
@@ -77,6 +77,7 @@ def on_date_change():
     else:
         st.session_state.fallback = False
         st.session_state.data = response.json()
+        st.session_state.data_input = get_forecast_input(st.session_state.selected_date.strftime('%Y-%m-%d'))
 
 # Remove espaço em branco no topo
 st.markdown("""
@@ -342,7 +343,8 @@ with col_2:
             plot_gauge(today['meninos']['proba'], "Bacia dos Meninos", "meninos", {'l':10, 'b':20, 't':50})
 
 
-# plot_weather_forecast(st.session_state.forecast)
+if not st.session_state.fallback:
+    plot_weather_forecast(st.session_state.data_input)
 
 # except Exception as e:
 #     if isinstance(e, NameError):

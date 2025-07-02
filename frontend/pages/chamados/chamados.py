@@ -7,8 +7,6 @@ from streamlit_js_eval import streamlit_js_eval
 #     height=750,
 # )
 
-
-
 height = streamlit_js_eval(js_expressions='screen.height', key = 'SCR')
 
 st.markdown("""
