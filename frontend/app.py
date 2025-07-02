@@ -12,7 +12,7 @@ from streamlit_theme import st_theme
 api_url = environ.get('API_URL', 'http://localhost:8000')
 
 def get_forecast(date: str=""):
-    if date is "":
+    if date == "":
         api_url_i = f"{api_url}/region/santoandre"
     else:
         api_url_i = f"{api_url}/region/santoandre?date={date}"
@@ -21,7 +21,7 @@ def get_forecast(date: str=""):
     return response_i
 
 def get_forecast_input(date: str=""):
-    if date is "":
+    if date == "":
         api_url_i = f"{api_url}/forecast-data/santoandre/openweather"
     else:
         api_url_i = f"{api_url}/forecast-data/santoandre/openweather?date={date}"
@@ -62,8 +62,10 @@ if 'data' not in st.session_state:
     response = get_forecast()
     if response.status_code == 200:
         st.session_state.data = response.json()
+        st.session_state.fallback = False
     else:
         st.session_state.data = None
+        st.session_state.fallback = True
 
 if 'authentication_status' not in st.session_state:
     st.session_state.authentication_status = None  # Armazena o status de autenticação
