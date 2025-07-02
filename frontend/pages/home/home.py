@@ -37,6 +37,9 @@ def change_theme():
     else:
         st.session_state.map_theme = 'Cartodb Positron'
 
+def on_date_change():
+    st.session_state.data = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+
 # Remove espaço em branco no topo
 st.markdown("""
     <style>
@@ -78,20 +81,15 @@ col1, col2, col3, _, col4 = st.columns([3, 7, 5, 1, 11], vertical_alignment='cen
 
 with col1:
 
-    date_aux = st.date_input(
-        'Data Base', 
+    st.date_input(
+        'Data escolhida:', 
         value=datetime.now(), 
         min_value=datetime(2017, 10, 6),
         format="DD/MM/YYYY",
+        key="selected_date",
+        on_change=on_date_change
     )
     
-    st.session_state.selected_date = date_aux
-    
-    # Botão para atualizar os dados
-#     if st.button("Atualizar Predição"):
-#         with st.spinner("Carregando dados..."):
-#             st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
-
     # Exibe os dados apenas se existirem
     if st.session_state.data:
         today = st.session_state.data.get("today", None)
@@ -289,8 +287,8 @@ with col_2:
 # except Exception as e:
 #     if isinstance(e, NameError):
 #         with st.spinner("Carregando dados inicias..."):
-#             st.session_state.data = call_models(st.session_state.selected_date.strftime('%Y-%m-%d'))
-#             st.session_state.forecast = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+#             st.session_state.data = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+#             st.session_state.input = get_forecast_input(st.session_state.selected_date.strftime('%Y-%m-%d'))
 #         st.rerun()
 #     else:
 #         st.error(f"An unexpected error occurred: {e}")
