@@ -11,6 +11,7 @@ from app.sanic_blueprints.home.home import bp_home
 from app.sanic_blueprints.forecast.forecast import bp_forecast
 from app.sanic_blueprints.chamados_pbi.chamados_pbi import chamados_pbi_bp
 from app.sanic_blueprints.region.region import bp_region
+from app.sanic_blueprints.forecast_data.forecast_data import bp_forecast_data
 
 
 def register_app_blueprints(app, settings: dict):
@@ -19,4 +20,5 @@ def register_app_blueprints(app, settings: dict):
     app.blueprint(bp_forecast)
     app.blueprint(chamados_pbi_bp)
     app.blueprint(bp_region)
+    app.blueprint(bp_forecast_data)
     # app.blueprint(feature_XPTO)
