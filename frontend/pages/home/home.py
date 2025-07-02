@@ -18,16 +18,17 @@ try:
 except:
     pass
 
-
 st.session_state.tema = st_theme()
 
 @st.dialog("Erro")
 def not_found_dialog():
-    st.error("Não há resultados para a data selecionada")
+    st.session_state.err_text = "Não há resultados para a data selecionada"
+    st.error(st.session_state.err_text)
 
 @st.dialog("Erro")
 def generic_error_dialog():
-    st.error("Houve um erro ao coletar os resultados")
+    st.session_state.err_text = "Houve um erro ao coletar os resultados"
+    st.error(st.sessoin_state.err_text)
 
 @st.cache_data
 def load_geojson(file_path):
@@ -35,9 +36,28 @@ def load_geojson(file_path):
         data = json.load(f)
     return data
 
-if 'map_theme' not in st.session_state:
+if '' not in st.session_state:
     st.session_state.map_theme = 'Cartodb Positron'
 
+def set_fallback_data():
+    st.session_state.fallback = True
+    st.session_state.data = {
+        "today": {
+            "all": {
+                "rain_today": {"morning": 1.0, "afternoon": 1.0, "evening": 1.0, "night": 1.0},
+                "proba": 1.0
+            },
+            "tamanduatei": { "proba": 1.0 },
+            "oratorio": { "proba": 1.0 },
+            "meninos": { "proba": 1.0 },
+            "guarara": { "proba": 1.0 }
+        },
+        "tomorrow": {
+            "all": {
+                "proba": 1.0
+            }
+        }
+    }
 
 def change_theme():
     if st.session_state.map_theme == 'OpenStreetMap':
@@ -49,12 +69,13 @@ def on_date_change():
     st.session_state.previous_selected_date = st.session_state.selected_date
     response = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
     if response.status_code == 404:
+        set_fallback_data()
         not_found_dialog()
-        st.session_state.selected_date = st.session_state.previous_selected_date
     elif response.status_code != 200:
+        set_fallback_data()
         generic_error_dialog()
-        st.session_state.selected_date = st.session_state.previous_selected_date
     else:
+        st.session_state.fallback = False
         st.session_state.data = response.json()
 
 # Remove espaço em branco no topo
@@ -85,8 +106,8 @@ st.markdown(
 st.markdown(
     f"""
     <div style='text-align: right;'>
-        <p style='margin: 0;'>Data e hora da última atualização dos modelos: {st.session_state.predict_date} 00:00</p>
-        <p style='margin: 0;'>Data e hora da próxima dos modelos: {st.session_state.next_predict_date} 00:00</p>
+        <p style='margin: 0;'>Previsão feita em: {st.session_state.predict_date}.</p>
+        <p style='margin: 0;'>Todas as previsões são feitas a partir das 0h do dia selecionado.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -178,32 +199,54 @@ with col3:
 # Caixa de prediçao + explicador
 with col4:
     with st.container(border=True):
-        st.markdown(f""" 
-        <div style=display: flex; justify-content: center; align-items: center;'> 
-            <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                <b>{today['all']['proba']*100:.0f}%</b> de possibilidade em {st.session_state.predict_date}
-            </p>
-            <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                <i>{today['all']['explanation']}</i>
-            </p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+        if st.session_state.fallback:
+            st.markdown(f"""
+                <div style=display: flex; justify-content: center; align-items: center;'> 
+                    <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2; color='red';'>
+                        {st.session_state.err_text}
+                    </p>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(f""" 
+            <div style=display: flex; justify-content: center; align-items: center;'> 
+                <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
+                    <b>{today['all']['proba']*100:.0f}%</b> de possibilidade em {st.session_state.predict_date}
+                </p>
+                <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
+                    <i>{today['all']['explanation']}</i>
+                </p>
+            </div>
+            """, 
+            unsafe_allow_html=True
+            )
 
     with st.container(border=True):
-        st.markdown(f""" 
-        <div style=display: flex; justify-content: center; align-items: center;'> 
-            <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                <b>{tomorrow['all']['proba']*100:.0f}%</b> de possibilidade em {st.session_state.next_predict_date}
-            </p>
-            <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                <i>{tomorrow['all']['explanation']}</i>
-            </p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+        if st.session_state.fallback:
+            st.markdown(f"""
+                <div style=display: flex; justify-content: center; align-items: center;'> 
+                    <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2; color='red';'>
+                        {st.session_state.err_text}
+                    </p>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(f""" 
+            <div style=display: flex; justify-content: center; align-items: center;'> 
+                <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
+                    <b>{tomorrow['all']['proba']*100:.0f}%</b> de possibilidade em {st.session_state.next_predict_date}
+                </p>
+                <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
+                    <i>{tomorrow['all']['explanation']}</i>
+                </p>
+            </div>
+            """, 
+            unsafe_allow_html=True
+            )
 
 st.divider()
 st.markdown("<h3 style='color:rgba(219, 116, 7, 255);'>Modelo de Bacias:</h3>", unsafe_allow_html=True)
