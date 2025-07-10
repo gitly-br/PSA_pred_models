@@ -23,8 +23,8 @@ def convert_decimal128_to_float(obj):
 
 @bp_region.listener('before_server_start')
 async def setup_db(app, loop):
-    app.ctx.mongo_client = AsyncIOMotorClient('mongodb://host.docker.internal:27017', io_loop=loop)
-    app.ctx.db = app.ctx.mongo_client.floodcast_db
+    app.ctx.mongo_client = AsyncIOMotorClient(os.environ.get("MONGO_URI"), io_loop=loop)
+    app.ctx.db = app.ctx.mongo_client.floodcast
 
 @bp_region.listener('after_server_stop')
 async def close_db(app, loop):

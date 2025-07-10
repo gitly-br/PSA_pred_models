@@ -22,7 +22,7 @@ def get_target_date(request):
 
 @bp_forecast_data.listener('before_server_start')
 async def setup_db(app, loop):
-    app.ctx.mongo_client_harvest = AsyncIOMotorClient('mongodb://host.docker.internal:27017', io_loop=loop)
+    app.ctx.mongo_client_harvest = AsyncIOMotorClient(os.environ.get("MONGO_URI"), io_loop=loop)
     app.ctx.db_harvest = app.ctx.mongo_client_harvest.harvest_data
 
 @bp_forecast_data.listener('after_server_stop')
