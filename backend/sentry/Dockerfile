@@ -35,5 +35,4 @@ VOLUME /source
 EXPOSE 8000 6457
 
 # Default command
-ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["python run.py --env $NODE_ENV"]
+CMD ["python", "/source/run.py", "--env", "$NODE_ENV"]
