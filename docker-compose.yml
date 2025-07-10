@@ -5,7 +5,6 @@ services:
     ports:
       - "27000:27017"
     volumes:
-      #- ./volume_dbs/mongo_data:/data/db
       - models_mongo_data:/data/db
     environment:
       - MONGO_INITDB_ROOT_USERNAME=localhost
@@ -13,25 +12,29 @@ services:
     networks:
       - app_network
 
-  sentry:
+  backend:
     build:
-      context: ./backend/sentry
+      context: ./backend
       dockerfile: Dockerfile
-    env_file:
-      - ./backend/sentry/.env
-    image: psa-sentry:latest
-    init: true
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - NODE_ENV=${NODE_ENV}
     ports:
       - "8080:8000"
       - "6457:6457"
-    command: python run.py --env dev
+    command: ./entrypoint.sh
     volumes:
-      - ./backend/sentry/source:/source
+      - ./backend/sentry/source:/backend/sentry/source
+      - ./backend/sentry/keys:/backend/sentry/keys
+      - ./backend/harvest:/backend/harvest
+      - ./backend/floodcast:/backend/floodcast
     networks:
       - app_network
       - support_network
-    depends_on:
-      - mongo
+    # Commented out so it doesn't wait for the local mongo
+    # depends_on:
+    #   - mongo
 
   frontend:
     build:
@@ -52,3 +55,4 @@ networks:
 
 volumes:
   models_mongo_data:
+
