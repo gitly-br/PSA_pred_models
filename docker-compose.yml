@@ -1,49 +1,54 @@
-
-
 services:
   mongo:
-    image: mongo:6
+    image: mongo:4.0.28
+    init: true
     ports:
-      - "27017:27017"
+      - "27000:27017"
     volumes:
-      - mongo-data:/data/db
-    restart: unless-stopped
+      #- ./volume_dbs/mongo_data:/data/db
+      - models_mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=localhost
+      - MONGO_INITDB_ROOT_PASSWORD=localhost_psa
+    networks:
+      - app_network
 
   sentry:
     build:
       context: ./backend/sentry
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/sentry/.env
+    image: psa-sentry:latest
+    init: true
     ports:
-      - "8000:8000"
-    depends_on:
-      - mongo
-    environment:
-      - NODE_ENV=local
-
-  harvest:
-    build:
-      context: ./backend/harvest
-    env_file:
-      - ./backend/harvest/.env
-    depends_on:
-      - mongo
-
-  floodcast:
-    build:
-      context: ./backend/floodcast
-    env_file:
-      - ./backend/floodcast/.env
+      - "8080:8000"
+      - "6457:6457"
+    command: python run.py --env dev
+    volumes:
+      - ./backend/sentry/source:/source
+    networks:
+      - app_network
+      - support_network
     depends_on:
       - mongo
 
   frontend:
     build:
       context: ./frontend
-    ports:
-      - "8501:8501"
+      dockerfile: Dockerfile
     env_file:
       - ./frontend/.env
-    depends_on:
-      - sentry
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "8501:8501"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+  support_network:
 
 volumes:
-  mongo-data:
+  models_mongo_data:
