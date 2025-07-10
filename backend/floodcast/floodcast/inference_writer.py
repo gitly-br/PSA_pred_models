@@ -22,7 +22,7 @@ AGG_DICT = {
 class InferenceWriter:
     def __init__(self):
         self.mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-        self.db_name = "floodcast_db"
+        self.db_name = "floodcast"
         self.collection_name = "inference"
 
     def _calculate_distribution(self, rain_distribution: dict, proba: float) -> dict:

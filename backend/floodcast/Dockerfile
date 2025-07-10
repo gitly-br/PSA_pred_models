@@ -11,7 +11,7 @@ COPY cookies.txt /root/.cache/gdown/
 
 # Copy the rest of the application code
 COPY . .
-COPY .env .
+
 
 # Set the command to run the application
 EXPOSE 27017

@@ -9,7 +9,7 @@ load_dotenv()
 # === Configuration ===
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 HARVEST_DB_NAME = "harvest_data"
-MODEL_DB_NAME = "floodcast_db"
+MODEL_DB_NAME = "floodcast"
 MODEL_COLLECTION_NAME = "models"
 
 async def get_models_config():
