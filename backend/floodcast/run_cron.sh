@@ -3,5 +3,5 @@ set -a
 source /etc/cron.env
 set +a
 
-cd /backend/harvest
-exec python -m harvest.main
+cd /backend/floodcast
+exec python -m floodcast.main
