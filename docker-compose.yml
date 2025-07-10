@@ -1,88 +1,49 @@
-version: '4.0'
+
 
 services:
-
-  streamlit_app:
-    build:
-      context: ./streamlit_app
-      dockerfile: Dockerfile
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
     volumes:
-      - ./streamlit_app:/app
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+  sentry:
+    build:
+      context: ./backend/sentry
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    environment:
+      - NODE_ENV=local
+
+  harvest:
+    build:
+      context: ./backend/harvest
+    env_file:
+      - ./backend/harvest/.env
+    depends_on:
+      - mongo
+
+  floodcast:
+    build:
+      context: ./backend/floodcast
+    env_file:
+      - ./backend/floodcast/.env
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./frontend
     ports:
       - "8501:8501"
-    networks:
-      - app_network
-
-  # Backend do Aplicativo (App)
-  psa_models_back:
-    build:
-      context: psa_models_back
-      dockerfile: Dockerfile
-    image: psa_models_back_local:latest
-    init: true
-    ports:
-      - "8080:8000"
-      - "6457:6457"
-    command: python run.py --env local
-    volumes:
-      - ./psa_models_back/source:/source
-    networks:
-      - app_network
-      - support_network
+    env_file:
+      - ./frontend/.env
     depends_on:
-      - mongo_models
-      # - redisA
-      # - redisB
-
-  mongo_models:
-    image: mongo:4.0.28
-    init: true
-    ports:
-      - "27000:27017"
-    volumes:
-      #- ./volume_dbs/mongo_data:/data/db
-      - models_mongo_data:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=localhost
-      - MONGO_INITDB_ROOT_PASSWORD=localhost_psa
-    networks:
-      - app_network
-
-  # Redis Configuration
-  # redisA:
-  #   image: redis/redis-stack
-  #   init: true
-  #   volumes:
-  #     - redis_A_data:/data
-  #   ports:
-  #     - "6300:6379"
-  #     - "8001:8001"
-  #   environment:
-  #     - REDIS_PASSWORD=local_redis
-  #   command: ["redis-server", "--requirepass", "local_redis"]
-  #   networks:
-  #     - support_network
-
-  # redisB:
-  #   image: redis/redis-stack
-  #   init: true
-  #   volumes:
-  #     - redis_B_data:/data
-  #   ports:
-  #     - "6310:6379"
-  #     - "8002:8001"
-  #   environment:
-  #     - REDIS_PASSWORD=local_redis
-  #   command: ["redis-server", "--requirepass", "local_redis"]
-  #   networks:
-  #     - support_network
-
-
-networks:
-  app_network:
-  support_network:
+      - sentry
 
 volumes:
-  models_mongo_data:
-  # redis_A_data:
-  # redis_B_data:
+  mongo-data:

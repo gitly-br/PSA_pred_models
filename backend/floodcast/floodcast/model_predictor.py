@@ -4,7 +4,8 @@ import gdown
 import pandas as pd
 import asyncio
 
-async def grab_from_gdrive(file_id, filename):
+async def grab_from_gdrive(file_link, filename):
+  file_id = file_link.split("/")[-2]
   url = f"https://drive.google.com/uc?id={file_id}"
   output = os.path.join('.', filename)
   if not(os.path.isfile(output)):
