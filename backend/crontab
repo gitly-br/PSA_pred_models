@@ -1,0 +1,5 @@
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+*/30 * * * * root /backend/harvest/run_cron.sh >> /var/log/cron.log 2>&1
+0 1,2,3,4,5,6,9,12 * * * root /backend/floodcast/run_cron.sh >> /var/log/cron.log 2>&1
+
