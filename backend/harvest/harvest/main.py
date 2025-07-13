@@ -17,6 +17,7 @@ import asyncio
 import logging
 import os
 import sys
+import argparse
 
 from harvest.mongo_client import MongoClientWrapper
 from harvest.harvester import Harvester
@@ -40,7 +41,7 @@ def setup_logger(name, log_file=None, level=logging.INFO):
         return logger
 
     # Create formatter
-    formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
+    formatter = logging.Formatter("%(asctime)s %(levelname)-8s HARVEST %(message)s")
 
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
@@ -57,10 +58,19 @@ def setup_logger(name, log_file=None, level=logging.INFO):
 
 
 async def main():
-    # 1) Configure logging
-    logger = setup_logger(__name__, "app.log")
+    # 1) Configure CLI arguments
+    parser = argparse.ArgumentParser(description="Harvest data from various sources.")
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Enable debug logging"
+    )
+    args = parser.parse_args()
 
-    # 2) Read environment variables or default values
+    # 2) Configure logging
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    logger = setup_logger(__name__, "app.log", level=log_level)
+
+
+    # 3) Read environment variables or default values
     mongo_uri = os.getenv("MONGO_URI", DEFAULT_MONGO_URI)
     config_db_name = os.getenv("CONFIG_DB_NAME", DEFAULT_CONFIG_DB)
     data_db_name = os.getenv("DATA_DB_NAME", DEFAULT_DATA_DB)
@@ -71,7 +81,7 @@ async def main():
     logger.debug(f"Config DB: {config_db_name}, Data DB: {data_db_name}")
     logger.debug(f"Default TTL: {ttl_days} days")
 
-    # 3) Instantiate MongoClientWrapper
+    # 4) Instantiate MongoClientWrapper
     mongo = MongoClientWrapper(
         uri=mongo_uri,
         config_db_name=config_db_name,
@@ -79,10 +89,10 @@ async def main():
     )
 
     try:
-        # 4) Instantiate the Harvester
+        # 5) Instantiate the Harvester
         harvester = Harvester(mongo=mongo)
 
-        # 5) Run the harvest process
+        # 6) Run the harvest process
         summary = await harvester.harvest()
 
         for src_type, counters in summary.items():
