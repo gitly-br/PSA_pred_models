@@ -25,7 +25,7 @@ from harvest.harvester import Harvester
 DEFAULT_MONGO_URI = "mongodb://localhost:27017"
 DEFAULT_CONFIG_DB = "harvest_config"
 DEFAULT_DATA_DB = "harvest_data"
-DEFAULT_TTL_DAYS = 7
+DEFAULT_TTL_DAYS = 60
 
 
 def configure_logging():
