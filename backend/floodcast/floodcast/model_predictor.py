@@ -114,6 +114,9 @@ class ModelPredictor:
             if os.path.exists(pipeline_filename):
                 os.remove(pipeline_filename)
                 print(f"**** Cleaned up {pipeline_filename}")
+            if os.path.exists(explainer_filename):
+                os.remove(explainer_filename)
+                print(f"**** Cleaned up {explainer_filename}")
 
     async def run_predictions(self) -> list[dict]:
         tasks = [self._process_single_model(model_config) for model_config in self.models_config]

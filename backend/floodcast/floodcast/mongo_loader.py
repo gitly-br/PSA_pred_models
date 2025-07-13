@@ -2,9 +2,6 @@ import os
 from datetime import datetime, timedelta
 import pytz
 from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # === Configuration ===
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
