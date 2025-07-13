@@ -28,38 +28,37 @@ DEFAULT_DATA_DB = "harvest_data"
 DEFAULT_TTL_DAYS = 60
 
 
-def configure_logging():
-    """
-    Configure two handlers:
-      - stdout_handler: handles INFO, DEBUG, and WARNING (level < ERROR) → sys.stdout
-      - stderr_handler: handles ERROR and CRITICAL (level >= ERROR) → sys.stderr
-    """
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)  # capture all levels, handlers will filter
+def setup_logger(name, log_file=None, level=logging.INFO):
+    """Set up logger with custom formatting"""
 
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+    # Create logger
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
 
-    # Handler for INFO and below → stdout
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.DEBUG)
-    stdout_handler.addFilter(lambda record: record.levelno < logging.ERROR)
-    stdout_handler.setFormatter(formatter)
+    # Prevent duplicate handlers
+    if logger.handlers:
+        return logger
 
-    # Handler for WARNING and above → stderr
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setLevel(logging.WARNING)
-    stderr_handler.setFormatter(formatter)
+    # Create formatter
+    formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
 
-    # Clear any existing handlers, then add ours
-    root_logger.handlers.clear()
-    root_logger.addHandler(stdout_handler)
-    root_logger.addHandler(stderr_handler)
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    # File handler (optional)
+    if log_file:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    return logger
 
 
 async def main():
     # 1) Configure logging
-    configure_logging()
-    logger = logging.getLogger(__name__)
+    logger = setup_logger(__name__, "app.log")
 
     # 2) Read environment variables or default values
     mongo_uri = os.getenv("MONGO_URI", DEFAULT_MONGO_URI)
@@ -67,10 +66,10 @@ async def main():
     data_db_name = os.getenv("DATA_DB_NAME", DEFAULT_DATA_DB)
     ttl_days = int(os.getenv("DEFAULT_TTL_DAYS", DEFAULT_TTL_DAYS))
 
-    logger.info("Starting Harvester CLI")
-    logger.info(f"Mongo URI: {mongo_uri}")
-    logger.info(f"Config DB: {config_db_name}, Data DB: {data_db_name}")
-    logger.info(f"Default TTL: {ttl_days} days")
+    logger.info("Starting harvest job")
+    logger.debug(f"Mongo URI: {mongo_uri}")
+    logger.debug(f"Config DB: {config_db_name}, Data DB: {data_db_name}")
+    logger.debug(f"Default TTL: {ttl_days} days")
 
     # 3) Instantiate MongoClientWrapper
     mongo = MongoClientWrapper(
@@ -90,14 +89,16 @@ async def main():
             inserted = counters.get("inserted", 0)
             skipped = counters.get("skipped", 0)
             failed = counters.get("failed", 0)
-            logger.info(
-                (f"SUMMARY: {src_type}: inserted={inserted},"
+            logger.debug(
+                (f"{src_type.upper()}: inserted={inserted},"
                  f"  skipped={skipped}, failed={failed}")
             )
         if skipped > 0:
-            logger.warning(f"{src_type} had {skipped} skips")
+            logger.warning(f"{src_type.upper()} had {skipped} skips")
         if failed > 0:
-            logger.error(f"{src_type} had {failed} failures")
+            logger.error(f"{src_type.upper()} had {failed} failures")
+        else:
+            logger.info(f"{src_type.upper()} is done")
 
     except Exception as e:
         # This goes to stderr because level=ERROR
