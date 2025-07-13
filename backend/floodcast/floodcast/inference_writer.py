@@ -3,6 +3,9 @@ from datetime import datetime
 import pytz
 from motor.motor_asyncio import AsyncIOMotorClient
 from collections import defaultdict
+from .logger import get_logger
+
+logger = get_logger(__name__)
 
 FEATURE_DICT = {
     "rain": "precipitação",
@@ -56,6 +59,7 @@ class InferenceWriter:
 
     async def _build_inference_object(self, all_predictions: list[dict]) -> dict:
         if not all_predictions:
+            logger.error("No predictions provided to build inference object.")
             raise ValueError("--- No predictions provided to build inference object.")
 
         # Assuming all predictions belong to the same region for a single inference object
@@ -70,6 +74,7 @@ class InferenceWriter:
         for pred in all_predictions:
             day = pred.get("day")
             if not day:
+                logger.error("--- Prediction object missing 'day' key.")
                 raise ValueError("--- Prediction object missing 'day' key.")
             subregion = pred.get("subregion", "unknown_subregion")
             model_name = pred.get("model_name", "unknown_model")
@@ -161,13 +166,13 @@ class InferenceWriter:
         })
 
         if existing_record:
-            print(f"**** Inference record for {region} on {dt_key.date()} already exists. Skipping write.")
+            logger.debug(f"Inference record for {region} on {dt_key.date()} already exists. Skipping write.")
         else:
             try:
                 await collection.insert_one(inference_object)
-                print(f"++++ Successfully wrote inference record for {region} on {dt_key.date()} to MongoDB.")
+                logger.debug(f"Successfully wrote inference record for {region} on {dt_key.date()} to MongoDB.")
             except Exception as e:
-                print(f"---- Error writing inference record to MongoDB: {e}")
+                logger.error(f"Error writing inference record to MongoDB: {e}")
     
     async def check_inference_needed(self, models_config: list[dict]) -> list[dict]:
         client = AsyncIOMotorClient(self.mongo_uri)
@@ -189,6 +194,6 @@ class InferenceWriter:
             if not existing_record:
                 needed_models.extend(models)
             else:
-                print(f"**** Inference record for {region} on {dt_key.date()} already exists. Skipping...")
+                logger.debug(f"Inference record for {region} on {dt_key.date()} already exists. Skipping...")
 
         return needed_models

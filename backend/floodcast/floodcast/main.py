@@ -12,37 +12,48 @@ from .forecast_loader import ForecastLoader
 from .model_predictor import ModelPredictor
 from .inference_writer import InferenceWriter
 
+import argparse
+from .logger import configure_logging, get_logger
+
+
+if __name__ == "__main__":
+    main()
 
 async def main():
     """
     Main function to run the flood prediction.
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+    args = parser.parse_args()
+    
+    # Configure logging before importing other modules
+    configure_logging(debug=args.debug)
+    logger = get_logger(__name__)
+
+    logger.info("Starting floodcast job")
     # Step 1: Fetch all model configurations
-    print("========= Fetching models ========")
     models_config = await get_models_config()
 
     # Step 2: Check if inference is needed
-    print("\n\n========= Checking if inference is needed ========")
     inference_writer = InferenceWriter()
     models_to_run = await inference_writer.check_inference_needed(models_config)
 
     if not models_to_run:
-        print("\n\n========= No new inferences needed. Exiting. ========")
+        logger.warning("No new inference needed. Exiting...")
         return
 
     # Step 3: Load forecasts for unique sources
-    print("\n\n========= Fetching forecasts ========")
     forecast_loader = ForecastLoader(models_to_run)
     forecasts = await forecast_loader.load_forecasts()
 
     # Step 4: Run predictions for all models
-    print("\n\n========= Running predicitons ========")
     model_predictor = ModelPredictor(models_to_run, forecasts)
     all_predictions = await model_predictor.run_predictions()
 
     # Step 5: Write inference results to MongoDB
-    print("\n\n========= Writing inferences ========")
     await inference_writer.write_inference_object(all_predictions)
+    logger.info("is done")
 
 
 if __name__ == "__main__":
