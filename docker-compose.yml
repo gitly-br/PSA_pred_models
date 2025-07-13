@@ -24,17 +24,9 @@ services:
       - "8080:8000"
       - "6457:6457"
     command: ./entrypoint.sh
-    volumes:
-      - ./backend/sentry/source:/backend/sentry/source
-      - ./backend/sentry/keys:/backend/sentry/keys
-      - ./backend/harvest:/backend/harvest
-      - ./backend/floodcast:/backend/floodcast
     networks:
       - app_network
       - support_network
-    # Commented out so it doesn't wait for the local mongo
-    # depends_on:
-    #   - mongo
 
   frontend:
     build:
@@ -55,4 +47,3 @@ networks:
 
 volumes:
   models_mongo_data:
-
