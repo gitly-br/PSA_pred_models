@@ -1,5 +1,8 @@
 import pandas as pd
 from .mongo_loader import get_latest_hourly_data
+from .logger import get_logger
+
+logger = get_logger(__name__)
 
 class ForecastLoader:
     def __init__(self, models_config: list):
@@ -20,9 +23,9 @@ class ForecastLoader:
             try:
                 hourly_forecast_list = await get_latest_hourly_data(source)
                 forecasts[source] = pd.DataFrame(hourly_forecast_list)
-                print(f"++++ Successfully loaded forecast for source: {source}")
+                logger.debug(f"Successfully loaded forecast for source: {source}")
             except RuntimeError as e:
-                print(f"---- Error loading forecast for source {source}: {e}")
+                logger.error(f"Error loading forecast for source {source}: {e}")
             except Exception as e:
-                print(f"---- An unexpected error occurred while loading forecast for source {source}: {e}")
+                logger.error(f"An unexpected error occurred while loading forecast for source {source}: {e}")
         return forecasts

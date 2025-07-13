@@ -3,6 +3,9 @@ import os
 import gdown
 import pandas as pd
 import asyncio
+from .logger import get_logger
+
+logger = get_logger(__name__)
 
 async def grab_from_gdrive(file_link, filename):
   file_id = file_link.split("/")[-2]
@@ -40,13 +43,13 @@ class ModelPredictor:
         explainer_file_id = model_config.get("files", {}).get("explainer")
 
         if not source_collection or not pipeline_file_id:
-            print(f"---- Skipping model {model_name}: Missing source collection or pipeline file ID.")
+            logger.warning(f"Skipping model {model_name}: Missing source collection or pipeline file ID.")
             return None
 
-        print(f"==== Processing model: {region}/{subregion}/{model_name}")
+        logger.debug(f"Processing model: {region}/{subregion}/{model_name}")
 
         if source_collection not in self.forecasts:
-            print(f"---- Skipping model {model_name}: Forecast data not available for source {source_collection}.")
+            logger.warning(f"Skipping model {model_name}: Forecast data not available for source {source_collection}.")
             return None
 
         hourly_df = self.forecasts[source_collection]
@@ -57,12 +60,12 @@ class ModelPredictor:
         try:
             await grab_from_gdrive(pipeline_file_id, pipeline_filename)
             if not os.path.exists(pipeline_filename):
-                print(f"---- Error: Pipeline file {pipeline_filename} not downloaded for model {model_name}.")
+                logger.error(f"Pipeline file {pipeline_filename} not downloaded for model {model_name}.")
                 return None
 
             pipeline = joblib.load(pipeline_filename)
         except Exception as e:
-            print(f"---- Error loading pipeline for {model_name}: {e}")
+            logger.error(f"Error loading pipeline for {model_name}: {e}")
             return None
 
         # Download and load the explainer
@@ -70,12 +73,12 @@ class ModelPredictor:
         try:
             await grab_from_gdrive(explainer_file_id, explainer_filename)
             if not os.path.exists(explainer_filename):
-                print(f"---- Error: Explainer file {explainer_filename} not downloaded for model {region}/{subregion}/{model_name}.")
+                logger.error(f"Error: Explainer file {explainer_filename} not downloaded for model {region}/{subregion}/{model_name}.")
                 return None
 
             explainer = joblib.load(explainer_filename)
         except Exception as e:
-            print(f"---- Error loading explainer for {region}/{subregion}/{model_name}: {e}")
+            logger.error(f"Error loading explainer for {region}/{subregion}/{model_name}: {e}")
             return None
 
         try:
@@ -83,9 +86,9 @@ class ModelPredictor:
             proba_value = None
             if hasattr(pipeline, 'predict_proba'):
                 proba_value = float(pipeline.predict_proba(hourly_df)[0][1]) # Probability of the positive class
-                print(f"++++ Prediction for {region}/{subregion}/{model_name}: {prediction_value} (Proba: {proba_value:.2f})")
+                logger.debug(f"Prediction for {region}/{subregion}/{model_name}: {prediction_value} (Proba: {proba_value:.2f})")
             else:
-                print(f"**** Prediction for {region}/{subregion}/{model_name}: {prediction_value}")
+                logger.debug(f"Prediction for {region}/{subregion}/{model_name}: {prediction_value}")
             hourly_agg = pipeline.named_steps["aggregator"].transform(hourly_df)
             hourly_pp = pipeline.named_steps["dt_dropper"].transform(hourly_agg)
             shap_values = explainer.shap_values(hourly_pp)
@@ -106,17 +109,17 @@ class ModelPredictor:
             return result
 
         except Exception as e:
-            print(f"---- Error during prediction for {region}/{subregion}/{model_name}: {e}")
+            logger.error(f"Error during prediction for {region}/{subregion}/{model_name}: {e}")
             return None
 
         finally:
             # Clean up the downloaded pipeline file
             if os.path.exists(pipeline_filename):
                 os.remove(pipeline_filename)
-                print(f"**** Cleaned up {pipeline_filename}")
+                logger.debug(f"Cleaned up {pipeline_filename}")
             if os.path.exists(explainer_filename):
                 os.remove(explainer_filename)
-                print(f"**** Cleaned up {explainer_filename}")
+                logger.debug(f"Cleaned up {explainer_filename}")
 
     async def run_predictions(self) -> list[dict]:
         tasks = [self._process_single_model(model_config) for model_config in self.models_config]

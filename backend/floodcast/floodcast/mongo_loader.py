@@ -2,6 +2,9 @@ import os
 from datetime import datetime, timedelta
 import pytz
 from motor.motor_asyncio import AsyncIOMotorClient
+from .logger import get_logger
+
+logger = get_logger(__name__)
 
 # === Configuration ===
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
@@ -17,9 +20,9 @@ async def get_models_config():
         models.append(doc)
     models_qty = len(models)
     if models_qty == 0:
-        print("---- No models found. Exiting...")
+        logger.warning("No models found. Exiting...")
         exit(1)
-    print(f"++++ Found {models_qty} models")
+    logger.debug(f"Found {models_qty} models")
     return models
 
 async def get_latest_hourly_data(collection_name: str) -> list:
@@ -50,20 +53,22 @@ async def get_latest_hourly_data(collection_name: str) -> list:
 
     # Fallback to 23:00 of the previous day if midnight not found
     if not latest_doc:
-        print(f"---- No forecast found for {midnight_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP. Trying {previous_day_23h_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP...")
+        logger.warning(f"No forecast found for {midnight_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP. Trying {previous_day_23h_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP...")
         latest_doc = await collection.find_one({"dt_request": previous_day_23h_utc})
 
     # Fallback to 01:00 of the current day if 23:00 not found
     if not latest_doc:
-        print(f"---- No forecast found for {previous_day_23h_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP. Trying {current_day_01h_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP...")
+        logger.warning(f"No forecast found for {previous_day_23h_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP. Trying {current_day_01h_sao_paulo.strftime('%Y-%m-%d %H:%M')} SP...")
         latest_doc = await collection.find_one({"dt_request": current_day_01h_utc})
     
     if not latest_doc:
+        logger.error(f"No forecast found for {collection_name} for the current day (midnight, 23h, or 01h).")
         raise RuntimeError(f"---- No forecast found for {collection_name} for the current day (midnight, 23h, or 01h).")
 
     if "hourly" not in latest_doc:
+        logger.error(f"Document found for {collection_name} but no 'hourly' data.")
         raise RuntimeError(f"---- Document found for {collection_name} but no 'hourly' data.")
 
     hourly_forecast = latest_doc["hourly"]
-    print(f"++++ Successfully fetched {len(hourly_forecast)} hourly records from {collection_name}.")
+    logger.debug(f"Successfully fetched {len(hourly_forecast)} hourly records from {collection_name}.")
     return hourly_forecast
