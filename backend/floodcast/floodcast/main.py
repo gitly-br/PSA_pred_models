@@ -18,22 +18,30 @@ async def main():
     Main function to run the flood prediction.
     """
     # Step 1: Fetch all model configurations
-    print("========= Fetching models =========")
+    print("========= Fetching models ========")
     models_config = await get_models_config()
 
-    # Step 2: Load forecasts for unique sources
-    print("\n\n========= Fetching forecasts =========")
-    forecast_loader = ForecastLoader(models_config)
+    # Step 2: Check if inference is needed
+    print("\n\n========= Checking if inference is needed ========")
+    inference_writer = InferenceWriter()
+    models_to_run = await inference_writer.check_inference_needed(models_config)
+
+    if not models_to_run:
+        print("\n\n========= No new inferences needed. Exiting. ========")
+        return
+
+    # Step 3: Load forecasts for unique sources
+    print("\n\n========= Fetching forecasts ========")
+    forecast_loader = ForecastLoader(models_to_run)
     forecasts = await forecast_loader.load_forecasts()
 
-    # Step 3: Run predictions for all models
-    print("\n\n========= Running predicitons =========")
-    model_predictor = ModelPredictor(models_config, forecasts)
+    # Step 4: Run predictions for all models
+    print("\n\n========= Running predicitons ========")
+    model_predictor = ModelPredictor(models_to_run, forecasts)
     all_predictions = await model_predictor.run_predictions()
 
-    # Step 4: Write inference results to MongoDB
-    print("\n\n========= Writing inferences =========")
-    inference_writer = InferenceWriter()
+    # Step 5: Write inference results to MongoDB
+    print("\n\n========= Writing inferences ========")
     await inference_writer.write_inference_object(all_predictions)
 
 

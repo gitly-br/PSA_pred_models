@@ -168,3 +168,27 @@ class InferenceWriter:
                 print(f"++++ Successfully wrote inference record for {region} on {dt_key.date()} to MongoDB.")
             except Exception as e:
                 print(f"---- Error writing inference record to MongoDB: {e}")
+    
+    async def check_inference_needed(self, models_config: list[dict]) -> list[dict]:
+        client = AsyncIOMotorClient(self.mongo_uri)
+        collection = client[self.db_name][self.collection_name]
+        sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+        dt_inference = datetime.now(sao_paulo_tz)
+        dt_key = datetime(dt_inference.year, dt_inference.month, dt_inference.day, tzinfo=sao_paulo_tz)
+
+        models_by_region = defaultdict(list)
+        for model in models_config:
+            models_by_region[model['region']].append(model)
+
+        needed_models = []
+        for region, models in models_by_region.items():
+            existing_record = await collection.find_one({
+                "dt_key": dt_key,
+                "region": region
+            })
+            if not existing_record:
+                needed_models.extend(models)
+            else:
+                print(f"**** Inference record for {region} on {dt_key.date()} already exists. Skipping...")
+
+        return needed_models
