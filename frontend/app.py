@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from authenticator import authenticator
 from streamlit_theme import st_theme
 
-api_url = environ.get('API_URL', 'http://localhost:8000')
+api_url = environ.get('API_URL', 'http://backend:8000')
 
 def get_forecast(date: str=""):
     if date == "":
