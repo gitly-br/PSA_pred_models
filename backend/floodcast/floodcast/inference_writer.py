@@ -3,9 +3,6 @@ from datetime import datetime
 import pytz
 from motor.motor_asyncio import AsyncIOMotorClient
 from collections import defaultdict
-from dotenv import load_dotenv
-
-load_dotenv()
 
 FEATURE_DICT = {
     "rain": "precipitação",

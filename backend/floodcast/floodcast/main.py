@@ -1,7 +1,11 @@
 import asyncio
+import sys
 
 # Import custom transformers
-from .custom_transformers import WindowAgg, DropColumnsTransformer
+from floodcast import custom_transformers
+from floodcast.custom_transformers import WindowAgg, DropColumnsTransformer
+sys.modules['__main__'] = custom_transformers
+
 
 from .mongo_loader import get_models_config
 from .forecast_loader import ForecastLoader
@@ -35,3 +39,9 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+def main_sync():
+    """Synchronous entry point for setup.py."""
+    asyncio.run(main())
+
