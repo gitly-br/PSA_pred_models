@@ -1,10 +1,8 @@
 FROM python:3.11-slim
 
 # Set environment variables
-ARG ENVIRONMENT
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
-ENV MONGO_URI=${MONGO_URI}
-ENV OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
 ENV MONGO_GITLY_CONNECTION_STRING=mongodb+srv://reader:3GLmsYqBpZfD2o0C@settings-and-secrets.hruknje.mongodb.net/?retryWrites=true&w=majority
 
 # Install build dependencies
