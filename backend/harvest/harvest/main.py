@@ -109,3 +109,9 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+def main_sync():
+    """Synchronous entry point for setup.py."""
+    import asyncio
+    asyncio.run(main())
