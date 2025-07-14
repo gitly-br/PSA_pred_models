@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import pandas as pd
 import json
 from streamlit_folium import folium_static
@@ -122,7 +122,7 @@ with col1:
 
     st.date_input(
         'Data escolhida:', 
-        value=datetime.now(), 
+        value=datetime.now(timezone(timedelta(hours=-3))).date(), 
         min_value=datetime(2017, 10, 6),
         format="DD/MM/YYYY",
         key="selected_date",
