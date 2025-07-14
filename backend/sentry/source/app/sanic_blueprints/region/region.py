@@ -3,7 +3,7 @@ from sanic.response import json
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.common.utils.log_config import setup_logger
 import os
-from datetime import datetime, time
+from datetime import datetime, time, timezone, timedelta
 from bson.decimal128 import Decimal128
 
 bp_region = Blueprint('region', url_prefix='/region')
@@ -42,7 +42,7 @@ async def get_region_inference(request, region_name):
             except ValueError:
                 return json({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
         else:
-            target_date = datetime.now().date()
+            target_date = datetime.now(timezone(timedelta(hours=-3))).date() 
 
         # Get the start and end of the day for the target date
         start_of_day = datetime.combine(target_date, time.min)
