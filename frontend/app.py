@@ -54,7 +54,7 @@ if 'tema' not in st.session_state or st.session_state.tema is None:
     st.session_state.tema = st_theme()
 
 if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = datetime.now(timezone(timedelta(hours=-3))).date()
+    st.session_state.selected_date = datetime.now(timezone(timedelta(hours=-5))).date()
 
 st.session_state.predict_date = st.session_state.selected_date.strftime('%d/%m/%Y')
 st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
@@ -86,7 +86,7 @@ except Exception as e:
 if st.session_state.authentication_status:
     pages = [
             st.Page("pages/home/home.py", title="Home"),
-            # st.Page("pages/models/models.py", title="Modelos Detalhados"),
+            st.Page("pages/models/models.py", title="Modelos Detalhados"),
             st.Page("pages/chamados/chamados.py", title="Mapa de Ocorrências"),
     ]
 
