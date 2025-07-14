@@ -3,7 +3,7 @@ from sanic.response import json
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.common.utils.log_config import setup_logger
 import os
-from datetime import datetime, time
+from datetime import datetime, time, timezone, timedelta
 
 bp_forecast_data = Blueprint('forecast_data', url_prefix='/forecast-data')
 
@@ -18,7 +18,7 @@ def get_target_date(request):
             return datetime.strptime(date_str, '%Y-%m-%d').date()
         except ValueError:
             return None
-    return datetime.now().date()
+    return datetime.now(timezone(timedelta(hours=-3))).date()
 
 @bp_forecast_data.listener('before_server_start')
 async def setup_db(app, loop):
