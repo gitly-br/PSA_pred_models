@@ -1,0 +1,10 @@
+# Ignore Python cache and virtual environments
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+**/venv/
+**/.mypy_cache/
+**/.pylint.d/
+**/.DS_Store
+**/.idea/
+**/.vscode/
