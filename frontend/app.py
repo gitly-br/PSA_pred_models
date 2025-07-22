@@ -92,7 +92,10 @@ if st.session_state.authentication_status:
 
     # SIDEBAR START
     pg = st.navigation(pages)
-    pg.run()
+    try:
+        pg.run()
+    except Exception as e:
+        st.error(e)
 
     # Remove espaço em branco no topo
     st.markdown("""
