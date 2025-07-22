@@ -8,7 +8,7 @@ OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
 
 */30 * * * * root psa-harvest >> /var/log/cron.log 2>&1
 5,35 0 * * * root psa-floodcast >> /var/log/cron.log 2>&1
-0 1,2,4,6,9,12 * * * root psa-floodcast >> /var/log/cron.log 2>&1
+0 3,4,5,6,9,12,15 * * * root psa-floodcast >> /var/log/cron.log 2>&1
 EOF
 
 chmod 0644 /etc/cron.d/crontab
