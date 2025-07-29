@@ -20,10 +20,11 @@ AGG_DICT = {
 }
 
 class InferenceWriter:
-    def __init__(self):
+    def __init__(self, target_date: datetime = None):
         self.mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
         self.db_name = "floodcast"
         self.collection_name = "inference"
+        self.target_date = target_date
 
     def _calculate_distribution(self, rain_distribution: dict, proba: float) -> dict:
         distribution = {}
@@ -62,12 +63,13 @@ class InferenceWriter:
             logger.error("No predictions provided to build inference object.")
             raise ValueError("--- No predictions provided to build inference object.")
 
-        # Assuming all predictions belong to the same region for a single inference object
-        # This can be refined if multi-region inference objects are needed later.
         top_level_region = all_predictions[0].get("region", "unknown_region")
         sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
         dt_inference = datetime.now(sao_paulo_tz)
-        dt_key = datetime(dt_inference.year, dt_inference.month, dt_inference.day, tzinfo=sao_paulo_tz)
+        if self.target_date:
+            dt_key = sao_paulo_tz.localize(self.target_date)
+        else:
+            dt_key = datetime(dt_inference.year, dt_inference.month, dt_inference.day, tzinfo=sao_paulo_tz)
 
         results_by_day_and_subregion = defaultdict(lambda: defaultdict(lambda: {"predicts": [], "probas": [], "shaps": [], "models": {}}))
 
@@ -83,27 +85,23 @@ class InferenceWriter:
             shap_explanation = pred.get("shap_explanation")
             rain_distribution = pred.get("rain_distribution")
 
-            # Store individual model results
             model_result = {"predict": predict_value}
             model_result["shap"] = shap_explanation
             if proba_value is not None:
                 model_result["proba"] = proba_value
             results_by_day_and_subregion[day][subregion]["models"][model_name] = model_result
 
-            # Collect for subregion aggregation
             results_by_day_and_subregion[day][subregion]["predicts"].append(predict_value)
             if shap_explanation is not None:
                 results_by_day_and_subregion[day][subregion]["shaps"].append(shap_explanation)
             if proba_value is not None:
                 results_by_day_and_subregion[day][subregion]["probas"].append(proba_value)
 
-        # Finalize results for each subregion and 'all'
         final_results_by_day = defaultdict(dict)
         for day, subregions_data in results_by_day_and_subregion.items():
             for subregion, data in subregions_data.items():
                 subregion_predict = int(sum(data["predicts"]) / len(data["predicts"])) if data["predicts"] else 0
                 subregion_proba = sum(data["probas"]) / len(data["probas"]) if data["probas"] else None
-                # TODO: Isso aqui esta porco!! Arrumar para uma logica decente depois
                 subregion_shap = data["shaps"][0]
 
                 if rain_distribution.get(day).get("total") < 3.5:
@@ -126,7 +124,6 @@ class InferenceWriter:
                     "models": data["models"]
                 }
             
-            # Coercion logic for 'all' model
             all_model_result = final_results_by_day[day].get("all")
             if all_model_result and all_model_result["predict"] == 0:
                 all_explanation = all_model_result["explanation"]
@@ -159,7 +156,6 @@ class InferenceWriter:
         client = AsyncIOMotorClient(self.mongo_uri)
         collection = client[self.db_name][self.collection_name]
 
-        # Check for duplicates for the current day and region
         existing_record = await collection.find_one({
             "dt_key": dt_key,
             "region": region
@@ -178,8 +174,12 @@ class InferenceWriter:
         client = AsyncIOMotorClient(self.mongo_uri)
         collection = client[self.db_name][self.collection_name]
         sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
-        dt_inference = datetime.now(sao_paulo_tz)
-        dt_key = datetime(dt_inference.year, dt_inference.month, dt_inference.day, tzinfo=sao_paulo_tz)
+        
+        if self.target_date:
+            dt_key = sao_paulo_tz.localize(self.target_date)
+        else:
+            dt_inference = datetime.now(sao_paulo_tz)
+            dt_key = datetime(dt_inference.year, dt_inference.month, dt_inference.day, tzinfo=sao_paulo_tz)
 
         models_by_region = defaultdict(list)
         for model in models_config:
