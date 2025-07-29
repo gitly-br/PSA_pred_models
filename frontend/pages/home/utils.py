@@ -44,9 +44,9 @@ def get_color(value, alpha=1):
 def get_color_distribution(rain_distribution):
     rain_color_distribution = rain_distribution.copy()
     for key, value in rain_color_distribution.items():
-        if value < 0.45:
+        if value < 0.42:
             rain_color_distribution[key] = (182, 226, 161, 1)
-        elif 0.45 <= value < 0.75:
+        elif 0.42 <= value < 0.75:
             rain_color_distribution[key] = (235, 189, 23, 1)
         else:
             rain_color_distribution[key] = (253, 138, 138, 1)
