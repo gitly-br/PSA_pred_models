@@ -25,7 +25,7 @@ async def get_models_config():
     logger.debug(f"Found {models_qty} models")
     return models
 
-async def get_latest_hourly_data(collection_name: str) -> list:
+async def get_latest_hourly_data(collection_name: str, target_date: datetime = None) -> list:
     """
     Connects to MongoDB to fetch the 'hourly' data from the most recent document
     where dt_request is at 00:00 (midnight) in America/Sao_Paulo timezone.
@@ -34,18 +34,22 @@ async def get_latest_hourly_data(collection_name: str) -> list:
     collection = client[HARVEST_DB_NAME][collection_name]
 
     sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
-    now_sao_paulo = datetime.now(sao_paulo_tz)
 
-    # Calculate midnight (00:00) for today in Sao Paulo time
-    midnight_sao_paulo = now_sao_paulo.replace(hour=0, minute=0, second=0, microsecond=0)
+    if target_date:
+        base_date = sao_paulo_tz.localize(target_date)
+    else:
+        base_date = datetime.now(sao_paulo_tz)
+
+    # Calculate midnight (00:00) for the target date in Sao Paulo time
+    midnight_sao_paulo = base_date.replace(hour=0, minute=0, second=0, microsecond=0)
     midnight_utc = midnight_sao_paulo.astimezone(pytz.utc)
 
     # Calculate 23:00 (11 PM) for the previous day in Sao Paulo time
-    previous_day_23h_sao_paulo = (now_sao_paulo - timedelta(days=1)).replace(hour=23, minute=0, second=0, microsecond=0)
+    previous_day_23h_sao_paulo = (base_date - timedelta(days=1)).replace(hour=23, minute=0, second=0, microsecond=0)
     previous_day_23h_utc = previous_day_23h_sao_paulo.astimezone(pytz.utc)
 
-    # Calculate 01:00 (1 AM) for today in Sao Paulo time
-    current_day_01h_sao_paulo = now_sao_paulo.replace(hour=1, minute=0, second=0, microsecond=0)
+    # Calculate 01:00 (1 AM) for the target day in Sao Paulo time
+    current_day_01h_sao_paulo = base_date.replace(hour=1, minute=0, second=0, microsecond=0)
     current_day_01h_utc = current_day_01h_sao_paulo.astimezone(pytz.utc)
 
     # Try to find the document for midnight first
@@ -62,8 +66,8 @@ async def get_latest_hourly_data(collection_name: str) -> list:
         latest_doc = await collection.find_one({"dt_request": current_day_01h_utc})
     
     if not latest_doc:
-        logger.error(f"No forecast found for {collection_name} for the current day (midnight, 23h, or 01h).")
-        raise RuntimeError(f"---- No forecast found for {collection_name} for the current day (midnight, 23h, or 01h).")
+        logger.error(f"No forecast found for {collection_name} for the specified date (midnight, 23h, or 01h).")
+        raise RuntimeError(f"---- No forecast found for {collection_name} for the specified date (midnight, 23h, or 01h).")
 
     if "hourly" not in latest_doc:
         logger.error(f"Document found for {collection_name} but no 'hourly' data.")
