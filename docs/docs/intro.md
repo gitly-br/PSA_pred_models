@@ -3,48 +3,15 @@ sidebar_position: 1
 slug: /
 ---
 
-# Introdução oi
+# Introdução
 
-Este é apenas um template para você poder criar um repositório de conteúdo
-rapidamente e com uma configuração opinionada do Docusaurus.
+Este documento apresenta o sistema de predição de alagamentos de curto prazo, desenvolvido como projeto piloto para o município de Santo André. O principal objetivo da ferramenta é apoiar as operações da Defesa Civil, fornecendo previsões que permitam a antecipação de eventos de inundação, visando otimizar a resposta a emergências e mitigar os impactos para a população.
 
-Neste repositório, já estão configurados:
+A documentação detalha a implementação técnica da versão atualizada e modular do sistema, entregue em agosto de 2025. As seções a seguir, acessíveis pelo menu lateral, estruturam este documento:
 
-* A base do docusaurus, que fica dentro do diretório `webpage`
+*   **[Visão Geral do Sistema](./system/README.md):** Descreve a arquitetura da solução e os aspectos de desenvolvimento de cada módulo. Funciona como um guia técnico para a manutenção e evolução do sistema.
+*   **[Manual Operacional](./guide.md):** Oferece um guia prático para a inicialização e operação do sistema em ambientes de desenvolvimento e produção.
+*   **Considerações sobre Modelos:** Apresenta um resumo da estratégia utilizada para o treinamento dos modelos de predição.
+*   **Próximos Passos:** Mapeia as futuras etapas de desenvolvimento do projeto.
 
-## 1. O que você precisa fazer
-
-### 1.1. Modificar o nome da página
-
-## 2. O que você pode querer fazer
-
-Não vou delinear todas as funcionalidades do docusaurus. Para isso, existe a
-[documentação do docusaurus](https://docusaurus.io/docs/next). No entanto, há
-algumas coisas que você pode querer fazer e que são esperadas pela natureza do
-conteúdo que vamos publicar aqui. Para essas, vou deixar um pequeno tutorial.
-
-### 2.1. Adicionando equações `LaTeX`
-
-**Inline**
-
-```LaTeX
-Let $f\colon[a,b]\to\R$ be Riemann integrable. Let $F\colon[a,b]\to\R$ be
-$F(x)=\int_{a}^{x} f(t)\,dt$. Then $F$ is continuous, and at all $x$ such that
-$f$ is continuous at $x$, $F$ is differentiable at $x$ with $F'(x)=f(x)$.
-```
-
-Let $f\colon[a,b]\to\R$ be Riemann integrable. Let $F\colon[a,b]\to\R$ be
-$F(x)=\int_{a}^{x} f(t)\,dt$. Then $F$ is continuous, and at all $x$ such that
-$f$ is continuous at $x$, $F$ is differentiable at $x$ with $F'(x)=f(x)$.
-
-**Bloco**
-
-```LaTeX
-$$
-I = \int_0^{2\pi} \sin(x)\,dx
-$$
-```
-
-$$
-I = \int_0^{2\pi} \sin(x)\,dx
-$$
+Este conjunto de documentos visa servir como uma referência completa, garantindo que usuários, operadores e desenvolvedores possam compreender e utilizar o sistema de forma eficaz.
