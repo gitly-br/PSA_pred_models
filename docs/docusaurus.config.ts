@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 const config: Config = {
-  title: 'Gitly PSA',
+  title: 'Projeto PSA',
   favicon: 'img/gitly_logo.png',
 
   url: 'https://gitly-br.github.io',
@@ -57,7 +57,7 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/gitly_social_card.png',
     navbar: {
-      title: 'Gitly PSA',
+      title: 'Projeto PSA',
       logo: {
         alt: 'Gitly logo',
         src: 'img/gitly_logo.png',
@@ -67,7 +67,7 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Docs',
+          label: 'Documentação',
         },
         {
           href: 'https://github.com/gitly-br/PSA_pred_models',
