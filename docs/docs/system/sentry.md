@@ -4,44 +4,113 @@ slug: /sentry
 sidebar_position: 3
 ---
 
-# Módulo Sentry (Backend API)
+# API do Sentry
 
-O módulo `sentry` é a API de backend do Sistema de Predição de Alagamentos (PSA). Desenvolvido com o framework [Sanic](https://sanic.dev/), ele atua como um microserviço escalável e configurável, responsável por servir os dados necessários para o frontend em Streamlit.
+O Sentry atua como a API de backend para o Sistema de Predição de Alagamentos (PSA). Ele fornece os endpoints necessários para que o frontend e outros serviços consumam os dados de previsão e de ocorrências.
 
-## 1. Arquitetura e Estrutura
+## 1. Rota de Previsão
 
-A aplicação é estruturada de forma modular, utilizando `Blueprints` do Sanic para organizar as diferentes rotas da API.
+Este endpoint retorna o resultado da previsão de alagamento para uma determinada região e data.
 
-### 1.1. `run.py`
+- **Método:** `GET`
+- **Rota:** `/region/<region_name>`
 
-Este é o ponto de entrada da aplicação. Suas principais funções são:
+**Parâmetros de URL:**
 
-- **Inicialização:** Interpreta os argumentos de linha de comando para definir o ambiente de execução (desenvolvimento, produção ou local).
-- **Carregamento de Configurações:** Carrega as configurações da aplicação a partir de um banco de dados MongoDB central, o que permite uma gestão centralizada das configurações para diferentes ambientes.
-- **Criação da Aplicação:** Utiliza a função `create_app` como uma fábrica para instanciar a aplicação Sanic.
-- **Execução do Servidor:** Inicia o servidor Sanic, configurando o número de `workers` com base nos recursos da máquina para otimizar o desempenho.
+- `<region_name>` (string, obrigatório): O nome da região para a qual a previsão é solicitada. Atualmente, o valor `santoandre` é o único suportado.
 
-### 1.2. `app/common/app.py`
+**Argumentos Opcionais (Query String):**
 
-Este arquivo contém a função `create_app`, que é a fábrica responsável por criar e configurar o objeto da aplicação Sanic. Suas responsabilidades incluem:
+- `date` (string, opcional): A data para a qual a previsão é solicitada, no formato `YYYY-MM-DD`. Se não for fornecida, a data atual é utilizada.
 
-- **Configuração do Sanic:** Aplica diversas configurações à aplicação, como CORS, timeouts, e endpoints de monitoramento de saúde (`health check`).
-- **Registro de Blueprints:** Registra os `Blueprints` que definem as rotas da API. Ele distingue entre `Blueprints` comuns (reutilizáveis em outras aplicações) e os `Blueprints` específicos da aplicação.
-- **Gestão de Ciclo de Vida:** Configura eventos que ocorrem antes do início e após o término do servidor, como a inicialização de um cliente HTTP (`httpx`) para comunicação com outros serviços.
+**Exemplo de Uso:**
 
-### 1.3. `app/sanic_blueprints/blueprint_register.py`
+```bash
+curl http://localhost:8080/region/santoandre?date=2024-01-10
+```
 
-Este arquivo centraliza o registro de todos os `Blueprints` específicos da aplicação, que são o coração da funcionalidade da API. Cada `Blueprint` corresponde a um conjunto de rotas relacionadas:
+**Resposta de Sucesso (200 OK):**
 
-- **`bp_get_dates`:** Provavelmente para obter as datas para as quais existem previsões disponíveis.
-- **`bp_home`:** Rota principal, utilizada pela página inicial do frontend.
-- **`bp_forecast`:** Fornece os dados de previsão de alagamento.
-- **`chamados_pbi_bp`:** Rota relacionada ao dashboard de ocorrências do Power BI.
-- **`bp_region`:** Fornece dados para uma região ou bacia hidrográfica específica.
-- **`bp_forecast_data`:** Fornece os dados de entrada que foram utilizados para gerar as previsões.
+```json
+{
+  "today": {
+    "all": {
+      "predict": 0,
+      "proba": 0.3,
+      "explanation": "Não há precipitação significativa prevista para o período",
+      "rain_today": { ... },
+      "models": { ... }
+    },
+    "tamanduatei": { ... },
+    "oratorio": { ... },
+    "meninos": { ... },
+    "guarara": { ... }
+  },
+  "tomorrow": {
+    "all": { ... }
+  }
+}
+```
 
-## 2. Tecnologias Utilizadas
+## 2. Rota de Dados de Entrada da Previsão
 
-- **Sanic:** Framework web assíncrono de alta performance para a construção da API.
-- **httpx:** Cliente HTTP assíncrono para a comunicação com outros serviços.
-- **MongoDB:** Utilizado como banco de dados central para o armazenamento de configurações.
+Este endpoint retorna os dados de previsão do tempo que foram utilizados como entrada para os modelos de Machine Learning.
+
+- **Método:** `GET`
+- **Rota:** `/forecast-data/<region>/<sourcename>`
+
+**Parâmetros de URL:**
+
+- `<region>` (string, obrigatório): A região para a qual os dados são solicitados (ex: `santoandre`).
+- `<sourcename>` (string, obrigatório): A fonte dos dados de previsão do tempo (ex: `openweather`).
+
+**Argumentos Opcionais (Query String):**
+
+- `date` (string, opcional): A data para a qual os dados são solicitados, no formato `YYYY-MM-DD`. Se não for fornecida, a data atual é utilizada.
+
+**Exemplo de Uso:**
+
+```bash
+curl http://localhost:8080/forecast-data/santoandre/openweather?date=2024-01-10
+```
+
+**Resposta de Sucesso (200 OK):**
+
+```json
+[
+  {
+    "dt": 1704855600,
+    "temp": 22.5,
+    "pressure": 1012,
+    "humidity": 80,
+    "wind_speed": 3.5,
+    "rain": 0,
+    "clouds": 75
+  },
+  ...
+]
+```
+
+## 3. Rota de Ocorrências (Power BI)
+
+Este endpoint fornece um arquivo CSV com os dados de ocorrências de alagamentos, para ser consumido pelo Power BI.
+
+- **Método:** `GET`
+- **Rota:** `/chamados_pbi/get_csv`
+
+**Autenticação:**
+
+Este endpoint requer autenticação básica (Basic Authentication).
+
+- **Usuário:** `chamados_psa`
+- **Senha:** `n0d817g2b307vd&@asdfGJV`
+
+**Exemplo de Uso:**
+
+```bash
+curl -u chamados_psa:n0d817g2b307vd\&@asdfGJV http://localhost:8080/chamados_pbi/get_csv
+```
+
+**Resposta de Sucesso (200 OK):**
+
+A resposta será um arquivo CSV para download com os dados das ocorrências.
