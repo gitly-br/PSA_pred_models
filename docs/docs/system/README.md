@@ -14,11 +14,6 @@ sua vez, encapsula a lógica de negócio em três processos Python concorrentes
 que se comunicam de forma assíncrona através do banco de dados `mongo`, que
 atua como um barramento de dados central.
 
-A imagem a seguir ilustra a arquitetura do sistema:
-
-TODO: Adicionar imagem arquitetura
-
-
 ## 1. Arquitetura de Serviços
 
 O sistema é dividido nos seguintes serviços Docker:
