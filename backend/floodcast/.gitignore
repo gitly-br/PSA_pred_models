@@ -1,0 +1,18 @@
+# local venvs
+.venv/
+env/
+venv/
+
+# byte-code / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# editor / tooling
+*.swp
+.idea/
+.vscode/
+
+# dotenv files
+.env
+cookies.txt
