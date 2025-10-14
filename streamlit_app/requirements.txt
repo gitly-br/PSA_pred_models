@@ -1,9 +1,0 @@
-streamlit
-requests
-pandas
-geopandas
-matplotlib
-streamlit-autorefresh
-streamlit-folium
-plotly
-st-theme

@@ -1,0 +1,16 @@
+credentials:
+  usernames:      
+    admin:
+      name: admin
+      password: "$2b$12$pKzzHf4EaENVnc4ZAXNN1uNM7zc5G34gg1SNPYuQf42G6ImOAM1nW"
+    psa_defesa_civil:
+      name: PSA Defesa Civil
+      password: "$2b$12$YhhGfArIBiw1URDt0aFNo.ZH8yVzV8VkamEaG0zFGCVQFhJ531IZi"
+    caf@santoandre:
+      name: CAF Santo André
+      password: "$2b$12$a6NT26y5iqpKULQ8sPgAz.pzcorzN8b9XB6MNcjLRSENZSF5ppDQW"
+
+cookie:                    # ← onde acontece a mágica da persistência
+  expiry_days: 30          # usuário fica logado até 30 dias
+  key: "koljn12089e76fvJKLHGV08Asfdv2"  # segredo para assinar o JWT
+  name: "streamlit_cookie" # nome do cookie no navegador
