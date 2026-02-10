@@ -1,14 +1,14 @@
 services:
   mongo:
-    image: mongo:4.0.28
+    image: mongo:8.2
     init: true
     ports:
       - "27000:27017"
     volumes:
       - models_mongo_data:/data/db
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=localhost
-      - MONGO_INITDB_ROOT_PASSWORD=localhost_psa
+      - MONGO_INITDB_ROOT_USERNAME=psa
+      - MONGO_INITDB_ROOT_PASSWORD=psa
     networks:
       - app_network
 
