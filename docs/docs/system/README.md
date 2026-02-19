@@ -1,5 +1,5 @@
 ---
-title: Visão geral do sistema
+title: Sistema
 slug: /system
 sidebar_position: 2
 ---

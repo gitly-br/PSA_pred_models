@@ -1,5 +1,6 @@
 ---
-sidebar_position: 3
+title: Guia operacional
+sidebar_position: 2
 slug: /guide
 ---
 

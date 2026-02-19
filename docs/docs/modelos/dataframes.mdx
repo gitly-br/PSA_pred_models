@@ -1,0 +1,206 @@
+---
+title: Datasets e arquivos
+slug: /datasets
+sidebar_position: 2
+---
+
+:::warning TODO
+
+Tirar os arquivos do drive e levar para o minio
+
+:::
+
+# Datasets e arquivos utilizados
+
+A seguir uma breve descrição dos dataframes utilizados nos notebooks (com ou sem
+processamento).
+
+## Datasets de chamados
+
+### Raw
+
+Dataframe **cru**, apenas com os chamados registrados entre 2002 e 2021.
+
+Gerado no notebook de [**Processamento de chamados**](./notebooks#processamento-de-chamados).
+
+[Link para
+download](https://drive.google.com/file/d/1jzFVDT9LYGF7gk3e68FGOVF1r6k60wMJ/view?usp=drive_link)
+
+
+```
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 60353 entries, 0 to 60352
+Data columns (total 5 columns):
+ #   Column       Non-Null Count  Dtype 
+---  ------       --------------  ----- 
+ 0   servico      60353 non-null  object
+ 1   end          60352 non-null  object
+ 2   data         60352 non-null  object
+ 3   enc          60159 non-null  object
+ 4   solicitante  60352 non-null  object
+dtypes: object(5)
+memory usage: 2.3+ MB
+```
+
+### Por bacia
+
+Para cada bacia, define o bairro onde aconteceu o chamado através do endereço e
+introduz colunas one-hot para indicar em qual bacia o chamado ocorre.
+
+Gerado no notebook de [**Processamento de chamados**](./notebooks#processamento-de-chamados).
+
+[Link para
+download](https://drive.google.com/file/d/1jzFVDT9LYGF7gk3e68FGOVF1r6k60wMJ/view?usp=drive_link)
+
+```
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 60353 entries, 0 to 60352
+Data columns (total 10 columns):
+ #   Column       Non-Null Count  Dtype 
+---  ------       --------------  ----- 
+ 0   servico      60353 non-null  object
+ 1   end          60352 non-null  object
+ 2   data         60352 non-null  object
+ 3   enc          60159 non-null  object
+ 4   solicitante  60352 non-null  object
+ 5   bairro       60351 non-null  object
+ 6   meninos      60353 non-null  int64 
+ 7   oratorio     60353 non-null  int64 
+ 8   tamanduatei  60353 non-null  int64 
+ 9   guarara      60353 non-null  int64 
+dtypes: int64(4), object(6)
+memory usage: 4.6+ MB
+```
+
+Proporção de chamados por bacia:
+
+```
+tamanduatei    0.621775
+guarara        0.329246
+meninos        0.120822
+oratorio       0.104104
+```
+
+### Enchente
+
+Filtra apenas pelos chamados relacionados a enchentes. A saber:
+
+* 809.3 - DDC - Enchente / Inundação / Alagamento - Núcleo
+* 809 - DDC - Enchente / Inundação / Alagamento
+* 809.2 - DDC - Enchente / Inundação / Alagamento - Residência
+* 809.1 - DDC - Enchente / Inundação / Alagamento - Via
+* 809.4 - DDC - Enchente / Inundação / Alagamento - Industria / Comércio
+
+
+Gerado no notebook de [**Processamento de chamados**](./notebooks#processamento-de-chamados).
+
+[Link para
+download](https://drive.google.com/file/d/1XhMzkKWY7b_8M67xHrpcLjQenAqD4aA8/view?usp=drive_link)
+
+```
+<class 'pandas.core.frame.DataFrame'>
+Index: 2991 entries, 167 to 60165
+Data columns (total 10 columns):
+ #   Column       Non-Null Count  Dtype 
+---  ------       --------------  ----- 
+ 0   servico      2991 non-null   object
+ 1   end          2991 non-null   object
+ 2   data         2991 non-null   object
+ 3   enc          2981 non-null   object
+ 4   solicitante  2991 non-null   object
+ 5   bairro       2991 non-null   object
+ 6   meninos      2991 non-null   int64 
+ 7   oratorio     2991 non-null   int64 
+ 8   tamanduatei  2991 non-null   int64 
+ 9   guarara      2991 non-null   int64 
+dtypes: int64(4), object(6)
+memory usage: 257.0+ KB
+```
+
+Proporção de chamados por bacia:
+
+```
+tamanduatei    0.637245
+guarara        0.392177
+meninos        0.240388
+oratorio       0.068205
+```
+
+# Diario
+
+Agrega os chamados de enchente por dia. Remove dados de solicitante, endereço e
+bairro. Mantém apenas o one hot das bacias e a data.
+
+Gerado no notebook de [**Processamento de chamados**](./notebooks#processamento-de-chamados).
+
+[Link para
+download](https://drive.google.com/file/d/1tRnkV0FcgqKIIiVLdwaBp2Mevw_pyFSP/view?usp=drive_link)
+
+```
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 474 entries, 0 to 473
+Data columns (total 5 columns):
+ #   Column       Non-Null Count  Dtype         
+---  ------       --------------  -----         
+ 0   data         474 non-null    datetime64[ns]
+ 1   tamanduatei  474 non-null    int64         
+ 2   oratorio     474 non-null    int64         
+ 3   meninos      474 non-null    int64         
+ 4   guarara      474 non-null    int64         
+dtypes: datetime64[ns](1), int64(4)
+memory usage: 18.6 KB
+```
+
+Dias com chamado por bacia:
+
+```
+Número de dias com chamados de enchente por bacia:
+- Tamanduatei: 348 dias
+- Oratorio: 98 dias
+- Meninos: 196 dias
+- Guarara: 245 dias
+```
+
+# Alagamentos confirmados
+
+Verifica por outras fontes e deixa apenas as datas com enchentes confirmadas.
+
+Outras fontes: notícias. Feito através de deep research GPT.
+
+:::tip Importante
+
+Esse dataset contempla apenas datas após 10/01/2016. Isso se dá por causa da
+inauguração de piscinões em SA
+
+:::
+
+Gerado no notebook de [**Exploratória
+chamados**](./notebooks#exploratoria-chamados).
+
+[Link para
+download](https://drive.google.com/file/d/126R0l_TKkkr5-tFkgWXPaXs9mktjYecG/view?usp=drive_link)
+
+```
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 79 entries, 0 to 78
+Data columns (total 5 columns):
+ #   Column     Non-Null Count  Dtype  
+---  ------     --------------  -----  
+ 0   dt         79 non-null     object 
+ 1   ano        79 non-null     int64  
+ 2   mes        79 non-null     int64  
+ 3   dia        79 non-null     int64  
+ 4   date_diff  78 non-null     float64
+dtypes: float64(1), int64(3), object(1)
+memory usage: 3.2+ KB
+```
+
+## Outros arquivos
+
+### Definição de bairros por bacia
+
+Arquivo `json` simples que correlaciona nomes de bairros com as bacias da região
+metropolitana de Sto André.
+
+[Link para
+download](https://drive.google.com/file/d/15oplqaHWY20ad7aL8Dt7AMvDFe_uTtq9/view?usp=drive_link)

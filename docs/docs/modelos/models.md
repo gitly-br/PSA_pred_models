@@ -1,7 +1,7 @@
 ---
-title: Considerações sobre os modelos
+title: Modelos
 sidebar_position: 4
-slug: models
+slug: /models
 ---
 
 # Modelos de Previsão
