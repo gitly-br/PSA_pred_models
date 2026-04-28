@@ -1,0 +1,326 @@
+{
+  "regiao": "ABC Paulista",
+  "uf": "SP",
+  "fonte": "Defesa Civil de Santo André / Semasa / DAEE / SP Águas / Governo do Estado de SP / reportagens regionais",
+  "nota": "Meses marcados como null não possuem registro público confirmado. Anos aproximados estão indicados nas observações. CEPs são aproximados.",
+  "municipios": [
+    {
+      "municipio": "Santo André",
+      "total_piscinoes": 14,
+      "capacidade_total_m3": 511988,
+      "piscinoes": [
+        {
+          "nome": "Jardim Bom Pastor",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Jardim Bom Pastor",
+          "endereco": "R. Dom Silvério Pimenta até R. Xingu",
+          "cep": "09061-020",
+          "capacidade_m3": 19300,
+          "ano_inauguracao": 1994,
+          "mes_inauguracao": null,
+          "observacoes": "Primeiro piscinão do ABC"
+        },
+        {
+          "nome": "Santa Terezinha",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Santa Terezinha",
+          "endereco": "R. Eng. Olavo Alaysio de Lima",
+          "cep": "09210-580",
+          "capacidade_m3": 23878,
+          "ano_inauguracao": 1995,
+          "mes_inauguracao": null,
+          "observacoes": "Ampliado em 2020 de 19.000 para 23.878 m³"
+        },
+        {
+          "nome": "Grã-Bretanha (RM-9)",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Vila Príncipe de Gales",
+          "endereco": "R. Grã-Bretanha - junto à FMABC",
+          "cep": "09060-870",
+          "capacidade_m3": 120000,
+          "ano_inauguracao": 1999,
+          "mes_inauguracao": null,
+          "observacoes": "Investimento de R$ 7.5 milhões"
+        },
+        {
+          "nome": "Vila América",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila América",
+          "endereco": "Av. Cap. Mário Toledo de Camargo c/ R. Erato",
+          "cep": "09120-100",
+          "capacidade_m3": 3000,
+          "ano_inauguracao": 2001,
+          "mes_inauguracao": null,
+          "observacoes": "Modernizado em 2024 - vazão de 400 para 2.000 l/s"
+        },
+        {
+          "nome": "Oratório (RO-4)",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Parque Oratório",
+          "endereco": "Av. Nevada - Parque Oratório",
+          "cep": "09280-350",
+          "capacidade_m3": 320000,
+          "ano_inauguracao": 2007,
+          "mes_inauguracao": 4,
+          "observacoes": "Maior reservatório estadual em Santo André. Obras iniciadas em outubro de 2005."
+        },
+        {
+          "nome": "Homero Thon",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Homero Thon",
+          "endereco": "Praça na Av. Giovanni Battista Pirelli",
+          "cep": "09110-340",
+          "capacidade_m3": 2300,
+          "ano_inauguracao": 2016,
+          "mes_inauguracao": null,
+          "observacoes": "Reservatório subterrâneo"
+        },
+        {
+          "nome": "Jardim Irene",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Jardim Irene",
+          "endereco": "R. Caminho dos Vianas",
+          "cep": "09181-000",
+          "capacidade_m3": 19000,
+          "ano_inauguracao": 2018,
+          "mes_inauguracao": 12,
+          "observacoes": "Inaugurado no final de 2018"
+        },
+        {
+          "nome": "Microrreservatório Caquito",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Pires",
+          "endereco": "R. Caquito",
+          "cep": "09130-320",
+          "capacidade_m3": 1080,
+          "ano_inauguracao": 2024,
+          "mes_inauguracao": null,
+          "observacoes": "Programa Sanear / CAF"
+        },
+        {
+          "nome": "Microrreservatório Caravelas",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Pires",
+          "endereco": "R. Caravelas",
+          "cep": "09130-310",
+          "capacidade_m3": 730,
+          "ano_inauguracao": 2024,
+          "mes_inauguracao": null,
+          "observacoes": "Programa Sanear / CAF"
+        },
+        {
+          "nome": "Microrreservatório Buri",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Pires",
+          "endereco": "R. Buri",
+          "cep": "09130-280",
+          "capacidade_m3": 240,
+          "ano_inauguracao": 2024,
+          "mes_inauguracao": null,
+          "observacoes": "Programa Sanear / CAF"
+        },
+        {
+          "nome": "Microrreservatório Miguel Couto",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Pires",
+          "endereco": "R. Miguel Couto",
+          "cep": "09130-350",
+          "capacidade_m3": 1356,
+          "ano_inauguracao": 2024,
+          "mes_inauguracao": null,
+          "observacoes": "Programa Sanear / CAF"
+        },
+        {
+          "nome": "Microrreservatório N. Sra. Lourdes",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Pires",
+          "endereco": "R. Nossa Senhora de Lourdes",
+          "cep": "09130-360",
+          "capacidade_m3": 346,
+          "ano_inauguracao": 2024,
+          "mes_inauguracao": null,
+          "observacoes": "Programa Sanear / CAF"
+        },
+        {
+          "nome": "Microrreservatório Imirim",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Pires",
+          "endereco": "R. Imirim",
+          "cep": "09130-330",
+          "capacidade_m3": 238,
+          "ano_inauguracao": 2024,
+          "mes_inauguracao": null,
+          "observacoes": "Programa Sanear / CAF"
+        },
+        {
+          "nome": "Microrreservatório Jericó",
+          "gestao": "Municipal (Semasa)",
+          "bairro": "Vila Pires",
+          "endereco": "R. Jericó",
+          "cep": "09130-340",
+          "capacidade_m3": 520,
+          "ano_inauguracao": 2024,
+          "mes_inauguracao": null,
+          "observacoes": "Programa Sanear / CAF"
+        }
+      ]
+    },
+    {
+      "municipio": "São Bernardo do Campo",
+      "total_piscinoes": 9,
+      "capacidade_total_m3": 1777450,
+      "piscinoes": [
+        {
+          "nome": "Vila Rosa (Ribeirão dos Couros)",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Vila Rosa",
+          "endereco": "Av. Humberto de Alencar Castelo Branco - Vila Rosa",
+          "cep": "09660-000",
+          "capacidade_m3": 113450,
+          "ano_inauguracao": 1998,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (1998-2000). Ribeirão dos Couros."
+        },
+        {
+          "nome": "Canarinhos (Saracantan)",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Jardim Canarinhos",
+          "endereco": "Córrego Saracantan - R. dos Vianas",
+          "cep": "09725-000",
+          "capacidade_m3": 95000,
+          "ano_inauguracao": 1999,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (1998-2001). Córrego Saracantan."
+        },
+        {
+          "nome": "Chrysler",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Ferrazópolis",
+          "endereco": "Região de Ferrazópolis / Jardim Silvina",
+          "cep": "09771-000",
+          "capacidade_m3": 190000,
+          "ano_inauguracao": 2001,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (2001-2002). Terreno doado pela Volkswagen."
+        },
+        {
+          "nome": "Demarchi / Volks",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Demarchi",
+          "endereco": "Entre a fábrica Volkswagen e Av. Maria Servidei Demarchi",
+          "cep": "09820-000",
+          "capacidade_m3": 170000,
+          "ano_inauguracao": 2001,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (2000-2003)."
+        },
+        {
+          "nome": "Mercedes Paulicéia",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Paulicéia",
+          "endereco": "Próximo à Mercedes-Benz - Paulicéia",
+          "cep": "09692-000",
+          "capacidade_m3": 380000,
+          "ano_inauguracao": 2003,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (2002-2005). Investimento de R$ 17.1 milhões."
+        },
+        {
+          "nome": "Ford Fábrica",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Taboão",
+          "endereco": "Área da antiga fábrica Ford - Taboão",
+          "cep": "09655-000",
+          "capacidade_m3": 82000,
+          "ano_inauguracao": 2005,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (2003-2006). Investimento de R$ 6.4 milhões. Córrego Taboão."
+        },
+        {
+          "nome": "Ford Taboão",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Taboão",
+          "endereco": "Córrego Taboão - divisa com Diadema",
+          "cep": "09655-000",
+          "capacidade_m3": 340000,
+          "ano_inauguracao": 2008,
+          "mes_inauguracao": null,
+          "observacoes": "Investimento de R$ 17.5 milhões. Não confundir com o Taboão (RC-5)."
+        },
+        {
+          "nome": "Taboão (RC-5)",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Taboão",
+          "endereco": "Ribeirão dos Couros - divisa com Diadema",
+          "cep": "09671-100",
+          "capacidade_m3": 180000,
+          "ano_inauguracao": 2010,
+          "mes_inauguracao": 12,
+          "observacoes": "Inaugurado em 01/12/2010 pelo governador Alberto Goldman. Investimento R$ 8.7 milhões."
+        },
+        {
+          "nome": "Paço Municipal (túnel subterrâneo)",
+          "gestao": "Municipal (Prefeitura de SBC)",
+          "bairro": "Centro",
+          "endereco": "Praça Samuel Sabatini - Paço Municipal",
+          "cep": "09750-901",
+          "capacidade_m3": 220000,
+          "ano_inauguracao": 2019,
+          "mes_inauguracao": 8,
+          "observacoes": "Inaugurado em 20/08/2019 (aniversário da cidade). Túnel de 950m. Investimento R$ 353 milhões (PAC + municipal + CAF). Maior obra de drenagem municipal do país."
+        }
+      ]
+    },
+    {
+      "municipio": "Diadema",
+      "total_piscinoes": 4,
+      "capacidade_total_m3": 379000,
+      "piscinoes": [
+        {
+          "nome": "Casa Grande (Piraporinha)",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Casa Grande",
+          "endereco": "Ribeirão dos Couros - Bairro Casa Grande",
+          "cep": "09961-000",
+          "capacidade_m3": 85000,
+          "ano_inauguracao": 2000,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (1998-2001)."
+        },
+        {
+          "nome": "Bombeiros",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Centro",
+          "endereco": "Área do Corpo de Bombeiros - Córrego Taboão",
+          "cep": "09911-000",
+          "capacidade_m3": 34000,
+          "ano_inauguracao": 2001,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (1998-2005). Também referido como Av. Rotary."
+        },
+        {
+          "nome": "Ecovias Imigrantes",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Campanário",
+          "endereco": "Próximo à Rodovia dos Imigrantes",
+          "cep": "09960-000",
+          "capacidade_m3": 120000,
+          "ano_inauguracao": 2002,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (2000-2005)."
+        },
+        {
+          "nome": "Mercedes Diadema",
+          "gestao": "Estadual (SP Águas/DAEE)",
+          "bairro": "Piraporinha",
+          "endereco": "Região da Mercedes-Benz - Piraporinha",
+          "cep": "09950-000",
+          "capacidade_m3": 140000,
+          "ano_inauguracao": 2004,
+          "mes_inauguracao": null,
+          "observacoes": "Ano aproximado (2002-2007)."
+        }
+      ]
+    }
+  ]
+}

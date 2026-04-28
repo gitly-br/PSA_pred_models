@@ -91,13 +91,7 @@ def _():
     LOOKBACK_H = 72
     COD_ALAGAMENTO = "809"
     LIMIAR_DIAS_SUSPEITOS = 10
-    return (
-        ANO_INICIAL,
-        COD_ALAGAMENTO,
-        JANELAS_H,
-        LIMIAR_DIAS_SUSPEITOS,
-        LOOKBACK_H,
-    )
+    return ANO_INICIAL, COD_ALAGAMENTO, JANELAS_H, LOOKBACK_H
 
 
 @app.cell
@@ -319,63 +313,32 @@ def _(btn_cemaden, mo, pl):
         mo.callout(mo.md("Clique no botão acima para carregar os dados CEMADEN."), kind="warn"),
     )
     df_cemaden = (
-        pl.read_csv("dados/cemaden_bruto.csv", separator=";")
-        .with_columns([
-            pl.col("valorMedida")
-                .str.replace(",", ".")
-                .cast(pl.Float64, strict=False)
-                .alias("valor_mm"),
-            pl.col("datahora")
-                .str.slice(0, 19)
-                .str.strptime(pl.Datetime, "%Y-%m-%d %H:%M:%S", strict=False)
-                .alias("dt"),
-        ])
+        pl.read_parquet("dados/cemaden_abcd.parquet")
         .filter(pl.col("valor_mm").is_not_null() & (pl.col("valor_mm") >= 0))
     )
-    mo.md(f"Carregados **{len(df_cemaden):,}** registros CEMADEN.")
+    mo.md(f"Carregados **{len(df_cemaden):,}** registros CEMADEN ({df_cemaden['municipio'].n_unique()} municípios).")
     return (df_cemaden,)
 
 
 @app.cell
 def _(mo):
-    limiar_outlier = mo.ui.number(start=10, stop=401, step=5, value=100, label="Limiar máximo (mm/h)")
+    min_chamados = mo.ui.number(start=0, stop=50, step=1, value=3, label="Mínimo de chamados por dia de evento")
     mo.md(f"""
-    ### Filtro de outliers
+    ### Filtro de eventos por volume de chamados
 
-    Leituras acima de **{limiar_outlier} mm/h** são consideradas fisicamente implausíveis para a região e serão descartadas.
-    Referência: maior evento documentado em Santo André ≈ 90 mm/h (mar/2019); recorde SP capital = 82 mm/h (jan/2025).
+    Dias com menos de **{min_chamados} chamados** 809.x são descartados das análises seguintes.
+    Use para remover eventos isolados que podem ser falsos positivos ou registros incompletos.
     """)
-    return (limiar_outlier,)
+    return (min_chamados,)
 
 
 @app.cell
-def _(df_cemaden, limiar_outlier, mo, pl):
+def _(df_cemaden, mo):
     mo.stop(
         df_cemaden is None,
-        mo.callout(mo.md("Carregue o CEMADEN para aplicar filtro."), kind="warn"),
+        mo.callout(mo.md("Carregue o CEMADEN para continuar."), kind="warn"),
     )
-
-    _limiar = limiar_outlier.value
-    _outliers = df_cemaden.filter(pl.col("valor_mm") > _limiar)
-    df_cemaden_filtrado = df_cemaden.filter(pl.col("valor_mm") <= _limiar)
-
-    _n_out = len(_outliers)
-    _n_total = len(df_cemaden)
-    _pct = _n_out / _n_total * 100
-
-    _estacoes = (
-        _outliers
-        .group_by("codEstacao")
-        .agg(pl.len().alias("n"), pl.col("valor_mm").max().alias("max_mm"))
-        .sort("n", descending=True)
-    )
-
-    mo.hstack([
-        mo.stat(value=f"{_n_out:,}", label="Leituras removidas", bordered=True),
-        mo.stat(value=f"{_pct:.3f}%", label="Do total", bordered=True),
-        mo.stat(value=f"{len(_estacoes)}", label="Estações afetadas", bordered=True),
-        mo.stat(value=f"{float(_outliers['valor_mm'].max()):.1f} mm/h" if _n_out > 0 else "—", label="Maior valor removido", bordered=True),
-    ], widths="equal")
+    df_cemaden_filtrado = df_cemaden
     return (df_cemaden_filtrado,)
 
 
@@ -449,7 +412,26 @@ def _(df_enchente_acc, lims, pl):
         lambda a, b: a | b,
         [pl.col(f"acc_{h}h").fill_null(0) >= lim for h, lim in _janelas],
     )
-    df_enchente_confirmado = df_enchente_acc.with_columns(_cond.alias("confirmado_chuva"))
+    df_enc_com_flag = df_enchente_acc.with_columns(_cond.alias("confirmado_chuva"))
+    return (df_enc_com_flag,)
+
+
+@app.cell
+def _(df_enc_com_flag, min_chamados, pl):
+    _dias_validos = (
+        df_enc_com_flag
+        .with_columns(pl.col("dt_abertura").dt.date().alias("_data"))
+        .group_by("_data")
+        .agg(pl.len().alias("_n"))
+        .filter(pl.col("_n") >= min_chamados.value)
+        .get_column("_data")
+    )
+    df_enchente_confirmado = (
+        df_enc_com_flag
+        .with_columns(pl.col("dt_abertura").dt.date().alias("_data"))
+        .filter(pl.col("_data").is_in(_dias_validos))
+        .drop("_data")
+    )
     return (df_enchente_confirmado,)
 
 
@@ -970,7 +952,7 @@ def _(
 
 
 @app.cell
-def _(LIMIAR_DIAS_SUSPEITOS, df_enchente_confirmado, mo, pl):
+def _(df_enchente_confirmado, mo, pl):
     _df_suspeitos = (
         df_enchente_confirmado
         .with_columns(pl.col("dt_abertura").dt.date().alias("data"))
@@ -979,14 +961,16 @@ def _(LIMIAR_DIAS_SUSPEITOS, df_enchente_confirmado, mo, pl):
             pl.len().alias("n_chamados"),
             pl.col("confirmado_chuva").any().alias("algum_confirmado"),
         ])
-        .filter(
-            (pl.col("n_chamados") > LIMIAR_DIAS_SUSPEITOS) & (~pl.col("algum_confirmado"))
-        )
+        .filter(~pl.col("algum_confirmado"))
         .sort("n_chamados", descending=True)
         .drop("algum_confirmado")
     )
     mo.vstack([
-        mo.md(f"**{len(_df_suspeitos):,} dias com >{LIMIAR_DIAS_SUSPEITOS} chamados 809.x sem confirmação de chuva**"),
+        mo.md(f"**{len(_df_suspeitos):,} dias com chamados 809.x sem confirmação de chuva em nenhuma estação**"),
+        mo.callout(
+            mo.md("Esses dias **não serão incluídos no export** de chamados confirmados."),
+            kind="warn",
+        ),
         mo.ui.table(_df_suspeitos),
     ])
     return
@@ -997,29 +981,69 @@ def _(mo):
     mo.md(r"""
     ### Alagamentos confirmados sem chamados
 
-    Eventos da lista de validação externa que **não geraram chamados 809.x** numa janela de ±3 dias.
-    Pergunta: há sinal CEMADEN detectável mesmo sem registro na prefeitura?
-    Casos típicos: fins de semana, zonas pouco cobertas, falha de registro ou data deslocada.
+    Eventos consolidados das 3 fontes externas que **não geraram chamados 809.x confirmados** numa janela de ±3 dias.
+    Datas a menos de 3 dias entre si nas fontes são tratadas como o mesmo evento (mantém a mais antiga).
     """)
     return
 
 
 @app.cell
 def _(df_enchente_confirmado, mo, pl):
-    _df_conf_ext = (
+    from datetime import timedelta as _timedelta
+
+    # --- Carregar e consolidar as 3 fontes externas ---
+    _src1 = (
         pl.read_csv("dados/alagamentos_confirmados.csv")
         .with_columns(pl.col("dt").str.to_date())
-        .select("dt")
+        .select(pl.col("dt").alias("data"), pl.lit("alagamentos_confirmados").alias("fonte"))
+    )
+    _src2 = (
+        pl.read_csv("dados/fonte_gpt.csv")
+        .filter(pl.col("Check") == "TRUE")
+        .with_columns(pl.col("Data").str.to_date("%d/%m/%Y").alias("data"))
+        .select("data", pl.lit("fonte_gpt").alias("fonte"))
+    )
+    _src3 = (
+        pl.read_csv("dados/maior_tres_verificado_gpt.csv")
+        .with_columns(pl.col("Data").str.to_date("%d/%m/%Y").alias("data"))
+        .select("data", pl.lit("maior_tres").alias("fonte"))
     )
 
+    _todas = pl.concat([_src1, _src2, _src3]).sort("data")
+
+    # Deduplicar com tolerância de 3 dias: percorre em ordem, agrupa datas próximas
+    _datas_sorted = _todas["data"].unique().sort().to_list()
+    _deduped = []
+    _last = None
+    for _d in _datas_sorted:
+        if _last is None or (_d - _last).days > 3:
+            _deduped.append(_d)
+            _last = _d
+
+    # Fontes de cada data deduplicada (qual(is) fontes contribuíram para o cluster)
+    _rep = []
+    for _d_rep in _deduped:
+        _fontes = (
+            _todas
+            .filter(
+                (pl.col("data") >= pl.lit(_d_rep) - pl.duration(days=3)) &
+                (pl.col("data") <= pl.lit(_d_rep) + pl.duration(days=3))
+            )
+            ["fonte"].unique().sort().to_list()
+        )
+        _rep.append({"dt": _d_rep, "fontes": ", ".join(_fontes)})
+
+    _df_conf_ext = pl.DataFrame(_rep).with_columns(pl.col("dt").cast(pl.Date))
+
+    # --- Cruzar com chamados confirmados (±3 dias) ---
     _chamados_datas = (
         df_enchente_confirmado
+        .filter(pl.col("confirmado_chuva"))
         .with_columns(pl.col("dt_abertura").dt.date().alias("data"))
         .select("data")
         .unique()
     )
 
-    # Confirmados que têm pelo menos um chamado em ±3 dias
     _df_conf_with_window = _df_conf_ext.with_columns([
         (pl.col("dt") - pl.duration(days=3)).alias("dt_ini"),
         (pl.col("dt") + pl.duration(days=3)).alias("dt_fim"),
@@ -1041,15 +1065,28 @@ def _(df_enchente_confirmado, mo, pl):
         .sort("dt")
     )
 
+    _n_total_ext = len(_df_conf_ext)
+    _n_com_chamado = _n_total_ext - len(_df_sem)
+
     _opcoes = {d.strftime("%d/%m/%Y"): d for d in _df_sem["dt"].to_list()}
 
     seletor_conf_sem_chamados = mo.ui.dropdown(
         options=_opcoes,
-        label="Evento confirmado sem chamados",
+        label="Selecionar evento para ver perfil de chuva",
     )
 
     mo.vstack([
-        mo.md(f"**{len(_df_sem)} eventos confirmados sem chamados 809.x em ±3 dias**"),
+        mo.hstack([
+            mo.stat(value=str(_n_total_ext), label="Eventos externos únicos", bordered=True),
+            mo.stat(value=str(_n_com_chamado), label="Cobertos por chamados", bordered=True),
+            mo.stat(value=str(len(_df_sem)), label="Sem chamados — para revisar", bordered=True),
+        ], widths="equal"),
+        mo.md("**Eventos sem chamados 809.x confirmados em ±3 dias:**"),
+        mo.ui.table(_df_sem),
+        mo.callout(
+            mo.md("**TODO:** Para cada evento desta lista, buscar notícias de enchente e decidir se entra na lista consolidada de datas confirmadas."),
+            kind="info",
+        ),
         seletor_conf_sem_chamados,
     ])
     return (seletor_conf_sem_chamados,)
@@ -1223,6 +1260,544 @@ def _(
         height=280,
         title=f"Chuva máxima entre estações — 72h antes de {_dia_ref_ev} (sem chamados registrados)",
     )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ### Sinal de chuva sem registro de enchente
+
+    Dias onde o CEMADEN mostra padrão de risco (alguma janela >= limiar) mas **não há chamados 809.x
+    nem eventos confirmados** em ±3 dias. Possíveis causas: falha de registro, área não coberta pelos
+    chamados, evento real que não gerou demanda à prefeitura.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    sel_anos = mo.ui.range_slider(
+        start=2016, stop=2025, step=1,
+        value=[2016, 2025],
+        label="Período (anos)",
+        show_value=True,
+    )
+    sel_anos
+    return (sel_anos,)
+
+
+@app.cell
+def _(df_cemaden_horario, df_enchente_confirmado, lims, mo, pl, sel_anos):
+    mo.stop(
+        df_cemaden_horario is None,
+        mo.callout(mo.md("Carregue o CEMADEN para esta análise."), kind="warn"),
+    )
+
+    _ano_ini, _ano_fim = sel_anos.value
+
+    # Acumulado máximo por janela para cada hora do histórico (filtrado por período)
+    _df_sorted = (
+        df_cemaden_horario
+        .filter(
+            (pl.col("hora").dt.year() >= _ano_ini) &
+            (pl.col("hora").dt.year() <= _ano_fim)
+        )
+        .sort("hora")
+    )
+    _frames = [_df_sorted.select("hora")]
+    for _h in [1, 3, 6, 24, 48, 72]:
+        _frames.append(
+            _df_sorted
+            .rolling("hora", period=f"{_h}h")
+            .agg(pl.col("chuva_max_mm").sum().alias(f"acc_{_h}h"))
+            .select(f"acc_{_h}h")
+        )
+    _df_accs = pl.concat(_frames, how="horizontal")
+
+    # Dias onde alguma janela atinge o limiar
+    _df_rainy = (
+        _df_accs
+        .filter(
+            (pl.col("acc_1h") >= lims[1]) |
+            (pl.col("acc_3h") >= lims[3]) |
+            (pl.col("acc_6h") >= lims[6]) |
+            (pl.col("acc_24h") >= lims[24]) |
+            (pl.col("acc_48h") >= lims[48]) |
+            (pl.col("acc_72h") >= lims[72])
+        )
+        .with_columns(pl.col("hora").dt.date().alias("data"))
+        .group_by("data")
+        .agg([
+            pl.col("acc_1h").max(),
+            pl.col("acc_3h").max(),
+            pl.col("acc_6h").max(),
+            pl.col("acc_24h").max(),
+            pl.col("acc_48h").max(),
+            pl.col("acc_72h").max(),
+        ])
+        .sort("data")
+    )
+
+    # Datas com chamados em ±3 dias
+    _chamados_datas = (
+        df_enchente_confirmado
+        .with_columns(pl.col("dt_abertura").dt.date().alias("data_ch"))
+        .select("data_ch").unique()
+    )
+    _has_chamado = (
+        _df_rainy
+        .with_columns([
+            (pl.col("data") - pl.duration(days=3)).alias("ini"),
+            (pl.col("data") + pl.duration(days=3)).alias("fim"),
+        ])
+        .join_where(
+            _chamados_datas,
+            pl.col("data_ch") >= pl.col("ini"),
+            pl.col("data_ch") <= pl.col("fim"),
+        )
+        .select("data").unique()
+    )
+
+    # Datas com evento confirmado em ±3 dias
+    _conf_ext = (
+        pl.read_csv("dados/alagamentos_confirmados.csv")
+        .with_columns(pl.col("dt").str.to_date().alias("data_conf"))
+        .select("data_conf")
+    )
+    _has_confirmed = (
+        _df_rainy
+        .with_columns([
+            (pl.col("data") - pl.duration(days=3)).alias("ini"),
+            (pl.col("data") + pl.duration(days=3)).alias("fim"),
+        ])
+        .join_where(
+            _conf_ext,
+            pl.col("data_conf") >= pl.col("ini"),
+            pl.col("data_conf") <= pl.col("fim"),
+        )
+        .select("data").unique()
+    )
+
+    _df_candidatos = (
+        _df_rainy
+        .join(_has_chamado, on="data", how="anti")
+        .join(_has_confirmed, on="data", how="anti")
+        .sort("data")
+    )
+
+    # Conjunto de todos os dias confirmados (chamados + fontes externas)
+    _datas_conf_set = set(
+        pl.concat([
+            df_enchente_confirmado
+                .filter(pl.col("confirmado_chuva"))
+                .with_columns(pl.col("dt_abertura").dt.date().alias("data"))
+                .select("data"),
+            pl.read_csv("dados/alagamentos_confirmados.csv")
+                .with_columns(pl.col("dt").str.to_date().alias("data"))
+                .select("data"),
+        ]).unique()["data"].to_list()
+    )
+
+    # Deduplicação greedy: manter só o primeiro de cada cluster de 3 dias,
+    # também excluindo dias próximos a eventos confirmados
+    _kept = []
+    _last = None
+    for _row in _df_candidatos["data"].to_list():
+        if _last is not None and (_row - _last).days <= 3:
+            continue
+        if any(abs((_row - _d).days) <= 3 for _d in _datas_conf_set):
+            continue
+        _kept.append(_row)
+        _last = _row
+
+    df_sinal_sem_registro = _df_candidatos.filter(pl.col("data").is_in(_kept))
+
+    _n_rainy = len(_df_rainy)
+    _n_com_registro = _n_rainy - len(_df_candidatos)
+    _n_ambiguos = len(_df_candidatos)
+    _n_dedup = len(df_sinal_sem_registro)
+
+    _funil = mo.callout(mo.md(
+        f"**{_n_rainy}** dias chuvosos ({_ano_ini}–{_ano_fim}) → "
+        f"**{_n_com_registro}** com chamado/confirmado → "
+        f"**{_n_ambiguos}** sem registro → "
+        f"**{_n_dedup}** após deduplicação (±3 dias)"
+    ), kind="warn")
+
+    _stat = mo.stat(
+        value=str(_n_dedup),
+        label="Dias para analisar",
+        caption="sinal de chuva sem registro de enchente",
+    )
+
+    _acc_cols = [c for c in df_sinal_sem_registro.columns if c.startswith("acc_")]
+    _tabela_df = df_sinal_sem_registro.with_columns(
+        [pl.col(c).round(1) for c in _acc_cols]
+    )
+
+    tabela_sinal_sem_registro = mo.ui.table(
+        _tabela_df,
+        selection="single",
+        label="Dias com sinal de risco sem registro de enchente",
+    )
+    mo.vstack([mo.hstack([_stat, _funil], align="center"), tabela_sinal_sem_registro])
+    return df_sinal_sem_registro, tabela_sinal_sem_registro
+
+
+@app.cell
+def _(
+    alt,
+    datetime,
+    df_cemaden_horario,
+    lims,
+    mo,
+    np,
+    pl,
+    tabela_sinal_sem_registro,
+    threshold_seco,
+    timedelta,
+):
+    mo.stop(
+        df_cemaden_horario is None,
+        mo.callout(mo.md("Carregue o CEMADEN para ver o perfil de chuva."), kind="warn"),
+    )
+    mo.stop(
+        len(tabela_sinal_sem_registro.value) == 0,
+        mo.callout(mo.md("Selecione uma linha da tabela acima."), kind="info"),
+    )
+
+    _data_sr = tabela_sinal_sem_registro.value["data"][0]
+
+    _dt_fim_sr = datetime(_data_sr.year, _data_sr.month, _data_sr.day) + timedelta(days=1)
+    _dt_ini_sr = _dt_fim_sr - timedelta(hours=72)
+
+    _df_janela_sr = (
+        df_cemaden_horario
+        .filter((pl.col("hora") >= _dt_ini_sr) & (pl.col("hora") < _dt_fim_sr))
+        .sort("hora")
+    )
+
+    # Janela confirmadora (sempre existe — dia foi filtrado por isso)
+    _accs_sr = {}
+    for _h_sr in [1, 3, 6, 24, 48, 72]:
+        _v = (
+            _df_janela_sr
+            .rolling("hora", period=f"{_h_sr}h")
+            .agg(pl.col("chuva_max_mm").sum())
+            ["chuva_max_mm"].max()
+        )
+        _accs_sr[_h_sr] = _v or 0.0
+
+    _confirmed_sr = [_h for _h in [1, 3, 6, 24, 48, 72] if _accs_sr[_h] >= lims[_h]]
+    _eff_w_sr = min(min(_confirmed_sr), 6)
+    _only_1h_sr = _confirmed_sr == [1]
+
+    _rolling_sr = (
+        _df_janela_sr
+        .rolling("hora", period=f"{_eff_w_sr}h")
+        .agg(pl.col("chuva_max_mm").sum().alias("rolling_acc"))
+    )
+    _window_end_sr = _rolling_sr.sort("rolling_acc", descending=True).row(0, named=True)["hora"]
+    _peak_dt_sr = (
+        _df_janela_sr
+        .filter(
+            (pl.col("hora") >= _window_end_sr - pl.duration(hours=_eff_w_sr)) &
+            (pl.col("hora") <= _window_end_sr)
+        )
+        .sort("chuva_max_mm", descending=True)
+        .row(0, named=True)["hora"]
+    )
+
+    _df_h_sr = df_cemaden_horario.sort("hora")
+    _hours_sr = _df_h_sr["hora"].to_numpy()
+    _chuva_sr = _df_h_sr["chuva_max_mm"].to_numpy()
+    _thr_sr = threshold_seco.value
+    _ONE_H_SR = np.timedelta64(65, "m")
+    _MAX_SIDE_SR = np.timedelta64(6, "h")
+
+    def _find_bounds_sr(peak_dt):
+        _peak = np.datetime64(peak_dt)
+        _i = min(int(np.searchsorted(_hours_sr, _peak)), len(_hours_sr) - 1)
+        _l = _i
+        while (
+            _l > 0
+            and (_hours_sr[_l] - _hours_sr[_l - 1]) <= _ONE_H_SR
+            and _chuva_sr[_l - 1] >= _thr_sr
+            and (_peak - _hours_sr[_l - 1]) <= _MAX_SIDE_SR
+        ):
+            _l -= 1
+        _r = _i
+        while (
+            _r < len(_hours_sr) - 1
+            and (_hours_sr[_r + 1] - _hours_sr[_r]) <= _ONE_H_SR
+            and _chuva_sr[_r + 1] >= _thr_sr
+            and (_hours_sr[_r + 1] - _peak) <= _MAX_SIDE_SR
+        ):
+            _r += 1
+        return _hours_sr[_l].item(), _hours_sr[_r].item()
+
+    _ev_start_sr, _ev_end_sr = (_peak_dt_sr, _peak_dt_sr) if _only_1h_sr else _find_bounds_sr(_peak_dt_sr)
+
+    _dia_ref_sr = _data_sr.strftime("%d/%m/%Y")
+
+    _line_sr = (
+        alt.Chart(_df_janela_sr)
+        .mark_line(color="#4e91d6", point=True)
+        .encode(
+            x=alt.X("hora:T", title="Hora"),
+            y=alt.Y("chuva_max_mm:Q", title="mm/h"),
+            tooltip=[
+                alt.Tooltip("hora:T", title="Hora", format="%d/%m %H:%M"),
+                alt.Tooltip("chuva_max_mm:Q", title="mm/h", format=".1f"),
+            ],
+        )
+    )
+
+    if _ev_start_sr != _ev_end_sr:
+        _df_band_sr = pl.DataFrame({"x1": [_ev_start_sr], "x2": [_ev_end_sr]})
+        _event_sr = alt.Chart(_df_band_sr).mark_rect(color="#ff7f0e", opacity=0.25).encode(x="x1:T", x2="x2:T")
+    else:
+        _df_rule_sr = pl.DataFrame({"hora": pl.Series([_ev_start_sr], dtype=pl.Datetime)})
+        _event_sr = alt.Chart(_df_rule_sr).mark_rule(color="#ff7f0e", strokeWidth=2).encode(x="hora:T")
+
+    _df_leg_sr = pl.DataFrame({
+        "hora": pl.Series([_peak_dt_sr], dtype=pl.Datetime),
+        "mm": [0.0],
+        "tipo": ["Evento"],
+    })
+    _legend_sr = (
+        alt.Chart(_df_leg_sr)
+        .mark_point(opacity=0)
+        .encode(
+            x=alt.X("hora:T"),
+            y=alt.Y("mm:Q"),
+            color=alt.Color(
+                "tipo:N",
+                scale=alt.Scale(domain=["Evento"], range=["#ff7f0e"]),
+                legend=alt.Legend(title=""),
+            ),
+        )
+    )
+
+    (
+        alt.layer(_line_sr, _event_sr, _legend_sr)
+        .properties(
+            width="container",
+            height=280,
+            title=f"Chuva máxima entre estações — 72h antes de {_dia_ref_sr} (sem registro de enchente)",
+        )
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## Diagnóstico: dias com chuva sem registro de enchente
+
+    Comparação entre três categorias de dias. **Confirmados**: chamados 809.x validados por chuva
+    ou constam nas fontes externas. **Ambíguos**: alguma janela ≥ limiar, mas sem chamados nem
+    confirmação externa em ±3 dias. **Negativos**: nenhum critério de chuva atendido.
+
+    Ajuste os limiares na seção anterior para ver como as categorias se redistribuem.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    sel_janela = mo.ui.radio(
+        options={"1h": 1, "3h": 3, "6h": 6, "24h": 24, "48h": 48, "72h": 72},
+        value="6h",
+        label="Janela de acumulado",
+        inline=True,
+    )
+    sel_janela
+    return (sel_janela,)
+
+
+@app.cell
+def _(
+    alt,
+    df_cemaden_horario,
+    df_enchente_confirmado,
+    df_sinal_sem_registro,
+    lims,
+    mo,
+    pl,
+    sel_anos,
+    sel_janela,
+):
+    mo.stop(
+        df_cemaden_horario is None,
+        mo.callout(mo.md("Carregue o CEMADEN para esta análise."), kind="warn"),
+    )
+
+    _ano_ini, _ano_fim = sel_anos.value
+
+    # Acumulado rolling da janela selecionada, máximo por dia
+    _h = sel_janela.value
+    _df_diario = (
+        df_cemaden_horario
+        .filter(
+            (pl.col("hora").dt.year() >= _ano_ini) &
+            (pl.col("hora").dt.year() <= _ano_fim)
+        )
+        .sort("hora")
+        .rolling("hora", period=f"{_h}h")
+        .agg(pl.col("chuva_max_mm").sum().alias("acc"))
+        .with_columns(pl.col("hora").dt.date().alias("data"))
+        .group_by("data")
+        .agg(pl.col("acc").max().alias("precip_janela"))
+        .sort("data")
+    )
+
+    # Datas confirmadas: chamados + fontes externas
+    _datas_conf_chamado = (
+        df_enchente_confirmado
+        .filter(pl.col("confirmado_chuva"))
+        .with_columns(pl.col("dt_abertura").dt.date().alias("data"))
+        .select("data").unique()
+    )
+    _datas_conf_ext = (
+        pl.read_csv("dados/alagamentos_confirmados.csv")
+        .with_columns(pl.col("dt").str.to_date().alias("data"))
+        .select("data")
+    )
+    _datas_conf = pl.concat([_datas_conf_chamado, _datas_conf_ext]).unique()
+
+    # Atribuição de categoria por dia (df_sinal_sem_registro já filtrado por período)
+    _df_cat = (
+        _df_diario
+        .join(_datas_conf.with_columns(pl.lit(True).alias("_conf")), on="data", how="left")
+        .join(
+            df_sinal_sem_registro.select("data").with_columns(pl.lit(True).alias("_ambig")),
+            on="data", how="left",
+        )
+        .with_columns(
+            pl.when(pl.col("_conf"))
+              .then(pl.lit("Confirmado"))
+              .when(pl.col("_ambig"))
+              .then(pl.lit("Ambíguo"))
+              .otherwise(pl.lit("Negativo"))
+              .alias("categoria")
+        )
+        .drop(["_conf", "_ambig"])
+    )
+
+    _cor_scale = alt.Scale(
+        domain=["Confirmado", "Ambíguo", "Negativo"],
+        range=["#e07b39", "#888888", "#9ecae1"],
+    )
+    _titulo_eixo = f"Acumulado {_h}h (mm)"
+
+    # Gráfico 1 — box plot: distribuição de precipitação por categoria
+    _df_vis = _df_cat.filter(pl.col("precip_janela") > 0)
+    _box = (
+        alt.Chart(_df_vis)
+        .mark_boxplot(extent="min-max", size=40)
+        .encode(
+            x=alt.X("categoria:N", title=None, sort=["Confirmado", "Ambíguo", "Negativo"]),
+            y=alt.Y("precip_janela:Q", title=_titulo_eixo),
+            color=alt.Color("categoria:N", scale=_cor_scale, legend=None),
+        )
+        .properties(width="container", height=220, title="Os dias ambíguos têm chuva parecida com os confirmados?")
+    )
+
+    # Gráfico 2 — ECDF da precipitação por categoria
+    _ecdf = (
+        alt.Chart(_df_vis)
+        .transform_window(
+            ecdf="cume_dist()",
+            sort=[{"field": "precip_janela"}],
+            groupby=["categoria"],
+        )
+        .mark_line(interpolate="step-after", strokeWidth=2)
+        .encode(
+            x=alt.X("precip_janela:Q", title=_titulo_eixo),
+            y=alt.Y("ecdf:Q", title="% acumulado", axis=alt.Axis(format="%", labelAngle=0)),
+            color=alt.Color("categoria:N", scale=_cor_scale, legend=alt.Legend(title="Categoria")),
+            order=alt.Order("precip_janela:Q"),
+        )
+        .properties(width="container", height=200, title="Distribuição acumulada por categoria")
+    )
+
+    # Gráfico 3 — quantos critérios cada dia ambíguo atende
+    _df_crit = (
+        df_sinal_sem_registro
+        .with_columns(
+            (
+                (pl.col("acc_1h")  >= lims[1]).cast(pl.Int32) +
+                (pl.col("acc_3h")  >= lims[3]).cast(pl.Int32) +
+                (pl.col("acc_6h")  >= lims[6]).cast(pl.Int32) +
+                (pl.col("acc_24h") >= lims[24]).cast(pl.Int32) +
+                (pl.col("acc_48h") >= lims[48]).cast(pl.Int32) +
+                (pl.col("acc_72h") >= lims[72]).cast(pl.Int32)
+            ).alias("criteria_count")
+        )
+        .group_by("criteria_count")
+        .agg(pl.len().alias("n_dias"))
+        .sort("criteria_count")
+    )
+    _bar = (
+        alt.Chart(_df_crit)
+        .mark_bar(color="#888888")
+        .encode(
+            x=alt.X("criteria_count:O", title="Critérios atendidos"),
+            y=alt.Y("n_dias:Q", title="Dias ambíguos"),
+            tooltip=["criteria_count:O", "n_dias:Q"],
+        )
+        .properties(width="container", height=180, title="Dias ambíguos: quantos critérios de chuva atendem?")
+    )
+
+    mo.vstack([_box, _ecdf, _bar])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    btn_export_chamados = mo.ui.run_button(label="💾 Exportar chamados_por_bacia.parquet + chamados_enchente_todos.parquet")
+    mo.vstack([mo.md("## Export"), btn_export_chamados])
+    return (btn_export_chamados,)
+
+
+@app.cell
+def _(btn_export_chamados, df_enc_com_flag, df_enchente_confirmado, mo, pl):
+    mo.stop(not btn_export_chamados.value)
+
+    # --- chamados_por_bacia.parquet: apenas confirmados (usado pela análise de AUC) ---
+    _df_confirmados = df_enchente_confirmado.filter(pl.col("confirmado_chuva"))
+    _df_excluidos = df_enchente_confirmado.filter(~pl.col("confirmado_chuva"))
+    _n_dias_conf = _df_confirmados.with_columns(pl.col("dt_abertura").dt.date()).select("dt_abertura").unique().height
+    _n_dias_excl = _df_excluidos.with_columns(pl.col("dt_abertura").dt.date()).select("dt_abertura").unique().height
+
+    _df_conf = _df_confirmados.select([
+        "dt_abertura", "bairro", "bacia", "servico_solicitado",
+        pl.col("latitude").cast(pl.Float64),
+        pl.col("longitude").cast(pl.Float64),
+    ])
+    _df_conf.write_parquet("dados/chamados_por_bacia.parquet")
+
+    # --- chamados_enchente_todos.parquet: todos os 809.x com flag confirmado_chuva ---
+    _df_todos = df_enc_com_flag.select([
+        "dt_abertura", "bairro", "bacia", "servico_solicitado",
+        pl.col("latitude").cast(pl.Float64),
+        pl.col("longitude").cast(pl.Float64),
+        "confirmado_chuva",
+    ])
+    _df_todos.write_parquet("dados/chamados_enchente_todos.parquet")
+
+    mo.vstack([
+        mo.callout(
+            mo.md(f"Exportado **chamados_por_bacia.parquet** — {len(_df_conf):,} confirmados em {_n_dias_conf} dias."),
+            kind="success",
+        ),
+        mo.callout(
+            mo.md(f"Exportado **chamados_enchente_todos.parquet** — {len(_df_todos):,} chamados totais ({len(_df_conf):,} confirmados, {len(_df_excluidos):,} sem chuva)."),
+            kind="success",
+        ),
+    ])
     return
 
 
