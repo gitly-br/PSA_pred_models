@@ -11,7 +11,7 @@
 
 Decisões validadas empiricamente que devem ser preservadas:
 
-1. **Split temporal obrigatório** — train 2016-2022, test 2023-2024 (nunca random split)
+1. **Split temporal obrigatório** — train 2016-2022, test 2023-2024 (nunca random split) ⚠️ *Revisado em 2026-04-28: optou-se por random split estratificado no baseline porque o split temporal deixa oratorio sem positivos no teste (todos os 24 eventos são anteriores a 2024). Retornar ao split temporal em versões posteriores com mais dados.*
 2. **Filtro sazonal** — remover meses 5-10 (seca), confirmado em ambos notebooks
 3. **Undersampling por cluster** — KMeans nos negativos, sample de cada cluster
 4. **Avaliação condicionada a percentil** — precision melhora dramaticamente em dias com chuva >p75; cenário operacional

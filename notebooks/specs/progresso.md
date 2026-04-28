@@ -1,39 +1,43 @@
 # Progresso do Pipeline
 
-## Fase ativa: 1/2 — chamados_exploratoria.py + pluviometria_exploratoria.py
+## Fase ativa: modelagem_baseline.py (Fases 3+4 combinadas)
 
-**Status:** Notebooks refatorados e expandidos. Pronto para criar `chamados_por_bacia.py`.
+**Status:** Notebook completo com narrativa. Baseline treinado e avaliado. Gate de chuva testado.
 
-**Próximo passo:** Criar `chamados_por_bacia.py` — revalidação dos chamados confirmados usando apenas estações da bacia (Passo 5 do plano).
+**Próximo passo:** Ajuste de threshold por curva precision-recall + features temporais (fase 5).
 
 **O que falta no pipeline:**
-- `chamados_por_bacia.py` — reconfirmar chamados bacia a bacia com estações do `estacoes_bacia.json`; ver quais chamados caem
-- Validação manual de datas sem chamados (TODO no notebook — busca por notícias)
-- Export `chamados_enchente.parquet` com `confirmado_chuva_bacia`
-- Export `datas_enchente_consolidadas.csv`
+- Ajuste de threshold por curva precision-recall por bacia
+- Features temporais: lags, rolling stats (fase 5)
+- Integração de forecast (fase 6)
+- Revalidação de estações e limiares para bacia meninos
+
+## Decisões tomadas nesta sessão (2026-04-28)
+
+- Caminho B: features + modelagem diretamente dos dados existentes, sem artefatos intermediários de fase 3
+- Chuva por bacia: `max` entre estações por hora para revalidação e features; `mean` incluído como feature adicional
+- Parquets wide por bacia em `dados/chuva_bacias/` (1 coluna por estação, horas sem leitura = 0)
+- Split: train < 2024, test 2024–2025
+- Features: max e mean por janela (18 features no total)
+- **Bacia meninos:** 50,8% de confirmação (vs ~70% nas demais) — estações podem ter cobertura insuficiente. Registrado para revalidação futura da seleção de estações.
 
 ## Artefatos
 
 | Artefato | Existe? |
 |----------|---------|
 | `dados/chamados_por_bacia.parquet` | Sim (chamados confirmados por chuva, qualquer estação) |
-| `dados/estacoes_bacia.json` | Sim (estações relevantes por bacia, score ajustado) |
-| `dados/chamados_enchente.parquet` | Não |
-| `dados/datas_enchente_consolidadas.csv` | Não |
-| `dados/cemaden_limpo.parquet` | Não |
-| `dados/cemaden_diario_bacia.parquet` | Não |
-| `dados/percentis_chuva.json` | Não |
-| `dados/features_24h.parquet` | Não |
-| `dados/target_por_bacia.parquet` | Não |
+| `dados/estacoes_bacia.json` | Sim (estações por score ajustado) |
+| `dados/chuva_bacias/chuva_{bacia}.parquet` | Sim (wide, 1 col/estação, 87.672 horas) |
+| `dados/cemaden_abcd.parquet` | Sim |
+| `dados/chamados_enchente.parquet` | Não (substituído por lógica inline) |
+| `dados/features_24h.parquet` | Não (gerado inline no modelagem_baseline.py) |
 
 ## Fases seguintes
 
 | Fase | Status |
 |------|--------|
-| chamados_por_bacia.py | A criar |
-| 2. pluviometria_exploratoria | Em progresso (AUC, mapa, estacoes_bacia.json) |
-| 3. processamento_features | Não iniciada |
-| 4. modelagem_classica | Não iniciada |
+| preprocessamento_chuva.py | ✅ Concluído |
+| modelagem_baseline.py | 🔄 Em progresso (revalidação pronta, features a fazer) |
 | 5. modelagem_temporal | Não iniciada |
 | 6. forecast_integracao | Não iniciada |
 
