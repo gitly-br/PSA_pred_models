@@ -6,6 +6,7 @@ dependencies = [
   "altair>=6.0.0",
   "boto3>=1.42.65",
   "google-genai>=1.66.0",
+  "lightgbm>=4.6.0",
   "marimo==0.20.4",
   "matplotlib>=3.10.8",
   "mcp>=1.26.0",
@@ -19,4 +20,5 @@ dependencies = [
   "pydantic-ai-slim>=1.67.0",
   "pyzmq>=27.1.0",
   "scikit-learn>=1.8.0",
+  "xgboost>=3.2.0",
 ]

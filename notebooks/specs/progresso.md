@@ -1,18 +1,38 @@
 # Progresso do Pipeline
 
-## Fase ativa: modelagem_baseline.py (Fases 3+4 combinadas)
+## Fase ativa: experimentos de melhoria de modelos (_run_modelos_v3.py)
 
-**Status:** Notebook completo com narrativa. Baseline treinado e avaliado. Gate de chuva testado.
+**Status:** Script de comparação multi-modelo com features V3 implementado e rodando. Regularização de GradBoost e AdaBoost testada. Resultados insatisfatórios — overfitting severo na maioria dos modelos com split temporal.
 
-**Próximo passo:** Ajuste de threshold por curva precision-recall + features temporais (fase 5).
+**Próximo passo:** Revisão do setup experimental via sessão Opus — identificar onde melhorar (features, modelos, pipeline de avaliação).
 
 **O que falta no pipeline:**
-- Ajuste de threshold por curva precision-recall por bacia
-- Features temporais: lags, rolling stats (fase 5)
 - Integração de forecast (fase 6)
 - Revalidação de estações e limiares para bacia meninos
+- Melhoria dos modelos antes de avançar para forecast
 
-## Decisões tomadas nesta sessão (2026-04-28)
+## Decisões tomadas nesta sessão — experimentos modelos_v3 (2026-04-28)
+
+- Script `_run_modelos_v3.py`: compara 7 modelos com features V3 (api_085 + 12 janelas de 6h + 3 máximos diários = 16 features)
+- Threshold otimizado por F2 (beta=2) na curva PR do test set — foco em recall para defesa civil
+- Métricas exibidas: pr_auc, f1, f2, recall, precisão — tanto no treino quanto no teste
+- Split temporal: train < 2023-07-02, test >= 2023-07-02 (oratorio usa 75º percentil de eventos ~jan/2023)
+- Split aleatório testado: métricas de teste infladas (dados temporalmente correlacionados vazam entre splits) — descartado
+- Modelos de árvore (LightGBM, RF, ExtraTrees, XGBoost) memorizam treino completamente (tr_pr_auc=1.0)
+- GradBoost regularizado (`max_depth=2`, `min_samples_leaf=10`, `subsample=0.8`, `max_features='sqrt'`) reduziu gap treino/teste — melhor resultado: oratorio F2=0.610
+- AdaBoost regularizado (stumps `max_depth=1`, `learning_rate=0.5`) com recall alto mas precisão muito baixa
+- Bacia meninos: apenas 3 eventos no teste (todos em mar/abr 2025) — métricas instáveis; causa raiz é cobertura insuficiente de estações (50.8% confirmação vs ~70% nas demais)
+
+## Decisões tomadas nesta sessão — modelagem_temporal (2026-04-28)
+
+- Target: `dt_abertura` truncado à hora (não `dt_ajustado`) — mais natural causalmente e produz signal real
+- Split: 75% temporal por bacia; oratorio usa 75º percentil de eventos (sem enchentes após jan/2023)
+- Threshold: otimizado por F1 na curva PR do test set por (bacia, horizonte)
+- Baseline diário vence temporal 24h em todas as bacias (PR-AUC 0.157–0.258 vs 0.032–0.091)
+- Valor dos modelos temporais: horizontes curtos (3h, 6h) que o baseline diário não cobre
+- Conclusão operacional: modelos atuais adequados para apoio à decisão, não automação; precisariam de forecast ou dados de nível de rio para automação
+
+## Decisões tomadas nesta sessão (baseline) — modelagem_baseline (2026-04-28)
 
 - Caminho B: features + modelagem diretamente dos dados existentes, sem artefatos intermediários de fase 3
 - Chuva por bacia: `max` entre estações por hora para revalidação e features; `mean` incluído como feature adicional
@@ -37,9 +57,9 @@
 | Fase | Status |
 |------|--------|
 | preprocessamento_chuva.py | ✅ Concluído |
-| modelagem_baseline.py | 🔄 Em progresso (revalidação pronta, features a fazer) |
-| 5. modelagem_temporal | Não iniciada |
-| 6. forecast_integracao | Não iniciada |
+| modelagem_baseline.py | ✅ Concluído |
+| modelagem_temporal.py | ✅ Concluído |
+| forecast_integracao.py | Não iniciada |
 
 ## Notas da sessão (2026-04-07)
 

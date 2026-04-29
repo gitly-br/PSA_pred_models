@@ -20,13 +20,20 @@ def _():
 def _():
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
+    from sklearn.metrics import (
+        average_precision_score, f1_score, precision_recall_curve,
+        precision_score, recall_score, roc_auc_score,
+    )
     from sklearn.preprocessing import StandardScaler
+    from lightgbm import LGBMClassifier
     return (
+        LGBMClassifier,
         LogisticRegression,
         RandomForestClassifier,
         StandardScaler,
+        average_precision_score,
         f1_score,
+        precision_recall_curve,
         precision_score,
         recall_score,
         roc_auc_score,
@@ -759,6 +766,116 @@ def _(mo):
            (`LIMS` hoje são iguais para todas as bacias).
         """
     )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+        ## 9. LightGBM — melhoria de modelo
+
+        Gradient boosting tipicamente supera Random Forest em dados tabulares desbalanceados.
+        Testamos `LGBMClassifier` com as mesmas features do baseline, **split temporal idêntico**
+        (corte 2023-07-02) e **threshold otimizado por F1** na curva PR do test — mesma metodologia
+        da comparação com o modelo temporal.
+
+        Ajuste mínimo: `n_estimators=500`, `learning_rate=0.05`, `num_leaves=31` (default),
+        `class_weight='balanced'`.
+        """
+    )
+    return
+
+
+@app.cell
+def _(
+    FEATURES, LGBMClassifier, RandomForestClassifier, average_precision_score,
+    df_ml, f1_score, np, pl, precision_recall_curve, precision_score, recall_score,
+):
+    import warnings
+    from datetime import datetime as _dt
+
+    _T_CUT = _dt(2023, 7, 2).date()
+
+    # corte por fração de eventos para oratorio (sem eventos após jan/2023)
+    _ev_oratorio = (
+        df_ml
+        .filter((pl.col("bacia") == "oratorio") & pl.col("enchente"))
+        ["data"].sort()
+    )
+    _T_CUT_ORATORIO = _ev_oratorio[int(len(_ev_oratorio) * 0.75)]
+
+    def _fit_avaliar(clf, X_tr, y_tr, X_te, y_te):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            clf.fit(X_tr, y_tr)
+        y_prob = clf.predict_proba(X_te)[:, 1]
+        prec, rec, thrs = precision_recall_curve(y_te, y_prob)
+        f1s = 2 * prec[:-1] * rec[:-1] / (prec[:-1] + rec[:-1] + 1e-9)
+        best = float(thrs[np.argmax(f1s)])
+        y_pred = (y_prob >= best).astype(int)
+        return {
+            "threshold": round(best, 3),
+            "f1":        round(float(f1_score(y_te, y_pred)), 3),
+            "recall":    round(float(recall_score(y_te, y_pred)), 3),
+            "precisao":  round(float(precision_score(y_te, y_pred)), 3),
+            "pr_auc":    round(float(average_precision_score(y_te, y_prob)), 3),
+            "test_pos":  int(y_te.sum()),
+        }
+
+    _rows = []
+    for _bacia in sorted(df_ml["bacia"].unique().to_list()):
+        _t_cut = _T_CUT_ORATORIO if _bacia == "oratorio" else _T_CUT
+        _sub   = df_ml.filter(pl.col("bacia") == _bacia).drop_nulls(FEATURES)
+        _train = _sub.filter(pl.col("data") < _t_cut)
+        _test  = _sub.filter(pl.col("data") >= _t_cut)
+        _X_tr  = _train[FEATURES].to_pandas()
+        _X_te  = _test[FEATURES].to_pandas()
+        _y_tr  = _train["enchente"].cast(pl.Int8).to_numpy()
+        _y_te  = _test["enchente"].cast(pl.Int8).to_numpy()
+
+        if _y_te.sum() == 0:
+            continue
+
+        for _nome, _clf in [
+            ("RF",      RandomForestClassifier(n_estimators=200, class_weight="balanced", random_state=42, n_jobs=-1)),
+            ("LightGBM", LGBMClassifier(n_estimators=500, learning_rate=0.05, num_leaves=31,
+                                         class_weight="balanced", random_state=42, n_jobs=-1, verbose=-1)),
+        ]:
+            _res = _fit_avaliar(_clf, _X_tr, _y_tr, _X_te, _y_te)
+            _rows.append({"bacia": _bacia, "modelo": _nome, **_res})
+
+    df_lgbm = pl.DataFrame(_rows)
+    df_lgbm
+    return (df_lgbm,)
+
+
+@app.cell
+def _(df_lgbm, mo, pl):
+    _wide = (
+        df_lgbm
+        .select(["bacia", "modelo", "f1", "recall", "precisao", "pr_auc", "test_pos"])
+        .sort(["bacia", "modelo"])
+    )
+    _delta = (
+        df_lgbm.filter(pl.col("modelo") == "LightGBM")
+        .join(
+            df_lgbm.filter(pl.col("modelo") == "RF").rename({"pr_auc": "pr_auc_rf", "f1": "f1_rf"}),
+            on="bacia",
+        )
+        .select([
+            "bacia",
+            (pl.col("pr_auc") - pl.col("pr_auc_rf")).round(3).alias("Δpr_auc"),
+            (pl.col("f1") - pl.col("f1_rf")).round(3).alias("Δf1"),
+        ])
+        .sort("bacia")
+    )
+    mo.vstack([
+        mo.md("**RF vs LightGBM — split temporal, threshold otimizado por F1**"),
+        mo.ui.table(_wide),
+        mo.md("**Ganho LightGBM sobre RF (Δ = LightGBM − RF)**"),
+        mo.ui.table(_delta),
+    ])
     return
 
 
