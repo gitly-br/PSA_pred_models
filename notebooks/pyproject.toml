@@ -10,6 +10,7 @@ dependencies = [
   "marimo==0.20.4",
   "matplotlib>=3.10.8",
   "mcp>=1.26.0",
+  "netcdf4>=1.7.4",
   "numpy>=2.4.3",
   "openai>=2.26.0",
   "pandas>=3.0.1",
@@ -18,7 +19,9 @@ dependencies = [
   "polars>=1.38.1",
   "pyarrow>=23.0.1",
   "pydantic-ai-slim>=1.67.0",
+  "pydap>=3.5.9",
   "pyzmq>=27.1.0",
   "scikit-learn>=1.8.0",
+  "xarray>=2026.4.0",
   "xgboost>=3.2.0",
 ]

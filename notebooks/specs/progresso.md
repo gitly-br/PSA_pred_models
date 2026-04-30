@@ -1,10 +1,73 @@
 # Progresso do Pipeline
 
-## Fase ativa: experimentos de modelagem (V5/V5b — sessão 2026-04-28)
+## Fase ativa: comparativo de fontes de precipitação (sessão 2026-04-30)
 
-**Status:** Quatro iterações completas (V3 → V4 → V5 → V5b) com avaliação honesta (CV no treino, threshold fixo, bootstrap IC95). Champions por bacia identificados; resultados consolidados em `specs/relatorio_modelagem.md`.
+**Status:** Experimentos de modelagem V3→V7 concluídos (sessão anterior). Esta sessão investigou fontes alternativas de precipitação para substituir CEMADEN em produção. Resultado principal: ERA5-multipoint é viável para guarara/meninos, inviável para oratorio/tamanduatei.
 
-**Próximo passo (retomada):** ver seção "Próximos passos detalhados" abaixo. Há ~10 ideias pendentes vindas das discussões; nenhuma é "óbvia primeira".
+**Próximo passo (retomada):** ver seção "Próximos passos detalhados" abaixo e seção "Fase 6 — comparativo de fontes" adicionada no final deste arquivo.
+
+## Decisões tomadas nesta sessão (2026-04-30)
+
+### Comparativo de fontes de precipitação
+
+**Problema identificado:** o script anterior `_run_comparativo_fontes.py` usava GradBoost binário simples com `FEATURES_COMPAT` (sem features espaciais), produzindo resultados muito piores que o champion V7. Não era comparação justa.
+
+**Bug corrigido em `_run_comparativo_multipoint.py`:** usava `max_day_lag1` como proxy para `max_dia` no target de severidade — data leak que inflava recall artificialmente (chegava a 97–100%). Corrigido para usar `max_dia` real do dia atual via `build_diario()`.
+
+**Fontes pesquisadas:**
+- CEMADEN nowcasting: sem API pública documentada. Algoritmo TOOCAN existe internamente.
+- Open-Meteo archive API: retorna ERA5-Land (~11 km, 0.1°) por padrão quando consultado em múltiplos pontos próximos. Cobre 2016–2025, zero nulls, gratuito.
+- ICON-EU (7 km): indisponível historicamente para Brasil via Open-Meteo.
+- GFS via historical-forecast-api: disponível mas cobre Brasil a ~28 km, nulls em 2016.
+
+**ERA5-Land multipoint:** baixados 5 pontos de grade únicos cobrindo as 4 bacias (dados em `dados/openmeteo_multipoint/`). Cada ponto é uma célula ERA5-Land genuinamente distinta (snap para coordenadas diferentes). Correlação entre pontos: r=0.88–0.95. Std diário máximo intra-bacia: 13–30 mm (sinal real em eventos convectivos).
+
+**Mapeamento bacia → pontos ERA5-Land:**
+- guarara: 3 pontos
+- oratorio: 3 pontos
+- meninos: 4 pontos
+- tamanduatei: 3 pontos
+
+**Resultados do comparativo (modelo V7 ordinal, FEATURES_V4 completas):**
+
+| Experimento | Bacia | TPs | FPs | Pos | Precisão | Recall | PR-AUC | Alarmes/mês |
+|---|---|---|---|---|---|---|---|---|
+| CEM→CEM | guarara | 31 | 22 | 38 | 58% | 82% | 0.838 | 3.79 |
+| CEM→CEM | meninos | 8 | 10 | 10 | 44% | 80% | 0.732 | 1.29 |
+| CEM→CEM | oratorio | 21 | 22 | 23 | 49% | 91% | 0.664 | 2.53 |
+| CEM→CEM | tamanduatei | 28 | 26 | 37 | 52% | 76% | 0.780 | 3.86 |
+| ERA5mp→ERA5mp | guarara | 30 | 35 | 36 | 46% | 83% | 0.643 | 4.64 |
+| ERA5mp→ERA5mp | meninos | 9 | 14 | 13 | 39% | 69% | 0.604 | 1.64 |
+| ERA5mp→ERA5mp | oratorio | 14 | 251 | 14 | 5% | 100% | 0.563 | 15.59 |
+| ERA5mp→ERA5mp | tamanduatei | 27 | 199 | 29 | 12% | 93% | 0.513 | 16.14 |
+| CEM→ERA5mp | guarara | 18 | 44 | 36 | 29% | 50% | 0.700 | 4.43 |
+| CEM→ERA5mp | meninos | 10 | 7 | 13 | 59% | 77% | 0.779 | 1.21 |
+| CEM→ERA5mp | oratorio | 12 | 16 | 14 | 43% | 86% | 0.673 | 1.65 |
+| CEM→ERA5mp | tamanduatei | 13 | 33 | 29 | 28% | 45% | 0.571 | 3.29 |
+
+**Interpretação:**
+- guarara e meninos (bacias menores, mais homogêneas): ERA5mp→ERA5mp PR-AUC 0.60–0.64, recall decente. Potencialmente utilizável com calibração de threshold.
+- oratorio e tamanduatei (bacias maiores, mais estações CEMADEN): ERA5mp explode em FPs (251, 199), 15–16 alarmes/mês. Inviável operacionalmente.
+- CEM→ERA5mp: meninos e oratorio ficam razoáveis (PR-AUC 0.67–0.78); guarara e tamanduatei pioram muito.
+- Teto estrutural: ERA5-Land a 11 km suaviza eventos convectivos locais nas bacias maiores. Problema de resolução, não de modelo.
+
+**Artefatos produzidos nesta sessão:**
+
+| Artefato | Descrição |
+|---|---|
+| `dados/openmeteo_multipoint/pt_*.parquet` | 5 séries horárias ERA5-Land 2016–2025 (87.672 linhas cada) |
+| `dados/openmeteo_multipoint/index.json` | Mapa bacia → lista de pontos lat/lon |
+| `dados/comparativo_multipoint.parquet` | Tabela de resultados dos 3 experimentos × 4 bacias |
+| `_download_openmeteo_multipoint.py` | Script de download dos pontos ERA5-Land |
+| `_run_comparativo_multipoint.py` | Comparativo CEM→CEM / ERA5mp→ERA5mp / CEM→ERA5mp com modelo V7 |
+| `dados/openweather_history.parquet` | OpenWeather histórico 1979–2024 (ponto único) |
+| `dados/openweater/open_meteo_history.parquet` | ERA5-Land ponto único 2016–2025 (baseline) |
+
+**Pendências desta sessão:**
+- Avaliar se calibração de threshold separada por fonte melhora ERA5mp para guarara/meninos.
+- Investigar por que CEM→ERA5mp é tão ruim para guarara/tamanduatei mas razoável para meninos/oratorio.
+- Decidir se ERA5mp serve como fallback para guarara/meninos quando CEMADEN offline.
+- Consolidar resultados no relatório Typst `specs/relatorio_forecast_comparativo.typ`.
 
 ## Próximos passos detalhados (pendências das discussões)
 
