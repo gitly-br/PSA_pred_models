@@ -30,10 +30,17 @@ LOOKBACK_H     = 72
 T_CUT          = datetime(2023, 7, 2).date()
 K_API          = 0.85
 
-FEATURES_V3 = (
-    ["api_085"]
+K_APIS = [0.70, 0.85, 0.95]
+LIM_INTENSO_MM = 5.0
+
+FEATURES_V4 = (
+    [f"api_{int(k*100):03d}" for k in K_APIS]
     + [f"acc_6h_lag_{i}" for i in range(1, 13)]
     + ["max_day_lag1", "max_day_lag2", "max_day_lag3"]
+    + ["mean_day_lag1", "std_day_lag1", "n_chovendo_max_lag1"]
+    + ["pico_1h_lag1", "horas_intensas_lag1"]
+    + ["acum_7d", "acum_30d"]
+    + ["mes_sin", "mes_cos"]
 )
 
 with open("dados/estacoes_bacia.json") as f:
@@ -44,8 +51,13 @@ for bacia in estacoes_bacia:
     df = pl.read_parquet(f"dados/chuva_bacias/chuva_{bacia}.parquet")
     est_cols = [c for c in df.columns if c != "hora"]
     partes.append(
-        df.with_columns(pl.max_horizontal(est_cols).alias("chuva_max_mm"))
-        .select(["hora", "chuva_max_mm"])
+        df.with_columns([
+            pl.max_horizontal(est_cols).alias("chuva_max_mm"),
+            pl.mean_horizontal(est_cols).alias("chuva_mean_mm"),
+            pl.concat_list(est_cols).list.std().alias("chuva_std_mm"),
+            pl.sum_horizontal([(pl.col(c) > 1.0).cast(pl.Int8) for c in est_cols]).alias("n_chovendo"),
+        ])
+        .select(["hora", "chuva_max_mm", "chuva_mean_mm", "chuva_std_mm", "n_chovendo"])
         .with_columns(pl.lit(bacia).alias("bacia"))
     )
 df_chuva_h = pl.concat(partes).sort(["bacia", "hora"])
@@ -106,13 +118,21 @@ df_blocos_wide = (
     .sort(["bacia", "data"])
     .with_columns([pl.col(c).fill_null(0) for c in ["bloco_0", "bloco_1", "bloco_2", "bloco_3"]])
 )
-df_max_dia = (
+df_diario = (
     df_h.group_by(["data", "bacia"])
-    .agg(pl.col("chuva_max_mm").max().alias("max_dia"))
+    .agg([
+        pl.col("chuva_max_mm").max().alias("max_dia"),
+        pl.col("chuva_max_mm").sum().alias("acum_dia"),
+        pl.col("chuva_mean_mm").mean().alias("mean_dia"),
+        pl.col("chuva_std_mm").mean().alias("std_dia"),
+        pl.col("n_chovendo").max().alias("n_chovendo_max"),
+        pl.col("chuva_max_mm").max().alias("pico_1h"),
+        (pl.col("chuva_max_mm") >= LIM_INTENSO_MM).sum().alias("horas_intensas"),
+    ])
     .sort(["bacia", "data"])
 )
 df_feat = (
-    df_blocos_wide.join(df_max_dia, on=["data", "bacia"])
+    df_blocos_wide.join(df_diario, on=["data", "bacia"])
     .with_columns([
         pl.col("bloco_0").shift(3).over("bacia").alias("acc_6h_lag_1"),
         pl.col("bloco_1").shift(3).over("bacia").alias("acc_6h_lag_2"),
@@ -129,29 +149,57 @@ df_feat = (
         pl.col("max_dia").shift(1).over("bacia").alias("max_day_lag1"),
         pl.col("max_dia").shift(2).over("bacia").alias("max_day_lag2"),
         pl.col("max_dia").shift(3).over("bacia").alias("max_day_lag3"),
+        pl.col("mean_dia").shift(1).over("bacia").alias("mean_day_lag1"),
+        pl.col("std_dia").shift(1).over("bacia").alias("std_day_lag1"),
+        pl.col("n_chovendo_max").shift(1).over("bacia").alias("n_chovendo_max_lag1"),
+        pl.col("pico_1h").shift(1).over("bacia").alias("pico_1h_lag1"),
+        pl.col("horas_intensas").shift(1).over("bacia").alias("horas_intensas_lag1"),
+        pl.col("acum_dia").rolling_sum(window_size=7, min_samples=1).shift(1).over("bacia").alias("acum_7d"),
+        pl.col("acum_dia").rolling_sum(window_size=30, min_samples=1).shift(1).over("bacia").alias("acum_30d"),
+        (2 * np.pi * pl.col("data").dt.month() / 12).sin().alias("mes_sin"),
+        (2 * np.pi * pl.col("data").dt.month() / 12).cos().alias("mes_cos"),
     ])
-    .select(["data", "bacia"] + [f"acc_6h_lag_{i}" for i in range(1, 13)]
-            + ["max_day_lag1", "max_day_lag2", "max_day_lag3"])
+    .select(
+        ["data", "bacia"]
+        + [f"acc_6h_lag_{i}" for i in range(1, 13)]
+        + ["max_day_lag1", "max_day_lag2", "max_day_lag3"]
+        + ["mean_day_lag1", "std_day_lag1", "n_chovendo_max_lag1"]
+        + ["pico_1h_lag1", "horas_intensas_lag1"]
+        + ["acum_7d", "acum_30d"]
+        + ["mes_sin", "mes_cos"]
+    )
 )
 _api_parts = []
-for _bacia in df_max_dia["bacia"].unique().to_list():
-    _sub  = df_max_dia.filter(pl.col("bacia") == _bacia).sort("data")
+for _bacia in df_diario["bacia"].unique().to_list():
+    _sub  = df_diario.filter(pl.col("bacia") == _bacia).sort("data")
     _vals = _sub["max_dia"].fill_null(0).to_numpy()
-    _api  = lfilter([1.0], [1.0, -K_API], _vals)
-    _api_parts.append(
-        _sub.select(["data", "bacia"])
-        .with_columns(pl.Series("api_085", _api))
-    )
+    cols = {"data": _sub["data"], "bacia": _sub["bacia"]}
+    for _k in K_APIS:
+        cols[f"api_{int(_k*100):03d}"] = lfilter([1.0], [1.0, -_k], _vals)
+    _api_parts.append(pl.DataFrame(cols))
 df_api = pl.concat(_api_parts)
 df_feat = df_feat.join(df_api, on=["data", "bacia"])
 
-_df_target = (
+_df_target_cham = (
     df_chamados_conf
     .with_columns(pl.col("dt_abertura").dt.date().alias("data"))
     .group_by(["data", "bacia"]).len()
-    .with_columns(pl.lit(True).alias("enchente"))
-    .select(["data", "bacia", "enchente"])
+    .with_columns(pl.lit(True).alias("pos_chamado"))
+    .select(["data", "bacia", "pos_chamado"])
 )
+
+# fonte externa: alagamentos_bacias.csv → flag por bacia
+_ext = pl.read_csv("dados/alagamentos_bacias.csv").with_columns(pl.col("dt").str.to_date())
+_df_target_ext = _ext.select([
+    pl.col("dt").alias("data"),
+    pl.col("bacia_tamanduatei").alias("tamanduatei"),
+    pl.col("bacia_guarara").alias("guarara"),
+    pl.col("bacia_oratorio").alias("oratorio"),
+    pl.col("bacia_meninos").alias("meninos"),
+]).unpivot(index="data", variable_name="bacia", value_name="flag").filter(pl.col("flag") > 0).select([
+    "data", "bacia", pl.lit(True).alias("pos_externo"),
+])
+
 _bacias = list(estacoes_bacia.keys())
 _datas  = pl.date_range(date(2016, 1, 1), date(2025, 12, 31), interval="1d", eager=True).to_list()
 _cal    = pl.DataFrame({
@@ -160,12 +208,53 @@ _cal    = pl.DataFrame({
 })
 df_ml = (
     _cal
-    .join(_df_target, on=["data", "bacia"], how="left")
-    .with_columns(pl.col("enchente").fill_null(False))
+    .join(_df_target_cham, on=["data", "bacia"], how="left")
+    .join(_df_target_ext, on=["data", "bacia"], how="left")
+    .with_columns([
+        pl.col("pos_chamado").fill_null(False),
+        pl.col("pos_externo").fill_null(False),
+    ])
+    .with_columns((pl.col("pos_chamado") | pl.col("pos_externo")).alias("enchente"))
     .join(df_feat, on=["data", "bacia"], how="left")
     .filter(pl.col("data").dt.month().is_in(MESES_CHUVOSOS))
     .sort(["bacia", "data"])
 )
+
+# ---- detectar dias suspeitos (negativos similares a positivos, só excluídos do treino) ----
+from scipy.spatial.distance import cdist
+_FEATS_SIM = ["max_day_lag1", "acum_7d", "mean_day_lag1", "n_chovendo_max_lag1",
+              "horas_intensas_lag1", "api_085"]
+_susp_flags = []
+for _b in _bacias:
+    _sub = df_ml.filter(pl.col("bacia") == _b).drop_nulls(_FEATS_SIM)
+    _y = _sub["enchente"].to_numpy()
+    _X = _sub.select(_FEATS_SIM).to_numpy()
+    _sd = _X.std(axis=0) + 1e-9
+    _Xn = _X / _sd
+    _pos = np.where(_y)[0]
+    _neg = np.where(~_y)[0]
+    if len(_pos) < 2 or len(_neg) == 0:
+        _flag = np.zeros(_sub.height, dtype=bool)
+    else:
+        _dists = cdist(_Xn[_neg], _Xn[_pos], metric="euclidean").min(axis=1)
+        _dpos = cdist(_Xn[_pos], _Xn[_pos], metric="euclidean")
+        np.fill_diagonal(_dpos, np.inf)
+        _thr = float(np.percentile(_dpos.min(axis=1), 25))  # p25 intra-positivos = restrito
+        _p75_max = float(np.percentile(_X[_pos, 0], 75))
+        _datas_neg = _sub.filter(~pl.Series(_y))["data"].to_list()
+        _wknd = np.array([d.weekday() >= 5 for d in _datas_neg])
+        _cand_neg = (_dists <= _thr) & (_X[_neg, 0] >= _p75_max) & _wknd
+        _flag = np.zeros(_sub.height, dtype=bool)
+        _flag[_neg[_cand_neg]] = True
+    _susp_flags.append(_sub.select(["data", "bacia"]).with_columns(pl.Series("suspeito", _flag)))
+df_susp = pl.concat(_susp_flags)
+df_ml = df_ml.join(df_susp, on=["data", "bacia"], how="left").with_columns(
+    pl.col("suspeito").fill_null(False)
+)
+print("Suspeitos por bacia (excluídos do treino):")
+print(df_ml.filter(pl.col("suspeito")).group_by("bacia").len().sort("bacia").to_pandas().to_string(index=False))
+print(f"\nPositivos por bacia (target enriquecido):")
+print(df_ml.filter(pl.col("enchente")).group_by("bacia").len().sort("bacia").to_pandas().to_string(index=False))
 
 _ev_oratorio = df_ml.filter((pl.col("bacia") == "oratorio") & pl.col("enchente"))["data"].sort()
 T_CUT_ORATORIO = _ev_oratorio[int(len(_ev_oratorio) * 0.75)]
@@ -208,11 +297,12 @@ def _metricas(y_true, y_prob, thr):
     }
 
 def _thr_por_f2(y_true, y_prob):
+    """Otimiza F1 (não F2) — usado para escolha de threshold; nome mantido por compatibilidade."""
     prec, rec, thrs = precision_recall_curve(y_true, y_prob)
     if len(thrs) == 0:
         return 0.5
-    f2s = (5 * prec[:-1] * rec[:-1]) / (4 * prec[:-1] + rec[:-1] + 1e-9)
-    return float(thrs[np.nanargmax(f2s)]) if np.any(np.isfinite(f2s)) else 0.5
+    f1s = (2 * prec[:-1] * rec[:-1]) / (prec[:-1] + rec[:-1] + 1e-9)
+    return float(thrs[np.nanargmax(f1s)]) if np.any(np.isfinite(f1s)) else 0.5
 
 def _thr_cv_treino(mk, sw_full, X_tr, y_tr, n_splits=CV_SPLITS):
     """Walk-forward CV no treino: out-of-fold predictions → threshold por F2."""
@@ -287,11 +377,11 @@ def fit_avaliar(mk, sw, X_tr, y_tr, X_te, y_te, datas_te):
 rows = []
 for bacia in sorted(df_ml["bacia"].unique().to_list()):
     t_cut = T_CUT_ORATORIO if bacia == "oratorio" else T_CUT
-    sub   = df_ml.filter(pl.col("bacia") == bacia).drop_nulls(FEATURES_V3)
-    train = sub.filter(pl.col("data") < t_cut)
+    sub   = df_ml.filter(pl.col("bacia") == bacia).drop_nulls(FEATURES_V4)
+    train = sub.filter((pl.col("data") < t_cut) & ~pl.col("suspeito"))
     test  = sub.filter(pl.col("data") >= t_cut)
-    X_tr  = train[FEATURES_V3].to_pandas()
-    X_te  = test[FEATURES_V3].to_pandas()
+    X_tr  = train[FEATURES_V4].to_pandas()
+    X_te  = test[FEATURES_V4].to_pandas()
     y_tr  = train["enchente"].cast(pl.Int8).to_numpy()
     y_te  = test["enchente"].cast(pl.Int8).to_numpy()
     datas_te = test["data"]

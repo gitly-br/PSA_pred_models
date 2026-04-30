@@ -1,5 +1,32 @@
 # Decisões Técnicas Registradas
 
+## Decisões da sessão 2026-04-28 (modelagem V3→V5b)
+
+### Avaliação honesta — não negociável daqui pra frente
+- **Threshold escolhido por TimeSeriesSplit (5 splits walk-forward) no treino**, aplicado fixo no test.
+- **Otimização por F1** (não F2) na curva PR do CV. F2 viesa demais para recall quando o target tem positivos suficientes (e foi o que fez V5 virar alarmista).
+- **Bootstrap IC95** estratificado, 1000 reamostragens, sempre reportado junto da métrica pontual.
+- **Métrica operacional adicional**: alarmes/mês e eventos capturados (X/Y) — número que a defesa civil entende.
+- Custo aceito: 168 fits por rodada (×6 vs versão antiga).
+
+### Champion model — GradBoost regularizado
+Em todas as 4 bacias e em todas as iterações (V3→V5b), `GradientBoostingClassifier` com `max_depth=2, min_samples_leaf=10, subsample=0.8, max_features="sqrt", n_estimators=200, learning_rate=0.05` venceu RandomForest, ExtraTrees, LightGBM, XGBoost, AdaBoost e LogisticReg. Os modelos não-regularizados memorizam treino completamente (PR-AUC train ≈ 1.0).
+
+### Champions por bacia (target enriquecido com fontes externas)
+- **guarara** → V5b (peso 0.5 para fonte externa, threshold F1)
+- **meninos** → V5-F1 (peso uniforme, threshold F1)
+- **oratorio** → V5-F1
+- **tamanduatei** → V4 (sem fonte externa) — a inclusão da fonte externa **piora** essa bacia, que já tem volume suficiente de chamados.
+
+### Fonte externa de positivos
+- `alagamentos_bacias.csv` (79 datas com flags por bacia) traz +79 positivos novos (sem chamado correspondente). Maior impacto em meninos (+81%).
+- **Para bacias com poucos chamados (meninos): adicionar.** Para bacias com volume suficiente (tamanduatei): **não adicionar** (ou pesar muito menos).
+
+### Estações da bacia meninos
+- Cobertura real das 8 estações originais é **81,2%** (não 50,8% como nota antiga sugeria).
+- Adicionada `354870814A` (Vila Vitória, SBC) — fora dos 3 km do centróide, mas captura +20 chamados (cobertura 92,3%).
+- Aceito risco de chuva remota em troca do ganho de positivos.
+
 ## Validação de labels em duas fases
 
 - **Fase 1: `confirmado_chuva`** — validação permissiva com qualquer estação da cidade. Elimina chamados sem nenhuma chuva registrada.
