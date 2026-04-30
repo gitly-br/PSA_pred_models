@@ -69,6 +69,21 @@
 - Decidir se ERA5mp serve como fallback para guarara/meninos quando CEMADEN offline.
 - Consolidar resultados no relatório Typst `specs/relatorio_forecast_comparativo.typ`.
 
+**Bug pendente (verificar com Opus):**
+- Features `api_070`, `api_085`, `api_095` incluem `max_dia[t]` (precipitação de HOJE) sem shift.
+  Todos os outros features usam `shift(1)`. Corrigir aplicando `lfilter` sobre série shiftada.
+
+**Decisão de arquitetura pendente (Opus revisar):**
+- O modelo atual só olha para o passado (lags de 1-3 dias + acumulados). Em produção, a pergunta
+  operacional é "dado passado + forecast das próximas 12-48h, vai encher?". Sem features de forecast
+  no treino o modelo não aprende o peso da chuva futura.
+- Proposta: adicionar features `forecast_6h`, `forecast_12h`, `forecast_24h`, `forecast_48h`
+  (precipitação esperada nas próximas janelas) usando ERA5-Land Open-Meteo como proxy no treino
+  (previsão perfeita) e forecast real em produção. A lacuna entre ERA5 perfeito e forecast real
+  vira limite superior explícito de performance.
+- Isso muda fundamentalmente a arquitetura: CEMADEN fornece features de passado; Open-Meteo
+  fornece features de futuro. Não são fontes concorrentes — são complementares.
+
 ## Próximos passos detalhados (pendências das discussões)
 
 Cada item tem: **racional** (por que importa), **como fazer** (resumido), e **status** (não iniciado).
