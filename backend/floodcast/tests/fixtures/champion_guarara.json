@@ -1,0 +1,47 @@
+{
+  "bacia": "guarara",
+  "modeling_family": "psa_v7_ordinal",
+  "obj_version": "0.3",
+  "features": [
+    "api_070",
+    "api_085",
+    "api_095",
+    "acc_6h_lag_1",
+    "acc_6h_lag_2",
+    "acc_6h_lag_3",
+    "acc_6h_lag_4",
+    "acc_6h_lag_5",
+    "acc_6h_lag_6",
+    "acc_6h_lag_7",
+    "acc_6h_lag_8",
+    "acc_6h_lag_9",
+    "acc_6h_lag_10",
+    "acc_6h_lag_11",
+    "acc_6h_lag_12",
+    "max_day_lag1",
+    "max_day_lag2",
+    "max_day_lag3",
+    "mean_day_lag1",
+    "std_day_lag1",
+    "n_chovendo_max_lag1",
+    "pico_1h_lag1",
+    "horas_intensas_lag1",
+    "acum_7d",
+    "acum_30d",
+    "mes_sin",
+    "mes_cos"
+  ],
+  "thresholds": {
+    "1": 0.1634676200992284,
+    "2": 0.11851326381006416,
+    "3": 0.12588648120538853
+  },
+  "n_samples": 1810,
+  "class_distribution": {
+    "0": 1589,
+    "1": 154,
+    "2": 17,
+    "3": 50
+  },
+  "exported_at": "2026-05-19T20:29:55.884755+00:00"
+}

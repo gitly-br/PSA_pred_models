@@ -179,3 +179,7 @@ notebooks/dados/CEMADEN/
 notebooks/modelos/
 *.joblib
 *.pkl
+
+# Except test fixtures
+!backend/floodcast/tests/fixtures/*.joblib
+!backend/floodcast/tests/fixtures/*.json
