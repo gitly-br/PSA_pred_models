@@ -1,5 +1,14 @@
 ## Fontes de dados PSA
 
+### Organização do diretório `dados/`
+
+| Subdiretório | Conteúdo |
+|---|---|
+| *(raiz)* | Dados primários consumidos pelo pipeline (parquet, csv, geojson, json). |
+| `chuva_bacias/` | Séries horárias de precipitação por bacia hidrográfica (CEMADEN agregado). |
+| `weather/` | Dados meteorológicos históricos e de forecast (OpenWeather, Open-Meteo/ERA5). |
+| `results/` | Parquets de métricas e comparativos gerados por experimentos (`_run_modelos_*.py`). |
+
 ### Chamados
 
 #### Chamados raw

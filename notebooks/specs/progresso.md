@@ -1,18 +1,153 @@
 # Progresso do Pipeline
 
-## Fase ativa: comparativo de fontes de precipitação (sessão 2026-04-30)
+## Fase ativa: validação API Santo André para inferência em produção (sessão 2026-05-06)
 
-**Status:** Experimentos de modelagem V3→V7 concluídos (sessão anterior). Esta sessão investigou fontes alternativas de precipitação para substituir CEMADEN em produção. Resultado principal: ERA5-multipoint é viável para guarara/meninos, inviável para oratorio/tamanduatei.
+**Status:** Champions V7 fixados (F2 0.69-0.78). Estratégias para melhorar forecast ERA5 testadas e teto aceito (rich/max não bate v1 mean). Validação da API da defesa civil em curso — bloqueada por falta de coordenadas das estações.
 
-**Próximo passo (retomada):** ver seção "Próximos passos detalhados" abaixo e seção "Fase 6 — comparativo de fontes" adicionada no final deste arquivo.
+**Próximo passo (retomada):** quando a defesa civil enviar a tabela `estacao_id, lat, lon` das 25-27 estações Santo André, fazer:
+1. Mapeamento espacial estação → bacia hidrográfica (igual ao que fizemos para CEMADEN).
+2. Validação cruzada: para dias 2024+ com chuva, comparar features V4 derivadas de CEMADEN vs Santo André no período em que ambas existem.
+3. Se r > 0.85, viabiliza usar a API direto. Senão, considerar re-treino com Santo André.
 
-## Decisões tomadas nesta sessão (2026-04-30)
+## Decisões tomadas nesta sessão (2026-05-06)
+
+### Estratégias de melhoria do forecast Open-Meteo (testadas e descartadas)
+
+Ambas estratégias testadas em `_run_modelos_forecast_v7_rich.py`:
+
+**1. Múltiplas agregações espaciais (mean+max+std+n_chovendo+pico_1h+horas_intensas) — RICH:**
+- Adiciona 5 features por horizonte além de `mean`. Total 6 features × 3 horizontes = 18 novas features.
+- Resultado: piora em 8 de 12 (bacia × horizonte). Ganhos máximos +0.03 F2; perdas até -0.12 F2.
+- Pior caso: meninos H48 disparou 103 FPs vs 29 do v1 (overfit por dimensionalidade).
+
+**2. Substituir mean por max (uma feature, agregação espacial diferente) — MAX:**
+- Ataque mais cirúrgico: substitui sem aumentar dimensionalidade.
+- Resultado: empate técnico com v1 (deltas |Δ| < 0.05 F2 na maioria; tamanduatei H24 ganha marginal +0.004).
+- Confirmação: max e mean são intercambiáveis a 11 km de resolução (todos os pontos cobrem ~mesma célula).
+
+**Conclusão:** o teto do forecast ERA5-Land está no v1 mean. Próximo ganho real virá de fonte de forecast com resolução melhor (Open-Meteo histórico GFS, ICON, ou OW forecast quando viável).
+
+### Validação API defesa civil Santo André
+
+**API testada:** `https://santo-andre-api-app-acta-campo.mitraonline.com.br/api/v1/iot/consultar/leitura-estacoes`
+- Headers: `api-id` + `sistema-id`. Latência ~200ms. Granularidade até 1 min.
+- 25-27 estações ativas (IDs 1-27). Densidade horária boa (>22/24 leituras por estação no dia).
+- Semântica `pluviometro` = "soma da variação no período" → equivalente ao CEMADEN horário.
+
+**Limitações:**
+- **Cobertura histórica começa em 2024-01-01.** Anteriores retornam 0 leituras. Inviável para treino.
+- **Rede de estações DIFERENTE do CEMADEN.** IDs 1-27 com nomes "Area X - Bairro Y" vs CEMADEN `354780XXXA`. Apenas 2-4 matches plausíveis por nome (Vila Curuçá, Parque das Nações, João Ramalho, Capuava).
+
+**Bloqueador:** API não retorna lat/lon das estações. Pedido pendente:
+```
+Para cada estacao_id (1..27): latitude, longitude, município, data_inicio_operação
+```
+
+Sem essas coordenadas:
+- Não dá para mapear estações → bacias (essencial para features espaciais V7).
+- Não dá para validar overlap CEMADEN ↔ Santo André empiricamente.
+
+**Plano arquitetural confirmado:**
+- TREINO: continua CEMADEN histórico 2016-2025 (cobertura ampla).
+- INFERÊNCIA: API Santo André + acumulação em MongoDB. Após ~3 dias de start, o lookback de 72h fica completo.
+- VALIDAÇÃO: depois das coordenadas, comparar features V4 dia-a-dia entre as redes em período de sobreposição.
+
+**Artefatos da sessão:**
+| Artefato | Descrição |
+|---|---|
+| `scripts/experiments/_run_modelos_forecast_v7_rich.py` | 12 runs por bacia: baseline / v1 / max / rich (3 horizontes × 4 variantes) |
+| `dados/results/resultados_forecast_v7_rich.parquet` | Métricas das estratégias 1+2 |
+| `scripts/experiments/_run_modelos_legado_v1.py` | Reprodução fiel do V1 + dual eval (legado random / V7-eq temporal) |
+| `scripts/experiments/_run_modelos_forecast_v7.py` | Forecast V7 baseline (mean only) — agora com acurácia |
+| `dados/weather/openweather_forecast_history.parquet` | Bulk OW forecast convertido (3.3M linhas, 2017-10 a 2024-03) |
+
+**Pendências:**
+- Aguardar coordenadas da defesa civil para validar API.
+- Quando vier, especificar schema MongoDB de ingestão e job de coleta.
+- (Adiado) Testar forecast OW como substituto do ERA5 — provável ganho marginal só se OW tiver maior resolução efetiva.
+
+## Decisões da sessão anterior (forecast como feature — 2026-05-06 cedo)
+
+### Forecast como feature (V7 + ERA5 multipoint)
+
+**Arquitetura:** mantém features V4 (passado CEMADEN) e adiciona `forecast_12h`, `forecast_24h`, `forecast_48h` (ERA5 multipoint, média dos 3-4 pontos por bacia). Targets: H12/H24 = severidade no dia t (idêntico V7); H48 = max(sev[t], sev[t+1]).
+
+**Resultado (4 bacias × 6 runs, modelo V7 ordinal, métrica V7 nível ≥1):**
+
+| Bacia | Champion | Forecast? | TPs | FPs | Precisão | Recall | F2 |
+|---|---|---|---|---|---|---|---|
+| **guarara** | H24 forecast | ✅ Sim | 31 | 17 | **64.6%** | 81.6% | 0.775 |
+| **meninos** | H12/H24 baseline | ❌ Não | 8 | 10 | 44.4% | 80.0% | 0.690 |
+| **oratorio** | H12/H24 baseline | ❌ Não | 21 | 22 | 48.8% | **91.3%** | 0.778 |
+| **tamanduatei** | H24 forecast | ✅ Sim | 32 | 34 | 48.5% | **86.5%** | 0.748 |
+
+**Achados:**
+- **Forecast ajuda 2 de 4 bacias** (guarara, tamanduatei). Em guarara: ganho de **+6.1pp precisão** sem perder recall. Em tamanduatei: ganho de **+10.8pp recall** com leve perda de precisão.
+- **H24 ≥ H12 quando forecast é usado:** olhar 24h adiante consistentemente bate olhar só 12h. Baseline é idêntico (target sev[t] = mesma feature CEMADEN).
+- **H48 perde em todas exceto guarara forecast:** target mais amplo (max(sev[t], sev[t+1])) torna o problema mais difícil; F2 cai para 0.40-0.63.
+- **Meninos é a única bacia onde forecast claramente atrapalha** (-7 a -15pp precisão). Bacia pequena, ERA5 a 11 km mistura sinal vizinho.
+- **Recall ≥ 80% em 3 de 4 bacias** com champions atuais.
+
+**Diferença vs análise binária (v5b style):** quando rodamos forecast com target binário (apenas chamados), forecast piorou em 3 de 4 bacias. Com target V7 ordinal (onde "chuva forte sem chamado" é sev≥1, contando como TP detectável), forecast passa a ajudar em 2 de 4. A definição de positivo importa muito.
+
+**Artefatos:**
+| Artefato | Descrição |
+|---|---|
+| `scripts/experiments/_run_modelos_forecast.py` | Forecast estilo binário v5b (3 horizontes × baseline/forecast) |
+| `scripts/experiments/_run_modelos_forecast_v7.py` | Forecast estilo V7 ordinal (recomendado) |
+| `dados/results/resultados_forecast.parquet` | Resultados rodada binária |
+| `dados/results/resultados_forecast_v7.parquet` | Resultados rodada V7 ordinal |
+
+### Reprodução do V1 legado (`_run_modelos_legado_v1.py`, sessão 2026-05-06)
+
+Reproduziu fielmente o pipeline de `archive/notebooks_antigos/Modelos_V1.ipynb` seções 14-17 (sweep manual em vez de PyCaret): OW histórico → fill_missing → shift_dt(-24) → agregação diária com config legado → filtro sazonal → iterative_lower_fence_cuts → split aleatório 15% → ClusterCentroids 0.75 → sweep 6 modelos.
+
+**Champions V1 por bacia (LEGADO eval, ranking por acc):**
+
+| Modelo V1 | Acc | Precisão | Recall | F2 |
+|---|---|---|---|---|
+| **municipal** | 73.2% | **10.3%** | 87.8% | **0.352** |
+| tamanduatei | 71.1% | 8.2% | 90.9% | 0.300 |
+| meninos | 71.4% | 3.2% | 73.3% | 0.135 |
+| guarara | 70.4% | 4.7% | 73.9% | 0.188 |
+| oratorio | 68.7% | 1.9% | 70.0% | 0.085 |
+
+**Comparação V1 → V7 forecast (com acurácia):**
+
+| Bacia | V1 (V7-eq) Acc/Prec/Rec/F2 | V7 forecast Acc/Prec/Rec/F2 | Δ Precisão |
+|---|---|---|---|
+| guarara | 22.7% / 6.0% / 100% / 0.243 | 94.3% / 64.6% / 81.6% / 0.775 | +58.6pp |
+| meninos | 22.0% / 0.9% / 100% / 0.043 | 97.2% / 44.4% / 80.0% / 0.690 | +43.5pp |
+| oratorio | 12.8% / 0.8% / 100% / 0.039 | 95.3% / 48.8% / 91.3% / 0.778 | +48.0pp |
+| tamanduatei | 19.9% / 8.1% / 100% / 0.307 | 90.8% / 48.5% / 86.5% / 0.748 | +40.4pp |
+
+**Interpretação:**
+- Modelo municipal V1 era o "teto decente" do legado (F2 0.352), mas com precisão 10% (≈9 alarmes falsos por acerto). LogisticReg ganhou em todas as bacias do nosso sweep (PyCaret default seria similar — o legado escolheu manualmente XGB/AdaBoost para produção, com critérios secundários).
+- Acurácia alta no V7 (90-97%) é parcialmente artefato do desbalanceamento (preditor "sempre não" daria acc 92-98%). O ganho real é em **precisão (+40-58pp)** e F2 (+0.44-0.74).
+- A acurácia "decente" do V1 LEGADO (73%) era inflada pelo split aleatório que diluía positivos. No V7-eq temporal cai para 13-23%.
+
+**Artefatos:**
+| Artefato | Descrição |
+|---|---|
+| `_run_modelos_legado_v1.py` | Reprodução fiel do V1 (5 bacias incluindo municipal, dual eval) |
+| `dados/openweather_forecast_history.parquet` | Bulk OW forecast convertido (3.3M linhas, 2017-10 a 2024-03) |
+| `dados/resultados_legado_v1_legacy_eval.parquet` | Métricas no eval legado (random 0.15) |
+| `dados/resultados_legado_v1_v7eval.parquet` | Métricas no eval V7-equiv (temporal T_CUT) |
+
+**Pendências:**
+- Estratégias para melhorar forecast Open-Meteo (próxima discussão — ver fase ativa).
+- Quando OW forecast estiver bem mapeado por bacia, testar como substituto/complemento ao ERA5.
+- Variar granularidade do forecast (forecast_6h, forecast_72h).
+- Investigar meninos: trocar média de pontos por ponto único mais próximo do centróide.
+
+## Decisões da sessão 2026-04-30 (comparativo de fontes)
+
 
 ### Comparativo de fontes de precipitação
 
 **Problema identificado:** o script anterior `_run_comparativo_fontes.py` usava GradBoost binário simples com `FEATURES_COMPAT` (sem features espaciais), produzindo resultados muito piores que o champion V7. Não era comparação justa.
 
-**Bug corrigido em `_run_comparativo_multipoint.py`:** usava `max_day_lag1` como proxy para `max_dia` no target de severidade — data leak que inflava recall artificialmente (chegava a 97–100%). Corrigido para usar `max_dia` real do dia atual via `build_diario()`.
+**Bug corrigido em `scripts/diagnostics/_run_comparativo_multipoint.py`:** usava `max_day_lag1` como proxy para `max_dia` no target de severidade — data leak que inflava recall artificialmente (chegava a 97–100%). Corrigido para usar `max_dia` real do dia atual via `build_diario()`.
 
 **Fontes pesquisadas:**
 - CEMADEN nowcasting: sem API pública documentada. Algoritmo TOOCAN existe internamente.
@@ -20,7 +155,7 @@
 - ICON-EU (7 km): indisponível historicamente para Brasil via Open-Meteo.
 - GFS via historical-forecast-api: disponível mas cobre Brasil a ~28 km, nulls em 2016.
 
-**ERA5-Land multipoint:** baixados 5 pontos de grade únicos cobrindo as 4 bacias (dados em `dados/openmeteo_multipoint/`). Cada ponto é uma célula ERA5-Land genuinamente distinta (snap para coordenadas diferentes). Correlação entre pontos: r=0.88–0.95. Std diário máximo intra-bacia: 13–30 mm (sinal real em eventos convectivos).
+**ERA5-Land multipoint:** baixados 5 pontos de grade únicos cobrindo as 4 bacias (dados em `dados/weather/openmeteo_multipoint/`). Cada ponto é uma célula ERA5-Land genuinamente distinta (snap para coordenadas diferentes). Correlação entre pontos: r=0.88–0.95. Std diário máximo intra-bacia: 13–30 mm (sinal real em eventos convectivos).
 
 **Mapeamento bacia → pontos ERA5-Land:**
 - guarara: 3 pontos
@@ -55,12 +190,12 @@
 
 | Artefato | Descrição |
 |---|---|
-| `dados/openmeteo_multipoint/pt_*.parquet` | 5 séries horárias ERA5-Land 2016–2025 (87.672 linhas cada) |
-| `dados/openmeteo_multipoint/index.json` | Mapa bacia → lista de pontos lat/lon |
-| `dados/comparativo_multipoint.parquet` | Tabela de resultados dos 3 experimentos × 4 bacias |
-| `_download_openmeteo_multipoint.py` | Script de download dos pontos ERA5-Land |
-| `_run_comparativo_multipoint.py` | Comparativo CEM→CEM / ERA5mp→ERA5mp / CEM→ERA5mp com modelo V7 |
-| `dados/openweather_history.parquet` | OpenWeather histórico 1979–2024 (ponto único) |
+| `dados/weather/openmeteo_multipoint/pt_*.parquet` | 5 séries horárias ERA5-Land 2016–2025 (87.672 linhas cada) |
+| `dados/weather/openmeteo_multipoint/index.json` | Mapa bacia → lista de pontos lat/lon |
+| `dados/results/comparativo_multipoint.parquet` | Tabela de resultados dos 3 experimentos × 4 bacias |
+| `scripts/tools/_download_openmeteo_multipoint.py` | Script de download dos pontos ERA5-Land |
+| `scripts/diagnostics/_run_comparativo_multipoint.py` | Comparativo CEM→CEM / ERA5mp→ERA5mp / CEM→ERA5mp com modelo V7 |
+| `dados/weather/openweather_history.parquet` | OpenWeather histórico 1979–2024 (ponto único) |
 | `dados/openweater/open_meteo_history.parquet` | ERA5-Land ponto único 2016–2025 (baseline) |
 
 **Pendências desta sessão:**
@@ -233,24 +368,24 @@ GradBoost (`max_depth=2`, `min_samples_leaf=10`, `subsample=0.8`, `max_features=
 
 | Script | Propósito | Saída |
 |--------|-----------|-------|
-| `_run_modelos_v3.py` | Baseline V3 (16 features, avaliação honesta) | stdout |
-| `_run_modelos_v4.py` | V4 (27 features, mesmo target) | stdout |
-| `_run_modelos_v5.py` | V5 (target enriquecido + suspeitos, threshold F1) | stdout |
-| `_run_modelos_v5b.py` | V5b (peso 0,5 fonte externa) | stdout |
-| `_diagnostico_meninos.py` | Bloco B — revalidação estações meninos | `_meninos_revalidacao.json` |
-| `_diagnostico_dias_suspeitos.py` | Bloco D — diagnóstico dias suspeitos | `_dias_suspeitos.parquet` |
+| `scripts/experiments/_run_modelos_v3.py` | Baseline V3 (16 features, avaliação honesta) | stdout |
+| `scripts/experiments/_run_modelos_v4.py` | V4 (27 features, mesmo target) | stdout |
+| `scripts/experiments/_run_modelos_v5.py` | V5 (target enriquecido + suspeitos, threshold F1) | stdout |
+| `scripts/experiments/_run_modelos_v5b.py` | V5b (peso 0,5 fonte externa) | stdout |
+| `scripts/diagnostics/_diagnostico_meninos.py` | Bloco B — revalidação estações meninos | `_meninos_revalidacao.json` |
+| `scripts/diagnostics/_diagnostico_dias_suspeitos.py` | Bloco D — diagnóstico dias suspeitos | `_dias_suspeitos.parquet` |
 
 ## Pipeline (notebooks)
 
 | Fase | Status |
 |------|--------|
-| chamados_exploratoria.py | ✅ Concluído |
-| pluviometria_exploratoria.py | ✅ Concluído |
-| preprocessamento_chuva.py | ✅ Concluído (regenerar quando estações mudarem) |
-| modelagem_baseline.py | ✅ Concluído |
-| modelagem_temporal.py | ✅ Concluído |
-| modelagem (V3/V4/V5/V5b) | 🔄 Em iteração — scripts `_run_modelos_*.py` |
-| forecast_integracao.py | Não iniciada |
+| `scripts/pipeline/chamados_exploratoria.py` | ✅ Concluído |
+| `scripts/pipeline/pluviometria_exploratoria.py` | ✅ Concluído |
+| `scripts/pipeline/preprocessamento_chuva.py` | ✅ Concluído (regenerar quando estações mudarem) |
+| `scripts/pipeline/modelagem_baseline.py` | ✅ Concluído |
+| `scripts/pipeline/modelagem_temporal.py` | ✅ Concluído |
+| modelagem (V3/V4/V5/V5b) | 🔄 Em iteração — scripts `scripts/experiments/_run_modelos_*.py` |
+| `scripts/pipeline/forecast_integracao.py` | Não iniciada |
 
 ## Notas de retomada (próxima sessão)
 
@@ -259,7 +394,7 @@ Ler primeiro:
 2. **Este arquivo (progresso.md)** — estado atual e próximo passo.
 3. `specs/decisoes_tecnicas.md` — decisões duráveis acumuladas.
 
-Para reproduzir resultados: `uv run python _run_modelos_v5b.py` (ou v3/v4/v5). Cada um demora ~25 min (168 fits cada).
+Para reproduzir resultados: `uv run python scripts/experiments/_run_modelos_v5b.py` (ou v3/v4/v5). Cada um demora ~25 min (168 fits cada).
 
 ---
 
