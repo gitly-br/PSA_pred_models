@@ -78,10 +78,12 @@ if __name__ == "__main__":
         l_access_log = g_settings["SANIC_INIT"]["RUN_PARAMETERS"]["ACCESS_LOG"]
         l_auto_reload = g_settings["SANIC_INIT"]["RUN_PARAMETERS"]["AUTO_RELOAD"]
 
+        if env == "local":
+            app.run(host=l_host, port=l_port, debug=l_debug, access_log=l_access_log, single_process=True, auto_reload=l_auto_reload)
+            sys.exit(0)
+
         app.prepare(host=l_host, port=l_port, debug=l_debug, access_log=l_access_log,
                     workers= workers_, auto_reload=l_auto_reload)
-
-
         Sanic.serve(primary=app, app_loader=loader)
     except Exception as e:
         critical_message = f"[run] Erro ao iniciar o servidor: {str(e)}"
