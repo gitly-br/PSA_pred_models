@@ -19,6 +19,7 @@ from .minio_client import MinioClientWrapper, MinioSettings
 
 DEFAULT_HISTORIC_PREFIX = "weather/cemaden/"
 DEFAULT_FORECAST_PREFIX = "weather/openmeteo/forecast/"
+DEFAULT_MONGO_URI = "mongodb://psa:psa@localhost:16521/?authSource=admin"
 
 
 def _utc_now() -> datetime:
@@ -84,25 +85,31 @@ def _build_historic_documents(
     return documents
 
 
-def _build_forecast_documents(frame: pl.DataFrame, source_file: str) -> list[dict[str, Any]]:
+def _build_forecast_documents(
+    frame: pl.DataFrame,
+    source_file: str,
+    point_bacias: dict[str, list[str]] | None = None,
+) -> list[dict[str, Any]]:
     loaded_at = _utc_now()
     rows = frame.to_dicts()
     if not rows:
         return []
 
-    grouped: dict[tuple[Any, Any, Any], list[dict[str, Any]]] = defaultdict(list)
+    grouped: dict[tuple[Any, Any], list[dict[str, Any]]] = defaultdict(list)
     has_slice_dt = "slice_dt" in frame.columns and "forecast_dt" in frame.columns
+    point_bacias = point_bacias or {}
 
     for row in rows:
         if has_slice_dt:
             dt_request = _to_utc_datetime(row.get("slice_dt"))
             dt_value = _to_utc_datetime(row.get("forecast_dt"))
             point_id = f"{row.get('lat')}_{row.get('lon')}"
-            key = (dt_request, point_id, row.get("bacia") or Path(source_file).stem)
+            key = (dt_request, point_id)
         else:
             dt_value = _to_utc_datetime(row.get("dt"))
             point_id = f"{row.get('latitude')}_{row.get('longitude')}"
-            key = (point_id, row.get("bacia") or Path(source_file).stem)
+            dt_request = datetime(dt_value.year, dt_value.month, dt_value.day, tzinfo=timezone.utc) if dt_value else None
+            key = (dt_request, point_id)
 
         grouped[key].append(
             {
@@ -121,18 +128,18 @@ def _build_forecast_documents(frame: pl.DataFrame, source_file: str) -> list[dic
 
     documents: list[dict[str, Any]] = []
     for key, hourly in grouped.items():
-        if has_slice_dt:
-            dt_request, point_id, bacia = key
-        else:
-            point_id, bacia = key
-            dt_request = next((item["dt"] for item in hourly if item["dt"] is not None), None)
+        dt_request, point_id = key
         hourly = sorted(hourly, key=lambda item: item["dt"] or datetime.min.replace(tzinfo=timezone.utc))
         first = hourly[0] if hourly else {}
+        bacias = point_bacias.get(point_id, [])
+        if not bacias and not Path(source_file).stem.startswith("pt_"):
+            bacias = [Path(source_file).stem]
         documents.append(
             {
                 "provider": "openmeteo",
-                "bacia": bacia,
                 "point_id": point_id,
+                "bacia": bacias[0] if bacias else None,
+                "bacias": bacias,
                 "dt_request": dt_request,
                 "timezone": "UTC",
                 "hourly": hourly,
@@ -161,10 +168,12 @@ async def bootstrap_api_data(
     minio: MinioClientWrapper,
     mongo: MongoClientWrapper,
     station_bacias: dict[str, list[str]] | None = None,
+    point_bacias: dict[str, list[str]] | None = None,
     historic_prefix: str = DEFAULT_HISTORIC_PREFIX,
     forecast_prefix: str = DEFAULT_FORECAST_PREFIX,
 ) -> dict[str, int]:
     station_bacias = station_bacias or {}
+    point_bacias = point_bacias or {}
     minio.ensure_bucket()
 
     historic_collection = mongo.get_data_collection("historic")
@@ -190,7 +199,7 @@ async def bootstrap_api_data(
         if not object_name.endswith(".parquet"):
             continue
         frame = _load_parquet_bytes(minio.get_object_bytes(object_name))
-        documents = _build_forecast_documents(frame, object_name)
+        documents = _build_forecast_documents(frame, object_name, point_bacias=point_bacias)
         counters["forecast"] += await _upsert_many(
             forecast_collection,
             documents,
@@ -209,7 +218,7 @@ async def main() -> None:
     args = parser.parse_args()
 
     mongo = MongoClientWrapper(
-        uri=os.getenv("MONGO_URI"),
+        uri=os.getenv("MONGO_URI", DEFAULT_MONGO_URI),
         config_db_name="api_data",
         data_db_name="api_data",
     )
@@ -217,7 +226,7 @@ async def main() -> None:
         MinioSettings(
             endpoint=os.getenv("MINIO_ENDPOINT", "localhost:19000"),
             access_key=os.getenv("MINIO_ACCESS_KEY", "psa"),
-            secret_key=os.getenv("MINIO_SECRET_KEY", "psa"),
+            secret_key=os.getenv("MINIO_SECRET_KEY", "psa12345"),
             bucket=os.getenv("MINIO_BUCKET", "psa"),
             secure=os.getenv("MINIO_SECURE", "false").lower() == "true",
         )

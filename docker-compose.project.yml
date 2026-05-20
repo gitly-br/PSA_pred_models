@@ -4,7 +4,7 @@ services:
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: psa
-      MINIO_ROOT_PASSWORD: psa
+      MINIO_ROOT_PASSWORD: psa12345
     ports:
       - "19000:9000"
       - "19001:9001"
@@ -14,7 +14,7 @@ services:
       - psa_network
 
   mongo:
-    image: mongo:8.2
+    image: mongo:7.0
     init: true
     ports:
       - "16521:27017"

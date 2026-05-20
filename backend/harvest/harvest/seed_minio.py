@@ -21,7 +21,7 @@ async def seed_minio(source: str, prefix: str = "", recursive: bool = True) -> l
         MinioSettings(
             endpoint=os.getenv("MINIO_ENDPOINT", "localhost:19000"),
             access_key=os.getenv("MINIO_ACCESS_KEY", "psa"),
-            secret_key=os.getenv("MINIO_SECRET_KEY", "psa"),
+            secret_key=os.getenv("MINIO_SECRET_KEY", "psa12345"),
             bucket=os.getenv("MINIO_BUCKET", "psa"),
             secure=os.getenv("MINIO_SECURE", "false").lower() == "true",
         )

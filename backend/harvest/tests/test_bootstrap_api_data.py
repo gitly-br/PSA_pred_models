@@ -64,3 +64,25 @@ def test_build_forecast_documents_groups_hourly_rows():
     assert doc["bacia"] == "guarara"
     assert doc["dt_request"].tzinfo == timezone.utc
     assert [hourly["rain"] for hourly in doc["hourly"]] == [0.2, 0.4]
+
+
+def test_build_forecast_documents_groups_daily_rows_without_slice_dt():
+    frame = pl.DataFrame(
+        {
+            "dt": [
+                datetime(2025, 1, 1, 0, 0),
+                datetime(2025, 1, 1, 1, 0),
+                datetime(2025, 1, 2, 0, 0),
+                datetime(2025, 1, 2, 1, 0),
+            ],
+            "precipitation_mm": [0.0, 0.1, 0.2, 0.3],
+            "latitude": [-23.6, -23.6, -23.6, -23.6],
+            "longitude": [-46.5, -46.5, -46.5, -46.5],
+        }
+    )
+
+    docs = _build_forecast_documents(frame, "weather/openweater/open_meteo_history.parquet")
+
+    assert len(docs) == 2
+    assert [len(doc["hourly"]) for doc in docs] == [2, 2]
+    assert all(doc["dt_request"].tzinfo == timezone.utc for doc in docs)
