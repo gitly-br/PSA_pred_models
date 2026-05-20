@@ -188,7 +188,7 @@ MongoDB e a fonte operacional do backend:
 
 Tarefas:
 
-- Subir MinIO local no `docker-compose.yml`.
+- Subir MinIO local no `docker-compose.project.yml`.
 - Criar bucket/prefixos:
   - `models/`;
   - `weather/cemaden/`;
@@ -203,10 +203,10 @@ Tarefas:
 
 Primeiros passos de implementacao:
 
-1. **Infra local:** adicionar MinIO ao `docker-compose.yml` e variaveis `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`.
-2. **Cliente MinIO:** criar cliente simples para upload/download/listagem de objetos, usado por scripts e futuramente pelo `ArtifactLoader`.
-3. **Seeder de arquivos:** script local para enviar `notebooks/modelos/champion_*.joblib`, metadados `.json` e parquets CEMADEN/weather para os prefixos do bucket.
-4. **Bootstrap MongoDB:** script `bootstrap_api_data` que le do MinIO e faz upsert em `api_data.historic`/`api_data.forecast`.
+1. **Infra local:** adicionar MinIO ao `docker-compose.project.yml` e variaveis `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`. ✅
+2. **Cliente MinIO:** criar cliente simples para upload/download/listagem de objetos, usado por scripts e futuramente pelo `ArtifactLoader`. ✅
+3. **Seeder de arquivos:** script local para enviar `notebooks/modelos/champion_*.joblib`, metadados `.json` e parquets CEMADEN/weather para os prefixos do bucket. ✅
+4. **Bootstrap MongoDB:** script `bootstrap_api_data` que le do MinIO e faz upsert em `api_data.historic`/`api_data.forecast`. ✅
 5. **Validacao objetiva:** teste ou smoke local conferindo contagem de documentos, indices criados e capacidade de buscar janela por bacia/data.
 
 Schema inicial proposto:

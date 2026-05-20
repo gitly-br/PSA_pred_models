@@ -21,6 +21,7 @@ Hoje:
 
 - carrega configuracoes de fontes via MongoDB;
 - instancia fontes como `OpenWeatherSource`;
+- expoe CLI de seed para MinIO e bootstrap de `api_data`;
 - coleta payloads externos;
 - normaliza parte dos dados;
 - grava em MongoDB.
@@ -30,6 +31,7 @@ Direcao alvo:
 - incluir Open-Meteo como fonte de forecast;
 - coletar dados observados de estacoes meteorologicas da Defesa Civil quando a API estiver disponivel;
 - manter script de bootstrap/backfill que carrega historico CEMADEN do MinIO para `api_data.historic`;
+- manter script de seed para popular MinIO a partir de parquets locais e artefatos exportados;
 - manter collectors desacoplados de inferencia e API;
 - alimentar `api_data.forecast` e `api_data.historic`.
 
