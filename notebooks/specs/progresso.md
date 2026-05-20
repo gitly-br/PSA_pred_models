@@ -384,17 +384,27 @@ GradBoost (`max_depth=2`, `min_samples_leaf=10`, `subsample=0.8`, `max_features=
 | `scripts/pipeline/preprocessamento_chuva.py` | ✅ Concluído (regenerar quando estações mudarem) |
 | `scripts/pipeline/modelagem_baseline.py` | ✅ Concluído |
 | `scripts/pipeline/modelagem_temporal.py` | ✅ Concluído |
-| modelagem (V3/V4/V5/V5b) | 🔄 Em iteração — scripts `scripts/experiments/_run_modelos_*.py` |
-| `scripts/pipeline/forecast_integracao.py` | Não iniciada |
+| modelagem (V3/V4/V5/V5b/V7) | ✅ Champion V7 fixado; leak corrigido; artefatos exportados |
+| `scripts/tools/export_champion.py` | ✅ Exporta .joblib + .json por bacia; smoke test backend 5/5 |
+| `scripts/pipeline/forecast_integracao.py` | Não iniciada — depende de `api_data.forecast` no backend |
 
 ## Notas de retomada (próxima sessão)
 
-Ler primeiro:
-1. **`specs/relatorio_modelagem.md`** — narrativa completa com todos os resultados, racionais e tabelas.
-2. **Este arquivo (progresso.md)** — estado atual e próximo passo.
-3. `specs/decisoes_tecnicas.md` — decisões duráveis acumuladas.
+**Contexto:** Fase 0 da migração backend concluída (`BACKEND_MIGRATION_SESSION.md`). Champion V7 empacotado e testável.
 
-Para reproduzir resultados: `uv run python scripts/experiments/_run_modelos_v5b.py` (ou v3/v4/v5). Cada um demora ~25 min (168 fits cada).
+**Próximo passo:**
+1. **`BACKEND_MIGRATION_SESSION.md`** — ler seção "Sequencia de migracao" para decidir entre Fase 1 (Mongo api_data) ou Fase 2 (MinIO local mínimo).
+2. **`backend/floodcast/floodcast/ordinal_model.py`** — classe do champion já está pronta.
+3. **`backend/floodcast/tests/`** — smoke tests já validam carregamento e inferência.
+
+**Artefatos prontos para integração:**
+- `notebooks/modelos/champion_*.joblib` — 4 champions treinados
+- `backend/floodcast/tests/fixtures/champion_guarara.joblib` — fixture para testes
+- `backend/floodcast/floodcast/ordinal_model.py` — classe serializável
+
+**Para reproduzir resultados:**
+- `uv run python scripts/experiments/_run_modelos_v7.py` — benchmark V7 (~25 min)
+- `uv run python scripts/tools/export_champion.py` — exporta champions (~3 min)
 
 ---
 

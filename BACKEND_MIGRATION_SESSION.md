@@ -150,15 +150,17 @@ Fluxos principais:
 
 ## Plano de implementacao
 
-### Fase 0 - Contrato operacional do champion
+### Fase 0 - Contrato operacional do champion ✅ CONCLUIDA (2026-05-19)
 
-- Resolver o problema das features `api_070`, `api_085`, `api_095`.
-- Decidir se cada bacia usa:
-  - passado observado ate `D-1`;
-  - forecast do dia `D`;
-  - forecast `D+1` para horizontes maiores.
-- Reavaliar se os champions por bacia continuam iguais apos a correcao.
-- Criar script unico de exportacao dos champions.
+**Resumo:**
+- **Leak corrigido:** `api_*` agora usa `max_dia.shift(1)` antes do `lfilter`, garantindo que a feature do dia `t` dependa apenas de dados ate `D-1`.
+- **Script de exportacao:** `notebooks/scripts/tools/export_champion.py` treina 3 classificadores binarios (≥1, ≥2, ≥3) por bacia no dataset completo e exporta `.joblib` + `.json`.
+- **Artefatos gerados:** 4 champions (`guarara`, `meninos`, `oratorio`, `tamanduatei`) em `notebooks/modelos/`.
+- **Classe serializavel:** `ChampionOrdinalModel` em `backend/floodcast/floodcast/ordinal_model.py` com interface estavel (`predict`, `predict_proba`, `alarm_level`).
+- **Smoke test backend:** 5/5 testes passando (`test_model_load.py` — 4 testes de interface + `test_model_regression.py` — 1 teste com dados reais do dataset guarara).
+- **Reorganizacao do repo:** scripts separados em `pipeline/`, `experiments/`, `diagnostics/`, `tools/`; dados weather/resultados em subdiretorios; notebooks legados arquivados.
+
+**Proximo passo:** Fase 1 (Mongo `api_data`) ou Fase 2 (MinIO local minimo) — a ser decidido.
 
 ### Fase 1 - Mongo `api_data`
 
@@ -233,12 +235,15 @@ Fluxos principais:
 
 ## Proxima acao recomendada
 
-O proximo passo tecnico deve ser a Fase 0:
+A Fase 0 esta concluida. O proximo passo tecnico e decidir entre:
 
-1. Corrigir/explicitar a feature API sem CEMADEN observado do dia atual.
-2. Reavaliar champions.
-3. Exportar um artefato champion completo para uma bacia.
-4. So depois iniciar a mudanca do backend para MinIO/Open-Meteo.
+1. **Fase 1 — Mongo `api_data`**: implementar `OpenMeteoSource` e schema `api_data.forecast` para alimentar o backend com dados operacionais. Isso desbloqueia a inferencia ponta a ponta mas requer mais mudanca no `harvest`.
+2. **Fase 2 — MinIO local minimo**: subir MinIO no `docker-compose.yml`, criar `ArtifactLoader`, e trocar `grab_from_gdrive()` no `floodcast`. Menor risco, remove dependencia externa imediata.
+
+Recomendacao: Fase 2 primeiro (MinIO minimo), porque:
+- Remove Google Drive (ponto de falha externo) com baixo risco;
+- O champion ja carrega via `joblib` — so precisa mudar a origem do arquivo;
+- Nao depende da API da Defesa Civil (que ainda esta pendente de coordenadas).
 
 ## Sequencia de migracao local -> dev -> prod
 
