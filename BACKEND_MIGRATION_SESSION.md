@@ -398,3 +398,75 @@ Decisao inicial:
 - o artefato precisa carregar e passar um smoke test com fixture da familia antes de ser promovido;
 - se a validacao falhar, a versao anterior permanece ativa e a falha e registrada;
 - capabilities/runtime contract ficam como melhoria desejavel se houver tempo.
+
+---
+
+## Estado da sessao de 2026-05-20
+
+### O que foi concluido nesta sessao
+
+1. **Fase 1 - MinIO data lake + bootstrap MongoDB** ✅
+   - `docker-compose.project.yml` com MinIO, MongoDB, Floodcast e Sentry.
+   - Scripts de bootstrap: `harvest/bootstrap_local_weather.py`, `harvest/bootstrap_api_data.py`.
+   - Dados CEMADEN e forecast OpenWeather/OpenMeteo carregados no MinIO.
+   - `api_data.historic` e `api_data.forecast` populados no MongoDB.
+
+2. **Fase 2 - FeatureAssembler + WeatherDataRepository** ✅
+   - `floodcast/weather_repository.py`: le `api_data.historic` e `api_data.forecast` do MongoDB.
+   - `floodcast/feature_assembler.py`: monta features V7 a partir do MongoDB.
+   - `floodcast/artifact_loader.py`: carrega `.joblib` do MinIO via `minio://`.
+   - `floodcast/model_registry.py`: le champions ativos de `floodcast.models`.
+
+3. **Fase 3 - Runner + InferenceWriter** ✅
+   - `floodcast/runner.py`: orquestra inferencia, aplica thresholds e grava resultado.
+   - `floodcast/inference_writer.py`: persiste documento municipal (`region="all"`) em `floodcast.inference`.
+   - `floodcast/main.py`: CLI one-shot com `--date YYYY-MM-DD`.
+
+4. **Fase 4 - Sentry fallback on-demand** ✅
+   - Sentry consulta `floodcast.inference` antes de responder.
+   - Se nao ha inferencia, dispara Floodcast via subprocess, espera e reconsulta.
+   - Rota `GET /region/<region_name>?date=YYYY-MM-DD` mantem contrato externo.
+   - Busca por hora aproximada no MongoDB (fallback para hora proxima no mesmo dia).
+
+5. **MinIO fallback para dados ausentes no MongoDB** ✅
+   - `floodcast/minio_weather_fallback.py`: le parquets do MinIO quando MongoDB esta vazio.
+   - `WeatherDataRepository` tenta Mongo primeiro, cai para MinIO se necessario.
+
+### Bug critico descoberto: probabilidade "inflada"
+
+A probabilidade exibida no dashboard (campo `proba`) esta inconsistente:
+- Dias com pouca chuva (4-5mm, predict=0) mostram ~73%.
+- Dias com muita chuva (26mm, predict=3) mostram ~68%.
+
+**Causa raiz:** a formula `_display_probability` pega `raw_proba` = probabilidade da *classe predita*, que e `P(classe=3)` quando predict=3. Essa probabilidade nao representa risco de enchente; representa confianca do modelo na classe predita.
+
+**Tentativa de pós-processamento:** implementamos calibracao isotonica (`calibrate_models.py`) para ajustar probabilidades, mas:
+- So tinhamos 6 datas de 2025 para treinar a calibracao.
+- O modelo subjacente retorna `P(evento)` entre 0.65-0.92 para *qualquer* dia com chuva.
+- Isso e um problema de **calibracao do modelo durante treinamento**, nao resolvivel por pós-processamento com poucos dados.
+
+**Thresholds ajustados:** mudamos registry de `{1: ~0.16, 2: ~0.12, 3: ~0.13}` para `{1: 0.60, 2: 0.50, 3: 0.70}`. Isso melhora o `alarm_level`/`predict`, mas a `proba` display continua inflada porque usa a probabilidade da classe predita em vez da probabilidade de evento.
+
+### Proximo passo obrigatorio antes de validar integracao completa
+
+**Recalibrar o modelo durante treino com Platt scaling (isotonic regression).**
+
+O modelo `ChampionOrdinalModel` e composto por 3 classificadores binarios (`>=1`, `>=2`, `>=3`). A probabilidade de interesse para o usuario final e `P(evento >= 1)`, ou seja, a saida do classificador `>=1`. Hoje a saida do runner usa `model.predict_proba()[predict_value]`, que e a probabilidade da classe predita no modelo ordinal — nao a probabilidade de evento.
+
+**Tarefas:**
+1. Re-treinar os classificadores binarios com `CalibratedClassifierCV` ou `IsotonicRegression` durante o treino.
+2. Exportar novo `.joblib` com probabilidades calibradas.
+3. Atualizar o `runner.py` para usar `P(>=1)` como `raw_proba` (probabilidade de evento) em vez de `P(classe_predita)`.
+4. Ajustar a formula de display para refletir a probabilidade calibrada de forma que:
+   - dias com chuva leve (predict=0 ou 1) mostrem probabilidade baixa (< 30%);
+   - dias com chuva moderada (predict=2) mostrem probabilidade media (30-70%);
+   - dias com chuva forte (predict=3) mostrem probabilidade alta (> 70%).
+5. Re-gerar inferencias para datas conhecidas e comparar visualmente.
+6. Só então considerar a integracao backend completa validada.
+
+**Scripts de treino disponiveis:**
+- `notebooks/scripts/pipeline/modelagem_baseline.py`: modelo baseline com RF/LR, features V4.
+- `notebooks/scripts/pipeline/modelagem_temporal.py`: modelo temporal multi-horizonte.
+- Dados de treino: `notebooks/dados/chuva_bacias/chuva_*.parquet` (CEMADEN 2016-2025).
+
+**Nota:** esta pendencia foi registrada para que uma nova sessao possa continuar diretamente do ponto correto, sem repetir o diagnostico.
