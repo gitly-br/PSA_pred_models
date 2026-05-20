@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytz
 
 
@@ -33,8 +34,8 @@ def _as_local_date(value: date | datetime, tz) -> date:
     return value
 
 
-def _build_api_series(max_dia: pd.Series) -> dict[str, np.ndarray]:
-    prev = max_dia.shift(1).fillna(0.0).to_numpy(dtype=float)
+def _build_api_series(max_dia: np.ndarray) -> dict[str, np.ndarray]:
+    prev = np.concatenate(([0.0], max_dia[:-1]))
     series: dict[str, np.ndarray] = {}
     for k in K_APIS:
         out = np.zeros(len(prev), dtype=float)
@@ -42,6 +43,31 @@ def _build_api_series(max_dia: pd.Series) -> dict[str, np.ndarray]:
             out[idx] = value + (k * out[idx - 1] if idx else 0.0)
         series[f"api_{int(k * 100):03d}"] = out
     return series
+
+
+def _filter_documents_by_bacia_or_station(
+    documents: list[dict[str, Any]],
+    bacia: str,
+    station_ids: list[str] | None,
+) -> list[dict[str, Any]]:
+    station_id_set = {str(s) for s in (station_ids or [])}
+    if station_id_set:
+        return [d for d in documents if str(d.get("station_id", "")) in station_id_set]
+
+    def _matches_bacia(value: Any) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, list):
+            return bacia in value
+        if isinstance(value, tuple):
+            return bacia in list(value)
+        return value == bacia
+
+    return [
+        d
+        for d in documents
+        if _matches_bacia(d.get("bacia")) or _matches_bacia(d.get("bacias"))
+    ]
 
 
 def build_feature_frame(
@@ -56,139 +82,273 @@ def build_feature_frame(
     target_day = _as_local_date(target_date, tz)
     start_day = target_day - timedelta(days=lookback_days)
 
-    frame = pd.DataFrame(documents)
-    if frame.empty:
-        frame = pd.DataFrame(columns=["dt", "station_id", "bacia", "bacias", "precipitation_mm"])
-
-    station_id_set = {str(station_id) for station_id in station_ids or []}
-
-    if not frame.empty:
-        frame = frame.copy()
-        if station_id_set:
-            if "station_id" in frame.columns:
-                frame = frame[frame["station_id"].astype(str).isin(station_id_set)]
-        else:
-            def _matches_bacia(value: Any) -> bool:
-                if value is None:
-                    return False
-                if isinstance(value, list):
-                    return bacia in value
-                if isinstance(value, tuple):
-                    return bacia in list(value)
-                return value == bacia
-
-            frame = frame[
-                frame.apply(
-                    lambda row: _matches_bacia(row.get("bacia")) or _matches_bacia(row.get("bacias")),
-                    axis=1,
-                )
-            ]
-        if not frame.empty:
-            frame["dt"] = pd.to_datetime(frame["dt"], utc=True, errors="coerce")
-            frame = frame.dropna(subset=["dt"])
-            frame["dt_local"] = frame["dt"].dt.tz_convert(tz)
-            frame["data"] = frame["dt_local"].dt.date
-            frame["hora"] = frame["dt_local"].dt.floor("h")
-            frame["precipitation_mm"] = pd.to_numeric(frame.get("precipitation_mm"), errors="coerce").fillna(0.0)
-        else:
-            frame = pd.DataFrame(columns=["dt_local", "data", "hora", "precipitation_mm"])
-
-    if frame.empty:
-        hourly = pd.DataFrame(columns=["data", "hora", "chuva_max_mm", "chuva_mean_mm", "chuva_std_mm", "n_chovendo"])
+    # ------------------------------------------------------------------
+    # 1. Filter documents in plain Python (handles heterogeneous bacias)
+    # ------------------------------------------------------------------
+    if not documents:
+        filtered_docs: list[dict[str, Any]] = []
     else:
-        hourly = (
-            frame.groupby(["data", "hora"], as_index=False)
-            .agg(
-                chuva_max_mm=("precipitation_mm", "max"),
-                chuva_mean_mm=("precipitation_mm", "mean"),
-                chuva_std_mm=("precipitation_mm", "std"),
-                n_chovendo=("precipitation_mm", lambda s: int((s > 1.0).sum())),
+        filtered_docs = _filter_documents_by_bacia_or_station(documents, bacia, station_ids)
+
+    # ------------------------------------------------------------------
+    # 2. Build Polars DataFrame
+    # ------------------------------------------------------------------
+    if not filtered_docs:
+        frame = pl.DataFrame(
+            schema={
+                "dt": pl.Datetime("us", "UTC"),
+                "station_id": pl.Utf8,
+                "bacia": pl.Utf8,
+                "bacias": pl.List(pl.Utf8),
+                "precipitation_mm": pl.Float64,
+            }
+        )
+    else:
+        frame = pl.from_dicts(filtered_docs, infer_schema_length=1000)
+        # Ensure required columns exist with compatible types
+        required = {
+            "dt": pl.Datetime("us", "UTC"),
+            "station_id": pl.Utf8,
+            "bacia": pl.Utf8,
+            "bacias": pl.List(pl.Utf8),
+            "precipitation_mm": pl.Float64,
+        }
+        for col, dtype in required.items():
+            if col not in frame.columns:
+                frame = frame.with_columns(pl.lit(None).cast(dtype).alias(col))
+
+    # ------------------------------------------------------------------
+    # 3. Parse dt / localise / extract date and hour
+    # ------------------------------------------------------------------
+    if not frame.is_empty():
+        # Try to cast dt to datetime; if it fails (e.g. string), parse it.
+        dt_dtype = frame.schema.get("dt")
+        if dt_dtype == pl.Utf8:
+            frame = frame.with_columns(
+                pl.col("dt")
+                .str.to_datetime(time_zone="UTC", strict=False)
+                .alias("dt")
             )
-            .fillna({"chuva_std_mm": 0.0})
+        elif dt_dtype != pl.Datetime("us", "UTC"):
+            frame = frame.with_columns(
+                pl.col("dt").cast(pl.Datetime("us", "UTC"), strict=False).alias("dt")
+            )
+
+        frame = frame.with_columns(
+            pl.col("precipitation_mm").cast(pl.Float64, strict=False).fill_null(0.0)
+        ).drop_nulls("dt")
+
+        if frame.is_empty():
+            frame = pl.DataFrame(
+                schema={
+                    "data": pl.Date,
+                    "hora": pl.Datetime("us", tz_name),
+                    "precipitation_mm": pl.Float64,
+                }
+            )
+        else:
+            frame = frame.with_columns(
+                pl.col("dt")
+                .dt.convert_time_zone(tz_name)
+                .alias("dt_local")
+            ).with_columns(
+                pl.col("dt_local").dt.date().alias("data"),
+                pl.col("dt_local").dt.truncate("1h").alias("hora"),
+            )
+    else:
+        frame = pl.DataFrame(
+            schema={
+                "data": pl.Date,
+                "hora": pl.Datetime("us", tz_name),
+                "precipitation_mm": pl.Float64,
+            }
         )
 
-    daily = (
-        hourly.groupby("data", as_index=False)
-        .agg(
-            max_dia=("chuva_max_mm", "max"),
-            acum_dia=("chuva_max_mm", "sum"),
-            mean_dia=("chuva_mean_mm", "mean"),
-            std_dia=("chuva_std_mm", "mean"),
-            n_chovendo_max=("n_chovendo", "max"),
-            pico_1h=("chuva_max_mm", "max"),
-            horas_intensas=("chuva_max_mm", lambda s: int((s >= LIM_INTENSO_MM).sum())),
+    # ------------------------------------------------------------------
+    # 4. Hourly aggregation
+    # ------------------------------------------------------------------
+    if not frame.is_empty():
+        hourly = (
+            frame.group_by(["data", "hora"])
+            .agg(
+                chuva_max_mm=pl.col("precipitation_mm").max(),
+                chuva_mean_mm=pl.col("precipitation_mm").mean(),
+                chuva_std_mm=pl.col("precipitation_mm").std(),
+                n_chovendo=(pl.col("precipitation_mm") > 1.0).sum().cast(pl.Int64),
+            )
+            .with_columns(pl.col("chuva_std_mm").fill_nan(0.0).fill_null(0.0))
         )
-        if not hourly.empty
-        else pd.DataFrame(columns=["data", "max_dia", "acum_dia", "mean_dia", "std_dia", "n_chovendo_max", "pico_1h", "horas_intensas"])
+    else:
+        hourly = pl.DataFrame(
+            schema={
+                "data": pl.Date,
+                "hora": pl.Datetime("us", tz_name),
+                "chuva_max_mm": pl.Float64,
+                "chuva_mean_mm": pl.Float64,
+                "chuva_std_mm": pl.Float64,
+                "n_chovendo": pl.Int64,
+            }
+        )
+
+    # ------------------------------------------------------------------
+    # 5. Daily aggregation
+    # ------------------------------------------------------------------
+    if not hourly.is_empty():
+        daily = hourly.group_by("data").agg(
+            max_dia=pl.col("chuva_max_mm").max(),
+            acum_dia=pl.col("chuva_max_mm").sum(),
+            mean_dia=pl.col("chuva_mean_mm").mean(),
+            std_dia=pl.col("chuva_std_mm").mean(),
+            n_chovendo_max=pl.col("n_chovendo").max(),
+            pico_1h=pl.col("chuva_max_mm").max(),
+            horas_intensas=(pl.col("chuva_max_mm") >= LIM_INTENSO_MM)
+            .sum()
+            .cast(pl.Int64),
+        )
+    else:
+        daily = pl.DataFrame(
+            schema={
+                "data": pl.Date,
+                "max_dia": pl.Float64,
+                "acum_dia": pl.Float64,
+                "mean_dia": pl.Float64,
+                "std_dia": pl.Float64,
+                "n_chovendo_max": pl.Int64,
+                "pico_1h": pl.Float64,
+                "horas_intensas": pl.Int64,
+            }
+        )
+
+    # ------------------------------------------------------------------
+    # 6. Complete date range base
+    # ------------------------------------------------------------------
+    n_days = (target_day - start_day).days + 1
+    complete_dates = [start_day + timedelta(days=i) for i in range(n_days)]
+    base = pl.DataFrame({"data": complete_dates})
+
+    daily = base.join(daily, on="data", how="left").fill_null(0.0)
+
+    # ------------------------------------------------------------------
+    # 7. 6-hour blocks per day
+    # ------------------------------------------------------------------
+    if not frame.is_empty():
+        blocks = (
+            frame.with_columns(
+                (pl.col("hora").dt.hour() // 6).cast(pl.Int64).alias("bloco_6h")
+            )
+            .group_by(["data", "bloco_6h"])
+            .agg(acc_6h=pl.col("precipitation_mm").sum())
+            .pivot(index="data", on="bloco_6h", values="acc_6h")
+        )
+        rename_map = {}
+        for i in range(4):
+            if str(i) in blocks.columns:
+                rename_map[str(i)] = f"bloco_{i}"
+        if rename_map:
+            blocks = blocks.rename(rename_map)
+    else:
+        blocks = pl.DataFrame({"data": complete_dates})
+
+    for col in ("bloco_0", "bloco_1", "bloco_2", "bloco_3"):
+        if col not in blocks.columns:
+            blocks = blocks.with_columns(pl.lit(0.0).alias(col))
+
+    blocks = base.join(blocks, on="data", how="left").fill_null(0.0)
+
+    # ------------------------------------------------------------------
+    # 8. Merge daily + blocks
+    # ------------------------------------------------------------------
+    merged = daily.join(blocks, on="data", how="left").sort("data")
+
+    # Ensure numeric columns are not null before lags/rolling
+    numeric_cols = [
+        "max_dia",
+        "acum_dia",
+        "mean_dia",
+        "std_dia",
+        "n_chovendo_max",
+        "pico_1h",
+        "horas_intensas",
+        "bloco_0",
+        "bloco_1",
+        "bloco_2",
+        "bloco_3",
+    ]
+    merged = merged.with_columns(
+        [pl.col(c).fill_null(0.0) for c in numeric_cols]
     )
 
-    if not daily.empty:
-        daily["data"] = pd.to_datetime(daily["data"]).dt.date
+    # ------------------------------------------------------------------
+    # 9. Lags and rolling windows
+    # ------------------------------------------------------------------
+    merged = merged.with_columns(
+        acc_6h_lag_1=pl.col("bloco_0").shift(3),
+        acc_6h_lag_2=pl.col("bloco_1").shift(3),
+        acc_6h_lag_3=pl.col("bloco_2").shift(3),
+        acc_6h_lag_4=pl.col("bloco_3").shift(3),
+        acc_6h_lag_5=pl.col("bloco_0").shift(2),
+        acc_6h_lag_6=pl.col("bloco_1").shift(2),
+        acc_6h_lag_7=pl.col("bloco_2").shift(2),
+        acc_6h_lag_8=pl.col("bloco_3").shift(2),
+        acc_6h_lag_9=pl.col("bloco_0").shift(1),
+        acc_6h_lag_10=pl.col("bloco_1").shift(1),
+        acc_6h_lag_11=pl.col("bloco_2").shift(1),
+        acc_6h_lag_12=pl.col("bloco_3").shift(1),
+        max_day_lag1=pl.col("max_dia").shift(1),
+        max_day_lag2=pl.col("max_dia").shift(2),
+        max_day_lag3=pl.col("max_dia").shift(3),
+        mean_day_lag1=pl.col("mean_dia").shift(1),
+        std_day_lag1=pl.col("std_dia").shift(1),
+        n_chovendo_max_lag1=pl.col("n_chovendo_max").shift(1),
+        pico_1h_lag1=pl.col("pico_1h").shift(1),
+        horas_intensas_lag1=pl.col("horas_intensas").shift(1),
+        acum_7d=pl.col("acum_dia")
+        .rolling_sum(window_size=7, min_periods=1)
+        .shift(1),
+        acum_30d=pl.col("acum_dia")
+        .rolling_sum(window_size=30, min_periods=1)
+        .shift(1),
+    )
 
-    complete_dates = pd.date_range(start_day, target_day, freq="D").date
-    base = pd.DataFrame({"data": complete_dates})
-    daily = base.merge(daily, on="data", how="left").fillna(0.0)
+    # ------------------------------------------------------------------
+    # 10. Month cyclical features
+    # ------------------------------------------------------------------
+    month_angle = 2 * np.pi * merged["data"].dt.month() / 12.0
+    merged = merged.with_columns(
+        mes_sin=month_angle.sin(),
+        mes_cos=month_angle.cos(),
+    )
 
-    blocks = pd.DataFrame(columns=["data", "bloco_0", "bloco_1", "bloco_2", "bloco_3"])
-    if not frame.empty:
-        hour_blocks = frame.copy()
-        hour_blocks["bloco_6h"] = hour_blocks["hora"].dt.hour // 6
-        blocks = (
-            hour_blocks.groupby(["data", "bloco_6h"], as_index=False)
-            .agg(acc_6h=("precipitation_mm", "sum"))
-            .assign(col=lambda df: "bloco_" + df["bloco_6h"].astype(str))
-            .pivot(index="data", columns="col", values="acc_6h")
-            .reset_index()
-        )
-        blocks["data"] = pd.to_datetime(blocks["data"]).dt.date
-        blocks = base.merge(blocks, on="data", how="left").fillna(0.0)
-        for col in ("bloco_0", "bloco_1", "bloco_2", "bloco_3"):
-            if col not in blocks.columns:
-                blocks[col] = 0.0
-    else:
-        blocks = base.assign(bloco_0=0.0, bloco_1=0.0, bloco_2=0.0, bloco_3=0.0)
-
-    merged = daily.merge(blocks, on="data", how="left").sort_values("data").reset_index(drop=True)
-
-    for col in ("max_dia", "acum_dia", "mean_dia", "std_dia", "n_chovendo_max", "pico_1h", "horas_intensas", "bloco_0", "bloco_1", "bloco_2", "bloco_3"):
-        merged[col] = merged[col].fillna(0.0)
-
-    merged["acc_6h_lag_1"] = merged["bloco_0"].shift(3)
-    merged["acc_6h_lag_2"] = merged["bloco_1"].shift(3)
-    merged["acc_6h_lag_3"] = merged["bloco_2"].shift(3)
-    merged["acc_6h_lag_4"] = merged["bloco_3"].shift(3)
-    merged["acc_6h_lag_5"] = merged["bloco_0"].shift(2)
-    merged["acc_6h_lag_6"] = merged["bloco_1"].shift(2)
-    merged["acc_6h_lag_7"] = merged["bloco_2"].shift(2)
-    merged["acc_6h_lag_8"] = merged["bloco_3"].shift(2)
-    merged["acc_6h_lag_9"] = merged["bloco_0"].shift(1)
-    merged["acc_6h_lag_10"] = merged["bloco_1"].shift(1)
-    merged["acc_6h_lag_11"] = merged["bloco_2"].shift(1)
-    merged["acc_6h_lag_12"] = merged["bloco_3"].shift(1)
-
-    merged["max_day_lag1"] = merged["max_dia"].shift(1)
-    merged["max_day_lag2"] = merged["max_dia"].shift(2)
-    merged["max_day_lag3"] = merged["max_dia"].shift(3)
-    merged["mean_day_lag1"] = merged["mean_dia"].shift(1)
-    merged["std_day_lag1"] = merged["std_dia"].shift(1)
-    merged["n_chovendo_max_lag1"] = merged["n_chovendo_max"].shift(1)
-    merged["pico_1h_lag1"] = merged["pico_1h"].shift(1)
-    merged["horas_intensas_lag1"] = merged["horas_intensas"].shift(1)
-    merged["acum_7d"] = merged["acum_dia"].rolling(window=7, min_periods=1).sum().shift(1)
-    merged["acum_30d"] = merged["acum_dia"].rolling(window=30, min_periods=1).sum().shift(1)
-
-    month_angle = 2 * np.pi * pd.to_datetime(merged["data"]).dt.month / 12.0
-    merged["mes_sin"] = np.sin(month_angle)
-    merged["mes_cos"] = np.cos(month_angle)
-
-    api_series = _build_api_series(merged["max_dia"])
+    # ------------------------------------------------------------------
+    # 11. API series
+    # ------------------------------------------------------------------
+    api_series = _build_api_series(merged["max_dia"].to_numpy(allow_copy=True))
     for name, values in api_series.items():
-        merged[name] = values
+        merged = merged.with_columns(pl.Series(name, values))
 
-    row = merged[merged["data"] == target_day].tail(1).copy()
-    row.insert(0, "bacia", bacia)
-    row[FEATURES_V4] = row[FEATURES_V4].fillna(0.0)
-    return row[["bacia", "data", *FEATURES_V4]]
+    # ------------------------------------------------------------------
+    # 12. Select target row, fill NaNs, convert to pandas
+    # ------------------------------------------------------------------
+    row = merged.filter(pl.col("data") == target_day)
+    if row.is_empty():
+        # target_day is guaranteed to be in the complete date range,
+        # but defensively build an empty row if data is missing.
+        row = pl.DataFrame(
+            {c: [0.0] for c in FEATURES_V4},
+            schema={c: pl.Float64 for c in FEATURES_V4},
+        ).with_columns(pl.lit(target_day).alias("data"))
+    else:
+        row = row.tail(1)
+
+    row = row.with_columns(pl.lit(bacia).alias("bacia"))
+    row = row.with_columns([pl.col(f).fill_null(0.0) for f in FEATURES_V4])
+
+    # Convert to pandas to preserve downstream contract
+    selected = row.select(["bacia", "data", *FEATURES_V4])
+    result = pd.DataFrame(selected.to_dicts())
+    # Ensure column order matches contract
+    result = result[["bacia", "data", *FEATURES_V4]]
+    return result
 
 
 class FeatureAssembler:
