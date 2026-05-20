@@ -5,7 +5,13 @@ from datetime import date, datetime, time, timedelta
 from typing import Any
 
 import pytz
-from motor.motor_asyncio import AsyncIOMotorClient
+
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient
+except ModuleNotFoundError:
+    class AsyncIOMotorClient:  # pragma: no cover - import-time fallback only
+        def __init__(self, *args, **kwargs):
+            raise ModuleNotFoundError("motor is not installed")
 
 from .minio_weather_fallback import MinIOWeatherFallback
 
@@ -39,14 +45,20 @@ class WeatherDataRepository:
         bacia: str,
         start_date: date,
         end_date: date,
+        station_ids: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         start_utc, end_utc = self._to_utc_bounds(start_date, end_date)
-        query = {
-            "dt": {"$gte": start_utc, "$lt": end_utc},
-            "$or": [{"bacia": bacia}, {"bacias": bacia}],
-        }
+        query = {"dt": {"$gte": start_utc, "$lt": end_utc}}
+        if station_ids:
+            query["station_id"] = {"$in": station_ids}
+        else:
+            query["$or"] = [{"bacia": bacia}, {"bacias": bacia}]
         docs: list[dict[str, Any]] = []
         async for doc in self.collection.find(query):
+            if station_ids and not doc.get("bacia") and not doc.get("bacias"):
+                doc = dict(doc)
+                doc["bacia"] = bacia
+                doc["bacias"] = [bacia]
             docs.append(doc)
 
         # Fallback to MinIO if MongoDB has no data for this period
@@ -74,6 +86,10 @@ class WeatherDataRepository:
 
     async def summarize_forecast(self, bacia: str, target_date: date) -> dict[str, float | int]:
         docs = await self.fetch_forecast_documents(bacia, target_date)
+        return self.summarize_forecast_documents(docs)
+
+    @staticmethod
+    def summarize_forecast_documents(docs: list[dict[str, Any]]) -> dict[str, float | int]:
         point_totals: list[float] = []
         for doc in docs:
             hourly = doc.get("hourly") or []

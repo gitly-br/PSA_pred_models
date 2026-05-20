@@ -4,12 +4,10 @@ import pandas as pd
 from streamlit_autorefresh import st_autorefresh
 from pages.home.utils import week_day_portuguese
 import logging
-from app import get_forecast
 
 logging.basicConfig(level=logging.INFO)
 
 REGION_DICT = {
-        "all": "todo o município",
         "tamanduatei": "bacia do tamanduateí",
         "guarara": "sub-bacia do guarará",
         "meninos": "bacia dos meninos",
@@ -40,14 +38,16 @@ def get_color(value):
     else:
         return (253, 138, 138, abs(value - 0.5) + 0.4)
 
-forecast = get_forecast().json()
-today = forecast.get("today", None)
+forecast = st.session_state.data if "data" in st.session_state else {}
+today = forecast.get("models", {})
 model_results = {}
 for region, results in today.items():
-    if not region in model_results:
+    if region not in REGION_DICT:
+        continue
+    if region not in model_results:
         model_results[region] = {}
-    for model_name, results in today[region]["models"].items():
-        model_results[region][model_name] = results["proba"]
+    for model_name, results in results.items():
+        model_results[region][model_name] = results.get("proba")
 
 
 predict_date = datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').date()

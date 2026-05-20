@@ -17,11 +17,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - MONGO_URI=${MONGO_URI}
+      - MONGO_GITLY_CONNECTION_STRING=mongodb://psa:psa@mongo:27017/?authSource=admin
+      - MONGO_GITLY_VERSION_SCHEMA=1
+      - MONGO_URI=mongodb://psa:psa@mongo:27017/?authSource=admin
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
-      - NODE_ENV=${NODE_ENV}
+      - NODE_ENV=local
     ports:
-      - "8080:8000"
+      - "8080:8080"
       - "6457:6457"
     command: ./entrypoint.sh
     networks:
@@ -33,7 +35,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      - API_URL=${API_URL}
+      - API_URL=http://backend:8080
     volumes:
       - ./frontend:/app
     ports:

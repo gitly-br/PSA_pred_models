@@ -15,6 +15,7 @@ setup(
             "psa-bootstrap-api-data = harvest.bootstrap_api_data:main_sync",
             "psa-bootstrap-local-weather = harvest.bootstrap_local_weather:main_sync",
             "psa-seed-minio = harvest.seed_minio:main_sync",
+            "psa-seed-model-registry = harvest.seed_model_registry:main_sync",
         ],
     },
 )

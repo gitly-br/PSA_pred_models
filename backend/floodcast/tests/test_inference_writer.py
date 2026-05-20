@@ -73,6 +73,7 @@ def test_build_inference_object_municipal_uses_worst_regional():
                     "bacia": "guarara",
                     "day": "2025-02-04",
                     "predict": 0,
+                    "severity": 1,
                     "proba": 10.0,
                     "raw_proba": 0.2,
                     "forecast_summary": {"total_mm": 9.0, "point_count": 1, "max_point_total_mm": 9.0, "min_point_total_mm": 9.0},
@@ -84,6 +85,7 @@ def test_build_inference_object_municipal_uses_worst_regional():
                     "bacia": "meninos",
                     "day": "2025-02-04",
                     "predict": 3,
+                    "severity": 3,
                     "proba": 80.0,
                     "raw_proba": 0.8,
                     "forecast_summary": {"total_mm": 11.0, "point_count": 1, "max_point_total_mm": 11.0, "min_point_total_mm": 11.0},
@@ -95,5 +97,46 @@ def test_build_inference_object_municipal_uses_worst_regional():
     all_result = obj["results"]["2025-02-04"]["all"]
 
     assert all_result["predict"] == 3
+    assert all_result["severity"] == 3
     assert all_result["proba"] == 80.0
     assert all_result["winner_region"] == "meninos"
+
+
+def test_build_inference_object_prefers_severity_over_probability():
+    async def run():
+        writer = InferenceWriter(target_date=datetime(2025, 2, 4))
+        return await writer._build_inference_object(
+            [
+                {
+                    "model_name": "champion_guarara",
+                    "region": "guarara",
+                    "subregion": "guarara",
+                    "bacia": "guarara",
+                    "day": "2025-02-04",
+                    "predict": 1,
+                    "severity": 1,
+                    "proba": 90.0,
+                    "raw_proba": 0.9,
+                    "forecast_summary": {"total_mm": 12.0, "point_count": 1, "max_point_total_mm": 12.0, "min_point_total_mm": 12.0},
+                },
+                {
+                    "model_name": "champion_meninos",
+                    "region": "meninos",
+                    "subregion": "meninos",
+                    "bacia": "meninos",
+                    "day": "2025-02-04",
+                    "predict": 2,
+                    "severity": 3,
+                    "proba": 60.0,
+                    "raw_proba": 0.6,
+                    "forecast_summary": {"total_mm": 14.0, "point_count": 1, "max_point_total_mm": 14.0, "min_point_total_mm": 14.0},
+                },
+            ]
+        )
+
+    obj = asyncio.run(run())
+    all_result = obj["results"]["2025-02-04"]["all"]
+
+    assert all_result["winner_region"] == "meninos"
+    assert all_result["severity"] == 3
+    assert set(all_result["models"]) == {"guarara", "meninos"}

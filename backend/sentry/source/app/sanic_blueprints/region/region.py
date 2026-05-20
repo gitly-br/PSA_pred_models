@@ -1,12 +1,51 @@
-from sanic import Blueprint
-from sanic.response import json
-from motor.motor_asyncio import AsyncIOMotorClient
-from app.common.utils.log_config import setup_logger
-import os
+from __future__ import annotations
+
 import asyncio
+import json as _json
+import os
 import sys
 from datetime import datetime, time, timezone, timedelta
-from bson.decimal128 import Decimal128
+from types import SimpleNamespace
+
+try:
+    from bson.decimal128 import Decimal128
+except ModuleNotFoundError:
+    class Decimal128:  # pragma: no cover - import-time fallback only
+        def __init__(self, value):
+            self.value = value
+
+try:
+    from sanic import Blueprint
+    from sanic.response import json
+except ModuleNotFoundError:
+    class Blueprint:  # pragma: no cover - import-time fallback only
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def listener(self, *args, **kwargs):
+            def decorator(func):
+                return func
+
+            return decorator
+
+        def route(self, *args, **kwargs):
+            def decorator(func):
+                return func
+
+            return decorator
+
+    def json(payload, status=200, ensure_ascii=True):
+        body = _json.dumps(payload, ensure_ascii=ensure_ascii).encode("utf-8")
+        return SimpleNamespace(body=body, status=status)
+
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient
+except ModuleNotFoundError:
+    class AsyncIOMotorClient:  # pragma: no cover - import-time fallback only
+        def __init__(self, *args, **kwargs):
+            raise ModuleNotFoundError("motor is not installed")
+
+from app.common.utils.log_config import setup_logger
 
 bp_region = Blueprint('region', url_prefix='/region')
 
@@ -152,29 +191,6 @@ async def get_region_inference(request, region_name):
             missing_message = _missing_region_message(inference, region_name, target_date)
             if missing_message:
                 return json({"error": missing_message}, status=404)
-
-            ok, output = await _trigger_floodcast(target_date)
-            if ok:
-                inference = await _get_municipal_inference(collection, target_date, target_hour=target_hour)
-                if inference:
-                    inference['results'] = convert_decimal128_to_float(inference['results'])
-                    inference['region_errors'] = convert_decimal128_to_float(inference.get('region_errors') or {})
-                    day_key = next(iter(inference['results'].keys()), None)
-                    if day_key:
-                        day_payload = inference['results'][day_key]
-                        if region_name == 'all':
-                            return json(day_payload.get('all', {}), ensure_ascii=False)
-                        region_payload = day_payload.get(region_name)
-                        if region_payload:
-                            return json(region_payload, ensure_ascii=False)
-                        missing_message = _missing_region_message(inference, region_name, target_date)
-                        if missing_message:
-                            return json({"error": missing_message}, status=404)
-
-            logger.error(f"Fallback Floodcast failed for region {region_name}: {output}")
-            if "Sem dados para inferencia" in output:
-                return json({"error": output}, status=404)
-            return json({"error": f"Inference generation failed for {region_name} on date {target_date}: {output}"}, status=500)
 
         else:
             return json({'error': f'Inference not found for region {region_name} on date {target_date}'}, status=404)

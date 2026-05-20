@@ -1,13 +1,16 @@
 """Teste de regressão: champion com dados reais do dataset."""
 
 import json
+import tempfile
 from pathlib import Path
 
 import joblib
 import numpy as np
 import polars as pl
 import pandas as pd
-import pytest
+
+from floodcast.artifact_loader import load_artifact
+from floodcast.seed_model_registry import _build_compatible_champion
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 ARTIFACT_PATH = FIXTURE_DIR / "champion_guarara.joblib"
@@ -17,7 +20,11 @@ META_PATH = FIXTURE_DIR / "champion_guarara.json"
 
 def test_regression_real_sample():
     """Carrega modelo e roda inferência em amostra real do dataset guarara."""
-    model = joblib.load(ARTIFACT_PATH)
+    meta = json.loads(META_PATH.read_text(encoding="utf-8"))
+    model = _build_compatible_champion(meta, meta["bacia"])
+    with tempfile.NamedTemporaryFile(suffix=".joblib") as tmp:
+        joblib.dump(model, tmp.name)
+        model = load_artifact(f"file://{tmp.name}")
     sample = pl.read_parquet(SAMPLE_PATH)
 
     features = model.features

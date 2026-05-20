@@ -50,6 +50,7 @@ def build_feature_frame(
     target_date: date | datetime,
     lookback_days: int = 90,
     tz_name: str = TZ_NAME,
+    station_ids: list[str] | None = None,
 ) -> pd.DataFrame:
     tz = pytz.timezone(tz_name)
     target_day = _as_local_date(target_date, tz)
@@ -59,18 +60,29 @@ def build_feature_frame(
     if frame.empty:
         frame = pd.DataFrame(columns=["dt", "station_id", "bacia", "bacias", "precipitation_mm"])
 
-    def _matches_bacia(value: Any) -> bool:
-        if value is None:
-            return False
-        if isinstance(value, list):
-            return bacia in value
-        if isinstance(value, tuple):
-            return bacia in list(value)
-        return value == bacia
+    station_id_set = {str(station_id) for station_id in station_ids or []}
 
     if not frame.empty:
         frame = frame.copy()
-        frame = frame[frame.apply(lambda row: _matches_bacia(row.get("bacia")) or _matches_bacia(row.get("bacias")), axis=1)]
+        if station_id_set:
+            if "station_id" in frame.columns:
+                frame = frame[frame["station_id"].astype(str).isin(station_id_set)]
+        else:
+            def _matches_bacia(value: Any) -> bool:
+                if value is None:
+                    return False
+                if isinstance(value, list):
+                    return bacia in value
+                if isinstance(value, tuple):
+                    return bacia in list(value)
+                return value == bacia
+
+            frame = frame[
+                frame.apply(
+                    lambda row: _matches_bacia(row.get("bacia")) or _matches_bacia(row.get("bacias")),
+                    axis=1,
+                )
+            ]
         if not frame.empty:
             frame["dt"] = pd.to_datetime(frame["dt"], utc=True, errors="coerce")
             frame = frame.dropna(subset=["dt"])
@@ -184,8 +196,26 @@ class FeatureAssembler:
         self.repository = repository
         self.lookback_days = lookback_days
 
-    async def assemble(self, bacia: str, target_date: date | datetime) -> pd.DataFrame:
+    async def assemble(
+        self,
+        bacia: str,
+        target_date: date | datetime,
+        station_ids: list[str] | None = None,
+        documents: list[dict[str, Any]] | None = None,
+    ) -> pd.DataFrame:
         target_day = _as_local_date(target_date, pytz.timezone(TZ_NAME))
         start_day = target_day - timedelta(days=self.lookback_days)
-        documents = await self.repository.fetch_historic_documents(bacia, start_day, target_day)
-        return build_feature_frame(documents, bacia, target_day, lookback_days=self.lookback_days)
+        if documents is None:
+            documents = await self.repository.fetch_historic_documents(
+                bacia,
+                start_day,
+                target_day,
+                station_ids=station_ids,
+            )
+        return build_feature_frame(
+            documents,
+            bacia,
+            target_day,
+            lookback_days=self.lookback_days,
+            station_ids=station_ids,
+        )

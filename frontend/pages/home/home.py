@@ -13,6 +13,8 @@ from pages.home.utils import get_color_distribution, get_map_color, get_flood_co
 from streamlit_theme import st_theme
 from authenticator import authenticator
 
+REGION_NAMES = ("tamanduatei", "guarara", "oratorio", "meninos")
+
 try:
     st.set_page_config(layout='wide', page_title="Sistema de Previsão de Alagamentos", page_icon="🌧️")
 except:
@@ -28,7 +30,7 @@ def not_found_dialog():
 @st.dialog("Erro")
 def generic_error_dialog():
     st.session_state.err_text = "Houve um erro ao coletar os resultados"
-    st.error(st.sessoin_state.err_text)
+    st.error(st.session_state.err_text)
 
 @st.cache_data
 def load_geojson(file_path):
@@ -42,22 +44,45 @@ if '' not in st.session_state:
 def set_fallback_data():
     st.session_state.fallback = True
     st.session_state.data = {
-        "today": {
-            "all": {
-                "rain_today": {"morning": 1.0, "afternoon": 1.0, "evening": 1.0, "night": 1.0},
-                "proba": 1.0
-            },
-            "tamanduatei": { "proba": 1.0 },
-            "oratorio": { "proba": 1.0 },
-            "meninos": { "proba": 1.0 },
-            "guarara": { "proba": 1.0 }
-        },
-        "tomorrow": {
-            "all": {
-                "proba": 1.0
-            }
-        }
+        "proba": 1.0,
+        "explanation": "Não há resultados para a data selecionada",
+        "rain_today": {"morning": 1.0, "afternoon": 1.0, "evening": 1.0, "night": 1.0},
+        "forecast_summary": {"point_count": 0, "total_mm": 0.0, "max_point_total_mm": 0.0, "min_point_total_mm": 0.0},
+        "models": {},
     }
+    st.session_state.data_tomorrow = st.session_state.data.copy()
+    st.session_state.region_data = {region: {"proba": 1.0, "explanation": "Não há resultados para a data selecionada"} for region in REGION_NAMES}
+
+def load_dashboard_data(date_str: str):
+    response = get_forecast(date_str, region_name="all")
+    if response.status_code == 404:
+        set_fallback_data()
+        return response
+    if response.status_code != 200:
+        set_fallback_data()
+        return response
+
+    st.session_state.fallback = False
+    st.session_state.data = response.json()
+    st.session_state.region_data = {}
+
+    for region in REGION_NAMES:
+        region_response = get_forecast(date_str, region_name=region)
+        if region_response.status_code == 200:
+            st.session_state.region_data[region] = region_response.json()
+
+    for region in REGION_NAMES:
+        st.session_state.region_data.setdefault(region, {"proba": 0.0, "explanation": "Dados indisponíveis"})
+
+    next_date = (datetime.strptime(date_str, "%Y-%m-%d").date() + timedelta(days=1)).strftime("%Y-%m-%d")
+    tomorrow_response = get_forecast(next_date, region_name="all")
+    if tomorrow_response.status_code == 200:
+        st.session_state.data_tomorrow = tomorrow_response.json()
+    else:
+        st.session_state.data_tomorrow = {"proba": 0.0, "explanation": "Dados indisponíveis", "rain_today": {"morning": 0.0, "afternoon": 0.0, "evening": 0.0, "night": 0.0}}
+
+    st.session_state.data_input = get_forecast_input(date_str)
+    return response
 
 def change_theme():
     if st.session_state.map_theme == 'OpenStreetMap':
@@ -67,7 +92,8 @@ def change_theme():
 
 def on_date_change():
     st.session_state.previous_selected_date = st.session_state.selected_date
-    response = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
+    date_str = st.session_state.selected_date.strftime('%Y-%m-%d')
+    response = get_forecast(date_str, region_name="all")
     if response.status_code == 404:
         set_fallback_data()
         not_found_dialog()
@@ -75,9 +101,13 @@ def on_date_change():
         set_fallback_data()
         generic_error_dialog()
     else:
-        st.session_state.fallback = False
-        st.session_state.data = response.json()
-        st.session_state.data_input = get_forecast_input(st.session_state.selected_date.strftime('%Y-%m-%d'))
+        load_dashboard_data(date_str)
+
+if 'data' not in st.session_state:
+    load_dashboard_data(st.session_state.selected_date.strftime('%Y-%m-%d'))
+
+if 'data_input' not in st.session_state:
+    st.session_state.data_input = get_forecast_input(st.session_state.selected_date.strftime('%Y-%m-%d'))
 
 # Remove espaço em branco no topo
 st.markdown("""
@@ -131,17 +161,18 @@ with col1:
     
     # Exibe os dados apenas se existirem
     if st.session_state.data:
-        today = st.session_state.data.get("today", None)
-        tomorrow = st.session_state.data.get("tomorrow", None)
+        today = st.session_state.data
+        tomorrow = st.session_state.data_tomorrow
+        region_data = st.session_state.region_data
 
-rain_color_distribution = get_color_distribution(today['all']['rain_today'])
+rain_color_distribution = get_color_distribution(today['rain_today'])
 
 # RAIN DISTRIBUTION
 with col2:
     with st.container(border=True):
         st.markdown(
         f"""
-        <div style='background-color: rgba{str(get_color(today['all']['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
+        <div style='background-color: rgba{str(get_color(today['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
             <div style='display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;'>
                 <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     {week_day_portuguese[datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.predict_date}
@@ -178,7 +209,7 @@ with col3:
     with st.container(border=True):
         st.markdown(
         f"""
-        <div style='background-color: rgba{str(get_color(tomorrow['all']['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
+        <div style='background-color: rgba{str(get_color(tomorrow['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
             <div style='display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;'>
                 <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     {week_day_portuguese[datetime.strptime(st.session_state.next_predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.next_predict_date}
@@ -186,8 +217,8 @@ with col3:
             </div>
             <div style='display: flex; flex-direction: row; justify-content: space-evenly; gap: 20px;'>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
-                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px; color: rgba{str(get_color(tomorrow['all']['proba'], 0))};'>----</p>
-                    <div style='background-color: rgba{str(get_color(tomorrow['all']['proba']))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px; color: rgba{str(get_color(tomorrow['proba'], 0))};'>----</p>
+                    <div style='background-color: rgba{str(get_color(tomorrow['proba']))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
             </div>
@@ -214,10 +245,10 @@ with col4:
             st.markdown(f""" 
             <div style=display: flex; justify-content: center; align-items: center;'> 
                 <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                    <b>{today['all']['proba']*100:.0f}%</b> de possibilidade em {st.session_state.predict_date}
+                    <b>{today['proba']*100:.0f}%</b> de possibilidade em {st.session_state.predict_date}
                 </p>
                 <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                    <i>{today['all']['explanation']}</i>
+                    <i>{today['explanation']}</i>
                 </p>
             </div>
             """, 
@@ -239,10 +270,10 @@ with col4:
             st.markdown(f""" 
             <div style=display: flex; justify-content: center; align-items: center;'> 
                 <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                    <b>{tomorrow['all']['proba']*100:.0f}%</b> de possibilidade em {st.session_state.next_predict_date}
+                    <b>{tomorrow['proba']*100:.0f}%</b> de possibilidade em {st.session_state.next_predict_date}
                 </p>
                 <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                    <i>{tomorrow['all']['explanation']}</i>
+                    <i>{tomorrow['explanation']}</i>
                 </p>
             </div>
             """, 
@@ -303,10 +334,10 @@ with col_1:
         tooltip=folium.GeoJsonTooltip(fields=["fid"]),
         popup=folium.GeoJsonPopup(fields=["fid"]),
         style_function=lambda feature: {
-            "fillColor": get_flood_color(today.get(feature['properties'].get("MODELO", ""), {}).get("proba", None)),
+            "fillColor": get_flood_color(region_data.get(feature['properties'].get("MODELO", ""), {}).get("proba", None)),
             "fillOpacity": 0.7,
-            "color": get_flood_color(today.get(feature['properties'].get("MODELO", ""), {}).get("proba", None)),
-            'weight': (0.5 + today.get(feature['properties'].get("MODELO", ""), {}).get("proba", 0)) * 2
+            "color": get_flood_color(region_data.get(feature['properties'].get("MODELO", ""), {}).get("proba", None)),
+            'weight': (0.5 + region_data.get(feature['properties'].get("MODELO", ""), {}).get("proba", 0)) * 2
         }
 
     ).add_to(m)
@@ -329,18 +360,18 @@ with col_2:
     a1, a2 = st.columns([1, 1])
     with a1:
         with st.container(border=True):
-            plot_gauge(today['tamanduatei']['proba'], "Bacia do Tamanduateí Central", "tamanduatei", {'l':10, 'b':20, 't':50})
+            plot_gauge(region_data['tamanduatei']['proba'], "Bacia do Tamanduateí Central", "tamanduatei", {'l':10, 'b':20, 't':50})
     with a2:
         with st.container(border=True):
-            plot_gauge(today['guarara']['proba'], "Sub-bacia do Guarará", "guarara", {'l':10, 'b':20, 't':50})
+            plot_gauge(region_data['guarara']['proba'], "Sub-bacia do Guarará", "guarara", {'l':10, 'b':20, 't':50})
         
     b1, b2 = st.columns([1, 1])
     with b1:
         with st.container(border=True):
-            plot_gauge(today['oratorio']['proba'], "Bacia do Oratório", "oratorio", {'l':10, 'b':20, 't':50})
+            plot_gauge(region_data['oratorio']['proba'], "Bacia do Oratório", "oratorio", {'l':10, 'b':20, 't':50})
     with b2:
         with st.container(border=True):
-            plot_gauge(today['meninos']['proba'], "Bacia dos Meninos", "meninos", {'l':10, 'b':20, 't':50})
+            plot_gauge(region_data['meninos']['proba'], "Bacia dos Meninos", "meninos", {'l':10, 'b':20, 't':50})
 
 
 if not st.session_state.fallback:

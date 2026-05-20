@@ -11,7 +11,7 @@ import polars as pl
 
 from harvest.mongo_client import MongoClientWrapper
 
-from .bootstrap_api_data import bootstrap_api_data
+from .bootstrap_api_data import bootstrap_api_data, _load_station_bacias
 from .minio_client import MinioClientWrapper, MinioSettings
 
 
@@ -22,6 +22,7 @@ DEFAULT_MONGO_URI = "mongodb://psa:psa@localhost:16521/?authSource=admin"
 async def bootstrap_local_weather(
     cemaden_file: Path,
     forecast_source: Path,
+    station_bacias_path: Path | None = None,
     historic_prefix: str = "weather/cemaden/",
     forecast_prefix: str = "weather/openweather/forecast/",
     start_date: date = date(2025, 1, 1),
@@ -42,6 +43,7 @@ async def bootstrap_local_weather(
         config_db_name="api_data",
         data_db_name="api_data",
     )
+    station_bacias = _load_station_bacias(station_bacias_path) if station_bacias_path else {}
     point_bacias = _load_point_bacias(forecast_source)
 
     try:
@@ -83,6 +85,7 @@ async def bootstrap_local_weather(
         counters = await bootstrap_api_data(
             minio=minio,
             mongo=mongo,
+            station_bacias=station_bacias,
             historic_prefix=historic_prefix,
             forecast_prefix=forecast_prefix,
             point_bacias=point_bacias,
@@ -158,6 +161,7 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="Seed MinIO with local parquets and bootstrap api_data")
     parser.add_argument("--cemaden-file", default=str((REPO_ROOT / "notebooks/dados/cemaden_abcd.parquet")))
     parser.add_argument("--forecast-source", default=str((REPO_ROOT / "notebooks/dados/weather/openmeteo_multipoint")))
+    parser.add_argument("--station-bacias", default=None)
     parser.add_argument("--historic-prefix", default="weather/cemaden/")
     parser.add_argument("--forecast-prefix", default="weather/openweather/forecast/")
     parser.add_argument("--start-date", default="2025-01-01")
@@ -168,6 +172,7 @@ async def main() -> None:
     counters = await bootstrap_local_weather(
         cemaden_file=Path(args.cemaden_file).resolve(),
         forecast_source=Path(args.forecast_source).resolve(),
+        station_bacias_path=Path(args.station_bacias).resolve() if args.station_bacias else None,
         historic_prefix=args.historic_prefix,
         forecast_prefix=args.forecast_prefix,
         start_date=date.fromisoformat(args.start_date),

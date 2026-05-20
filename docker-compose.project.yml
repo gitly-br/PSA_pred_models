@@ -74,6 +74,19 @@ services:
     networks:
       - psa_network
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      API_URL: http://sentry:8080
+    depends_on:
+      - sentry
+    ports:
+      - "8501:8501"
+    networks:
+      - psa_network
+
 networks:
   psa_network:
 

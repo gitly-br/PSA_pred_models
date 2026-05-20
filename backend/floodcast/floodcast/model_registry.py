@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorClient
-
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://psa:psa@localhost:16521/?authSource=admin")
 DB_NAME = "floodcast"
@@ -45,6 +43,8 @@ def _normalize_doc(doc: dict[str, Any]) -> dict[str, Any]:
 
 
 async def upsert_model_spec(spec: ChampionModelSpec) -> None:
+    from motor.motor_asyncio import AsyncIOMotorClient
+
     client = AsyncIOMotorClient(MONGO_URI)
     collection = client[DB_NAME][COLLECTION_NAME]
     await collection.update_one(
@@ -72,6 +72,8 @@ async def upsert_model_spec(spec: ChampionModelSpec) -> None:
 
 
 async def get_active_models() -> list[dict[str, Any]]:
+    from motor.motor_asyncio import AsyncIOMotorClient
+
     client = AsyncIOMotorClient(MONGO_URI)
     collection = client[DB_NAME][COLLECTION_NAME]
     docs = []

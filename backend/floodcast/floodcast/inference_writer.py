@@ -89,6 +89,7 @@ class InferenceWriter:
                 subregion = pred.get("bacia", "unknown_subregion")
             model_name = pred.get("model_name", "unknown_model")
             predict_value = pred.get("predict")
+            severity_value = int(pred.get("severity") or predict_value or 0)
             proba_value = pred.get("proba")
             raw_proba_value = pred.get("raw_proba")
             calibrated_proba_value = pred.get("calibrated_proba")
@@ -106,6 +107,7 @@ class InferenceWriter:
             }
 
             model_result = {"predict": predict_value}
+            model_result["severity"] = severity_value
             model_result["shap"] = shap_explanation
             if proba_value is not None:
                 model_result["proba"] = proba_value
@@ -120,6 +122,7 @@ class InferenceWriter:
                 results_by_day_and_subregion[day][subregion]["shaps"].append(shap_explanation)
             if proba_value is not None:
                 results_by_day_and_subregion[day][subregion]["probas"].append(proba_value)
+            results_by_day_and_subregion[day][subregion].setdefault("severities", []).append(severity_value)
 
         final_results_by_day = defaultdict(dict)
         for day, subregions_data in results_by_day_and_subregion.items():
@@ -127,12 +130,14 @@ class InferenceWriter:
                 subregion_predict = int(sum(data["predicts"]) / len(data["predicts"])) if data["predicts"] else 0
                 subregion_proba = sum(data["probas"]) / len(data["probas"]) if data["probas"] else None
                 subregion_shap = data["shaps"][0] if data["shaps"] else None
+                subregion_severity = max(data.get("severities") or [subregion_predict])
 
                 if total_mm < 3.5:
                     explanation = "Não há precipitação significativa prevista para o período"
                     rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
                     subregion_predict = 0
                     subregion_proba = 0.0
+                    subregion_severity = 0
                 elif subregion_predict == 0:
                     explanation = "Há previsão de chuva, mas o modelo não detectou nenhuma condição preocupante na previsão."
                     rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
@@ -145,6 +150,7 @@ class InferenceWriter:
                 
                 final_results_by_day[day][subregion] = {
                     "predict": subregion_predict,
+                    "severity": subregion_severity,
                     "proba": subregion_proba,
                     "raw_proba": raw_proba_value,
                     "calibrated_proba": calibrated_proba_value,
@@ -157,15 +163,20 @@ class InferenceWriter:
             regional_items = [(name, result) for name, result in final_results_by_day[day].items() if name != "all"]
             positive_items = [
                 item for item in regional_items
-                if float(item[1].get("proba") or 0.0) > 0.0 and int(item[1].get("predict") or 0) > 0
+                if int(item[1].get("severity") or item[1].get("predict") or 0) > 0
             ]
             if positive_items:
                 winner_name, winner = max(
                     positive_items,
-                    key=lambda item: (float(item[1].get("proba") or 0.0), int(item[1].get("predict") or 0)),
+                    key=lambda item: (
+                        int(item[1].get("severity") or item[1].get("predict") or 0),
+                        float(item[1].get("proba") or 0.0),
+                        int(item[1].get("predict") or 0),
+                    ),
                 )
                 final_results_by_day[day]["all"] = {
                     "predict": int(winner.get("predict") or 0),
+                    "severity": int(winner.get("severity") or winner.get("predict") or 0),
                     "proba": float(winner.get("proba") or 0.0),
                     "raw_proba": winner.get("raw_proba"),
                     "calibrated_proba": winner.get("calibrated_proba"),
@@ -178,6 +189,7 @@ class InferenceWriter:
             else:
                 final_results_by_day[day]["all"] = {
                     "predict": 0,
+                    "severity": 0,
                     "proba": 0.0,
                     "raw_proba": 0.0,
                     "explanation": "Não há precipitação significativa prevista para o período",

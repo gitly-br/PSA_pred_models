@@ -5,13 +5,27 @@ import os
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 from io import BytesIO
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import polars as pl
 import pytz
+import polars as pl
 
-from harvest.minio_client import MinioClientWrapper, MinioSettings
+try:
+    from harvest.minio_client import MinioClientWrapper, MinioSettings
+except ModuleNotFoundError:
+    @dataclass(frozen=True)
+    class MinioSettings:
+        endpoint: str
+        access_key: str
+        secret_key: str
+        bucket: str
+        secure: bool = False
+
+    class MinioClientWrapper:  # pragma: no cover - import-time fallback only
+        def __init__(self, *args, **kwargs):
+            raise ModuleNotFoundError("harvest.minio_client is not installed")
 
 DEFAULT_MINIO_SETTINGS = MinioSettings(
     endpoint=os.getenv("MINIO_ENDPOINT", "localhost:19000"),
@@ -22,6 +36,10 @@ DEFAULT_MINIO_SETTINGS = MinioSettings(
 )
 
 TZ = pytz.timezone("America/Sao_Paulo")
+
+
+class WeatherDataUnavailableError(RuntimeError):
+    pass
 
 
 def _utc_bounds(start_date: date, end_date: date) -> tuple[datetime, datetime]:
@@ -76,20 +94,25 @@ class MinIOWeatherFallback:
 
     def _get_historic_frame(self) -> pl.DataFrame | None:
         """Load CEMADEN historic data from MinIO (cached)."""
+        import polars as pl
+
         prefix = "weather/cemaden/"
         objects = [o for o in self.minio.list_objects(prefix) if o.endswith(".parquet")]
         if not objects:
             return None
-        # Use the first (and usually only) parquet
-        key = objects[0]
-        if key not in self._historic_cache:
-            raw = self.minio.get_object_bytes(key)
-            self._historic_cache[key] = pl.read_parquet(BytesIO(raw))
-        return self._historic_cache[key]
+        # Load and concatenate all parquets (necessary for full date range coverage)
+        frames = []
+        for key in objects:
+            if key not in self._historic_cache:
+                raw = self.minio.get_object_bytes(key)
+                self._historic_cache[key] = pl.read_parquet(BytesIO(raw))
+            frames.append(self._historic_cache[key])
+        return pl.concat(frames, how="vertical_relaxed") if frames else None
 
-    def _get_forecast_frames(self) -> dict[str, pl.DataFrame]:
-        """Load OpenWeather/OpenMeteo forecast data from MinIO (cached)."""
-        prefix = "weather/openweather/forecast/"
+    def _get_forecast_frames(self, prefix: str) -> dict[str, pl.DataFrame]:
+        """Load forecast data from a MinIO prefix (cached)."""
+        import polars as pl
+
         objects = [o for o in self.minio.list_objects(prefix) if o.endswith(".parquet")]
         frames: dict[str, pl.DataFrame] = {}
         for obj in objects:
@@ -97,15 +120,6 @@ class MinIOWeatherFallback:
                 raw = self.minio.get_object_bytes(obj)
                 self._forecast_cache[obj] = pl.read_parquet(BytesIO(raw))
             frames[obj] = self._forecast_cache[obj]
-        # Also try openmeteo if openweather is empty
-        if not frames:
-            prefix = "weather/openmeteo/forecast/"
-            objects = [o for o in self.minio.list_objects(prefix) if o.endswith(".parquet")]
-            for obj in objects:
-                if obj not in self._forecast_cache:
-                    raw = self.minio.get_object_bytes(obj)
-                    self._forecast_cache[obj] = pl.read_parquet(BytesIO(raw))
-                frames[obj] = self._forecast_cache[obj]
         return frames
 
     def fetch_historic_documents(
@@ -116,13 +130,13 @@ class MinIOWeatherFallback:
     ) -> list[dict[str, Any]]:
         frame = self._get_historic_frame()
         if frame is None:
-            return []
+            raise WeatherDataUnavailableError(f"Sem dados historicos em parquet para {bacia}")
 
         station_ids = [
             sid for sid, bacias in self.station_bacias.items() if bacia in bacias
         ]
         if not station_ids:
-            return []
+            raise WeatherDataUnavailableError(f"Sem mapeamento de estacoes em parquet para {bacia}")
 
         start_utc, end_utc = _utc_bounds(start_date, end_date)
         # Ensure dt column is timezone-aware UTC for comparison
@@ -153,66 +167,78 @@ class MinIOWeatherFallback:
                     "precipitation_mm": row.get("valor_mm") or 0.0,
                 }
             )
+        if not docs:
+            raise WeatherDataUnavailableError(f"Sem dados historicos em parquet para {bacia}")
         return docs
 
     def fetch_forecast_documents(self, bacia: str, target_date: date) -> list[dict[str, Any]]:
-        frames = self._get_forecast_frames()
-        if not frames:
-            return []
-
         start_utc, end_utc = _utc_bounds(target_date, target_date + timedelta(days=1))
-
-        docs: list[dict[str, Any]] = []
-        for object_name, frame in frames.items():
-            # Extract lat/lon from filename: pt_mLAT_mLON_...
-            stem = Path(object_name).stem
-            parts = stem.split("_")
-            if len(parts) < 4 or parts[0] != "pt":
-                continue
-            lat = float(parts[1].replace("m", "-").replace("p", ""))
-            lon = float(parts[2].replace("m", "-").replace("p", ""))
-            point_id = f"{lat}_{lon}"
-            bacias = self.point_bacias.get(point_id, [])
-            if bacia not in bacias:
+        for prefix in ("weather/openweather/forecast/", "weather/openmeteo/forecast/"):
+            frames = self._get_forecast_frames(prefix)
+            if not frames:
                 continue
 
-            dt_col = pl.col("dt")
-            if frame.schema["dt"].time_zone is None:
-                dt_col = dt_col.dt.replace_time_zone("UTC", ambiguous="raise")
-            filtered = frame.filter(
-                (dt_col >= pl.lit(start_utc)) & (dt_col < pl.lit(end_utc))
-            )
-            if filtered.is_empty():
-                continue
+            docs: list[dict[str, Any]] = []
+            for object_name, frame in frames.items():
+                # Extract lat/lon from either the filename (`pt_...`) or the parquet rows.
+                stem = Path(object_name).stem
+                parts = stem.split("_")
+                lat = lon = None
+                if len(parts) >= 4 and parts[0] == "pt":
+                    lat = float(parts[1].replace("m", "-").replace("p", ""))
+                    lon = float(parts[2].replace("m", "-").replace("p", ""))
+                elif {"latitude", "longitude"}.issubset(set(frame.columns)):
+                    first = frame.select(["latitude", "longitude"]).head(1).to_dicts()
+                    if first:
+                        lat = float(first[0]["latitude"])
+                        lon = float(first[0]["longitude"])
+                if lat is None or lon is None:
+                    continue
+                point_id = f"{lat}_{lon}"
+                bacias = self.point_bacias.get(point_id, [])
+                if bacia not in bacias:
+                    continue
 
-            hourly = []
-            for row in filtered.to_dicts():
-                hourly.append(
+                dt_col = pl.col("dt")
+                if frame.schema["dt"].time_zone is None:
+                    dt_col = dt_col.dt.replace_time_zone("UTC", ambiguous="raise")
+                filtered = frame.filter(
+                    (dt_col >= pl.lit(start_utc)) & (dt_col < pl.lit(end_utc))
+                )
+                if filtered.is_empty():
+                    continue
+
+                hourly = []
+                for row in filtered.to_dicts():
+                    hourly.append(
+                        {
+                            "dt": row.get("dt"),
+                            "latitude": lat,
+                            "longitude": lon,
+                            "temperature": row.get("temperature_c") or row.get("temp"),
+                            "dew_point": row.get("dew_point"),
+                            "pressure": row.get("pressure_hpa"),
+                            "humidity": row.get("humidity_pct"),
+                            "wind_speed": row.get("wind_speed_kmh"),
+                            "rain": row.get("rain_mm") or row.get("precipitation_mm") or 0.0,
+                            "precipitation_mm": row.get("precipitation_mm") or row.get("rain_mm") or 0.0,
+                        }
+                    )
+
+                docs.append(
                     {
-                        "dt": row.get("dt"),
+                        "provider": "openweather" if "openweather" in prefix else "openmeteo",
+                        "point_id": point_id,
+                        "bacia": bacias[0] if bacias else None,
+                        "bacias": bacias,
+                        "dt_request": start_utc,
+                        "timezone": "UTC",
+                        "hourly": hourly,
                         "latitude": lat,
                         "longitude": lon,
-                        "temperature": row.get("temperature_c") or row.get("temp"),
-                        "dew_point": row.get("dew_point"),
-                        "pressure": row.get("pressure_hpa"),
-                        "humidity": row.get("humidity_pct"),
-                        "wind_speed": row.get("wind_speed_kmh"),
-                        "rain": row.get("rain_mm") or row.get("precipitation_mm") or 0.0,
-                        "precipitation_mm": row.get("precipitation_mm") or row.get("rain_mm") or 0.0,
                     }
                 )
+            if docs:
+                return docs
 
-            docs.append(
-                {
-                    "provider": "openweather",
-                    "point_id": point_id,
-                    "bacia": bacias[0] if bacias else None,
-                    "bacias": bacias,
-                    "dt_request": start_utc,
-                    "timezone": "UTC",
-                    "hourly": hourly,
-                    "latitude": lat,
-                    "longitude": lon,
-                }
-            )
-        return docs
+        raise WeatherDataUnavailableError(f"Sem dados de forecast em parquet para {bacia}")

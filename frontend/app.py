@@ -11,11 +11,10 @@ from streamlit_theme import st_theme
 
 api_url = environ.get('API_URL', 'http://localhost:8080')
 
-def get_forecast(date: str=""):
-    if date == "":
-        api_url_i = f"{api_url}/region/santoandre"
-    else:
-        api_url_i = f"{api_url}/region/santoandre?date={date}"
+def get_forecast(date: str = "", region_name: str = "all"):
+    api_url_i = f"{api_url}/region/{region_name}"
+    if date != "":
+        api_url_i = f"{api_url_i}?date={date}"
 
     response_i = requests.get(api_url_i)
     return response_i

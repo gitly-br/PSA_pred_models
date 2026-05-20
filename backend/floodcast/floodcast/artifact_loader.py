@@ -5,11 +5,11 @@ from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlparse
 
-import joblib
-
 
 def load_artifact(artifact_uri: str):
     """Load a joblib artifact from a local path or file:// URI."""
+    import joblib
+
     if artifact_uri.startswith("minio://"):
         from harvest.minio_client import MinioClientWrapper, MinioSettings
 

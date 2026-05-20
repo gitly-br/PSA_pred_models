@@ -2,12 +2,15 @@
 
 import json
 import math
+import tempfile
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
-import pytest
+
+from floodcast.artifact_loader import load_artifact
+from floodcast.seed_model_registry import _build_compatible_champion
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 ARTIFACT_PATH = FIXTURE_DIR / "champion_guarara.joblib"
@@ -17,6 +20,15 @@ META_PATH = FIXTURE_DIR / "champion_guarara.json"
 def _load_meta():
     with open(META_PATH) as f:
         return json.load(f)
+
+
+def _load_model():
+    meta = _load_meta()
+    model = _build_compatible_champion(meta, meta["bacia"])
+    with tempfile.TemporaryDirectory() as tmpdir:
+        artifact_path = Path(tmpdir) / "champion.joblib"
+        joblib.dump(model, artifact_path)
+        return load_artifact(f"file://{artifact_path}")
 
 
 def _make_fixture_df(features: list[str], n: int = 5) -> pd.DataFrame:
@@ -51,7 +63,7 @@ def test_artifact_exists():
 
 
 def test_load_and_interface():
-    model = joblib.load(ARTIFACT_PATH)
+    model = _load_model()
     meta = _load_meta()
 
     # verifica interface mínima
@@ -64,7 +76,7 @@ def test_load_and_interface():
 
 
 def test_predict_shape_and_range():
-    model = joblib.load(ARTIFACT_PATH)
+    model = _load_model()
     X = _make_fixture_df(model.features, n=10)
 
     preds = model.predict(X)
@@ -78,7 +90,7 @@ def test_predict_shape_and_range():
 
 
 def test_alarm_level_matches_predict():
-    model = joblib.load(ARTIFACT_PATH)
+    model = _load_model()
     X = _make_fixture_df(model.features, n=10)
     alarm = model.alarm_level(X)
     pred = model.predict(X)

@@ -24,7 +24,7 @@ make envs
 **2. Preencha as variáveis:**
 Abra o arquivo correspondente ao ambiente desejado (ex: `.env.local`) e preencha as seguintes variáveis:
 
-*   `API_URL`: URL de acesso ao backend (padrão para ambiente local: `http://localhost:8080`).
+*   `API_URL`: URL de acesso ao backend quando o frontend roda fora do Docker (padrão: `http://localhost:8080`). No `docker compose`, o frontend usa `http://backend:8080`.
 *   `MONGO_URI`: Connection string da instância MongoDB.
 *   `OPENWEATHER_API_KEY`: Chave de acesso para a API do OpenWeather.
 
@@ -51,7 +51,7 @@ docker compose up --build -d
 *   **Backend:** Verifique o status dos endpoints.
     ```bash
     curl http://localhost:8080/region/santoandre
-    curl http://localhost:8080/forecast_data/santoandre/openweather
+    curl http://localhost:8080/forecast-data/santoandre/openweather
     ```
     Uma resposta em formato JSON é esperada para cada requisição.
 
@@ -75,9 +75,9 @@ cd backend
 docker build -t psa-backend --build-arg NODE_ENV=local .
 
 # Execute o contêiner
-docker run --rm -p 8000:8000 -d psa-backend
+docker run --rm -p 8080:8080 -d psa-backend
 ```
-Neste modo, a porta de acesso é a `8000`, e não a `8080` (mapeada pelo Docker Compose).
+Neste modo, a porta de acesso é a `8080`.
 
 ### 3.2. Frontend
 O frontend pode ser executado via Docker ou diretamente com Streamlit.

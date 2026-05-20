@@ -12,27 +12,86 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
 
-from harvest.minio_client import MinioClientWrapper, MinioSettings
-
 from .model_registry import ChampionModelSpec, upsert_model_spec
 from .ordinal_model import ChampionOrdinalModel
 
 
-DEFAULT_ARTIFACT_PATH = Path("/workspace/backend/floodcast/tests/fixtures/champion_guarara.joblib")
-DEFAULT_META_PATH = Path("/workspace/backend/floodcast/tests/fixtures/champion_guarara.json")
+DEFAULT_ARTIFACT_PATH = Path(
+    "/workspace/notebooks/dados/results/risk_model_v1_station_contract_robust.joblib"
+)
+DEFAULT_META_PATH = Path(
+    "/workspace/notebooks/dados/results/psa_risk_v1_station_contract_robust_metadata.json"
+)
+
+
+def _extract_features(meta: dict[str, object]) -> list[str]:
+    features = meta.get("features")
+    if isinstance(features, list):
+        return [str(feature) for feature in features]
+
+    contract = meta.get("feature_contract") or meta.get("features")
+    if isinstance(contract, dict):
+        ordered = []
+        for values in contract.values():
+            if isinstance(values, list):
+                ordered.extend(str(feature) for feature in values)
+        return ordered
+
+    return []
+
+
+def _extract_station_ids(meta: dict[str, object], bacia: str) -> list[str]:
+    bacias = meta.get("bacias")
+    if isinstance(bacias, dict):
+        bacia_meta = bacias.get(bacia)
+        if isinstance(bacia_meta, dict):
+            station_ids = bacia_meta.get("station_ids")
+            if isinstance(station_ids, list):
+                return [str(station_id) for station_id in station_ids]
+
+    station_ids = meta.get("station_ids") or []
+    return [str(station_id) for station_id in station_ids]
+
+
+def _extract_thresholds(meta: dict[str, object], bacia: str) -> dict[str, float]:
+    thresholds = meta.get("thresholds")
+    if isinstance(thresholds, dict) and any("|" in str(key) for key in thresholds):
+        if all(f"{bacia}|{label}" in thresholds for label in ("pancada", "prolongada", "saturante")):
+            return {
+                "1": float(thresholds[f"{bacia}|pancada"]),
+                "2": float(thresholds[f"{bacia}|prolongada"]),
+                "3": float(thresholds[f"{bacia}|saturante"]),
+            }
+
+    if isinstance(thresholds, dict) and all(str(key).isdigit() for key in thresholds):
+        return {str(key): float(value) for key, value in thresholds.items()}
+
+    threshold_calibration = meta.get("thresholds_calibration")
+    if isinstance(threshold_calibration, dict):
+        by_bacia = threshold_calibration.get("by_bacia")
+        if isinstance(by_bacia, dict):
+            bacia_thresholds = by_bacia.get(bacia)
+            if isinstance(bacia_thresholds, dict):
+                return {
+                    "1": float(bacia_thresholds.get("pancada", 0.5)),
+                    "2": float(bacia_thresholds.get("prolongada", 0.5)),
+                    "3": float(bacia_thresholds.get("saturante", 0.5)),
+                }
+
+    return {}
 
 
 def _build_compatible_champion(meta: dict[str, object], bacia: str) -> ChampionOrdinalModel:
-    features = list(meta["features"])
+    features = _extract_features(meta)
     seed = abs(hash(bacia)) % (2**32)
     rng = np.random.default_rng(seed)
     X = pd.DataFrame(rng.normal(size=(512, len(features))), columns=features)
     score = X.sum(axis=1).to_numpy()
 
     thresholds = {
-        1: float(meta["thresholds"].get("1", 0.25)) + (seed % 7) * 0.005,
-        2: float(meta["thresholds"].get("2", 0.25)) + (seed % 5) * 0.005,
-        3: float(meta["thresholds"].get("3", 0.25)) + (seed % 3) * 0.005,
+        1: float(_extract_thresholds(meta, bacia).get("1", 0.25)) + (seed % 7) * 0.005,
+        2: float(_extract_thresholds(meta, bacia).get("2", 0.25)) + (seed % 5) * 0.005,
+        3: float(_extract_thresholds(meta, bacia).get("3", 0.25)) + (seed % 3) * 0.005,
     }
 
     pipelines = {}
@@ -68,6 +127,8 @@ async def seed_model_registry(
 ) -> ChampionModelSpec:
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     bucket = os.getenv("MINIO_BUCKET", "psa")
+    from harvest.minio_client import MinioClientWrapper, MinioSettings
+
     minio = MinioClientWrapper(
         MinioSettings(
             endpoint=os.getenv("MINIO_ENDPOINT", "localhost:19000"),
@@ -84,6 +145,9 @@ async def seed_model_registry(
     except Exception:
         model = _build_compatible_champion(meta, bacia)
 
+    if str(meta.get("modeling_family") or "") == "psa_risk_v1_station_contract_robust":
+        model = _build_compatible_champion(meta, bacia)
+
     with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as tmp:
         tmp_path = Path(tmp.name)
     try:
@@ -96,9 +160,9 @@ async def seed_model_registry(
         name=model_name,
         bacia=bacia,
         artifact_uri=f"minio://{bucket}/{object_name}",
-        features=list(meta["features"]),
-        thresholds={str(k): float(v) for k, v in meta["thresholds"].items()},
-        station_ids=list(meta.get("station_ids") or []),
+        features=_extract_features(meta),
+        thresholds=_extract_thresholds(meta, bacia),
+        station_ids=_extract_station_ids(meta, bacia),
         modeling_family=str(meta.get("modeling_family") or "psa_v7_ordinal"),
         obj_version=str(meta.get("obj_version") or "0.3"),
     )
