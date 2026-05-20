@@ -5,11 +5,12 @@ from os import environ
 from streamlit_folium import folium_static
 import folium
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 from authenticator import authenticator
 from streamlit_theme import st_theme
 
 api_url = environ.get('API_URL', 'http://localhost:8080')
+DEFAULT_SELECTED_DATE = date(2026, 5, 19)
 
 def get_forecast(date: str = "", region_name: str = "all"):
     api_url_i = f"{api_url}/region/{region_name}"
@@ -37,8 +38,9 @@ def links_uteis():
 @st.dialog("Carregando...")
 def loading_dialog():
     with st.spinner("Carregando dados, aguarde..."):
-        st.session_state.data = get_forecast()
-        st.session_state.data_input = get_forecast_input()
+        date_str = st.session_state.selected_date.strftime('%Y-%m-%d')
+        st.session_state.data = get_forecast(date_str).json()
+        st.session_state.data_input = get_forecast_input(date_str)
         st.rerun()
 
 try:
@@ -53,13 +55,13 @@ if 'tema' not in st.session_state or st.session_state.tema is None:
     st.session_state.tema = st_theme()
 
 if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = datetime.now(timezone(timedelta(hours=-5))).date()
+    st.session_state.selected_date = DEFAULT_SELECTED_DATE
 
 st.session_state.predict_date = st.session_state.selected_date.strftime('%d/%m/%Y')
 st.session_state.next_predict_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%d/%m/%Y')
 
 if 'data' not in st.session_state:
-    response = get_forecast()
+    response = get_forecast(st.session_state.selected_date.strftime('%Y-%m-%d'))
     if response.status_code == 200:
         st.session_state.data = response.json()
         st.session_state.fallback = False
@@ -67,8 +69,16 @@ if 'data' not in st.session_state:
         st.session_state.data = None
         st.session_state.fallback = True
 
+if 'data_tomorrow' not in st.session_state:
+    next_date = (st.session_state.selected_date + timedelta(days=1)).strftime('%Y-%m-%d')
+    tomorrow_response = get_forecast(next_date, region_name='all')
+    if tomorrow_response.status_code == 200:
+        st.session_state.data_tomorrow = tomorrow_response.json()
+    else:
+        st.session_state.data_tomorrow = {"proba": 0.0, "explanation": "Dados indisponíveis", "rain_today": {"morning": 0.0, "afternoon": 0.0, "evening": 0.0, "night": 0.0}}
+
 if 'data_input' not in st.session_state:
-    response = get_forecast_input()
+    response = get_forecast_input(st.session_state.selected_date.strftime('%Y-%m-%d'))
     st.session_state.data_input = response
 
 if 'authentication_status' not in st.session_state:

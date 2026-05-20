@@ -98,3 +98,15 @@ def test_alarm_level_matches_predict():
     # apenas verificamos que ambos retornam arrays de inteiros do mesmo tamanho
     assert len(alarm) == 10
     assert all(np.issubdtype(type(a), np.integer) for a in alarm)
+
+
+def test_risk_score_returns_event_probability():
+    model = _load_model()
+    X = _make_fixture_df(model.features, n=10)
+    risk = model.risk_score(X)
+    probs = model.predict_proba(X)
+    assert len(risk) == 10
+    # risk_score deve retornar P(sev >= 1) = 1 - P(sev = 0)
+    expected = 1.0 - probs[:, 0]
+    assert np.allclose(risk, expected, atol=1e-6), "risk_score deve ser P(severidade >= 1)"
+    assert (risk >= 0).all() and (risk <= 1).all(), "risk_score deve estar em [0,1]"

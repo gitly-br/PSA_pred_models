@@ -20,6 +20,11 @@ from .minio_client import MinioClientWrapper, MinioSettings
 DEFAULT_HISTORIC_PREFIX = "weather/cemaden/"
 DEFAULT_FORECAST_PREFIX = "weather/openmeteo/forecast/"
 DEFAULT_MONGO_URI = "mongodb://psa:psa@localhost:16521/?authSource=admin"
+HISTORIC_QUERY_INDEXES = (
+    ([("bacia", 1), ("dt", 1)], "historic_bacia_dt_idx"),
+    ([("bacias", 1), ("dt", 1)], "historic_bacias_dt_idx"),
+    ([("station_id", 1), ("dt", 1)], "historic_station_id_dt_idx"),
+)
 
 
 def _utc_now() -> datetime:
@@ -164,6 +169,19 @@ async def _upsert_many(collection, documents: list[dict[str, Any]], index_fields
     return result.upserted_count + result.modified_count
 
 
+async def ensure_api_data_indexes(historic_collection, forecast_collection) -> None:
+    await historic_collection.create_index(
+        [("provider", 1), ("station_id", 1), ("dt", 1)],
+        unique=True,
+    )
+    for keys, name in HISTORIC_QUERY_INDEXES:
+        await historic_collection.create_index(keys, name=name, background=True)
+    await forecast_collection.create_index(
+        [("provider", 1), ("point_id", 1), ("dt_request", 1)],
+        unique=True,
+    )
+
+
 async def bootstrap_api_data(
     minio: MinioClientWrapper,
     mongo: MongoClientWrapper,
@@ -179,8 +197,7 @@ async def bootstrap_api_data(
     historic_collection = mongo.get_data_collection("historic")
     forecast_collection = mongo.get_data_collection("forecast")
 
-    await historic_collection.create_index([("provider", 1), ("station_id", 1), ("dt", 1)], unique=True)
-    await forecast_collection.create_index([("provider", 1), ("point_id", 1), ("dt_request", 1)], unique=True)
+    await ensure_api_data_indexes(historic_collection, forecast_collection)
 
     counters = {"historic": 0, "forecast": 0}
 

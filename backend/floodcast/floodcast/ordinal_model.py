@@ -65,3 +65,9 @@ class ChampionOrdinalModel(BaseEstimator, ClassifierMixin):
             p = self.pipelines[k].predict_proba(X)[:, 1]
             alarme = np.where(p >= self.thresholds[k], k, alarme)
         return alarme
+
+    def risk_score(self, X):
+        """Retorna probabilidade de evento P(severidade >= 1)."""
+        probs = self._prob_matrix(X)
+        # P(sev >= 1) = 1 - P(sev = 0)
+        return 1.0 - probs[:, 0]

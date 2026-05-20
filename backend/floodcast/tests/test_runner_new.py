@@ -335,6 +335,14 @@ def test_run_floodcast_fills_missing_contract_columns(monkeypatch):
     assert model.received_frame is not None
     assert fake_writer.passed_predictions[0]["predict"] == 2
     assert fake_writer.passed_predictions[0]["raw_proba"] == 0.5
+    assert fake_writer.passed_predictions[0]["proba"] == 0.5
+
+
+def test_display_probability_keeps_api_contract_0_to_1():
+    assert runner_module._display_probability(0.83, threshold=None) == 0.83
+    assert runner_module._display_probability(0.83, threshold=0.2) == 0.83
+    assert runner_module._display_probability(0.83, threshold=0.2, calibrated_proba=0.42) == 0.42
+    assert runner_module._display_probability(1.5, threshold=None) == 1.0
 
 
 def test_run_floodcast_processes_bacias_in_parallel(monkeypatch):
@@ -436,3 +444,49 @@ def test_run_floodcast_fetches_historic_and_forecast_in_parallel(monkeypatch):
 
     assert result is True
     assert fake_writer.passed_region_errors == {}
+
+
+class _FakeRiskModelWithComponents:
+    all_feature_order = ["api_070", "api_085", "api_095"]
+
+    def predict_severity(self, bacia, X):
+        return [3]
+
+    def risk_score(self, bacia, X):
+        return [0.95]  # alto se usado diretamente
+
+    def compute_risk_components(self, bacia, X):
+        return {"perigoso_any": 0.35, "pancada": 0.20, "prolongada": 0.15, "saturante": 0.10}
+
+
+def test_run_floodcast_prefers_perigoso_any_over_risk_score(monkeypatch):
+    """Quando compute_risk_components disponibiliza perigoso_any, raw_proba deve usa-lo em vez de risk_score."""
+    async def run():
+        fake_writer = _FakeWriter()
+
+        async def fake_get_active_models():
+            return [
+                {
+                    "name": "champion_risk_guarara",
+                    "bacia": "guarara",
+                    "region": "guarara",
+                    "subregion": "guarara",
+                    "artifact_uri": "/tmp/champion-risk.joblib",
+                }
+            ]
+
+        monkeypatch.setattr(runner_module, "get_active_models", fake_get_active_models)
+        monkeypatch.setattr(runner_module, "load_artifact", lambda artifact_uri: _FakeRiskModelWithComponents())
+        monkeypatch.setattr(runner_module, "WeatherDataRepository", lambda: _FakeRepo())
+        monkeypatch.setattr(runner_module, "InferenceWriter", lambda target_date=None: fake_writer)
+
+        result = await runner_module.run_floodcast(target_date=datetime(2025, 2, 4), debug=False)
+        return result, fake_writer
+
+    result, fake_writer = asyncio.run(run())
+
+    assert result is True
+    assert fake_writer.passed_predictions is not None
+    pred = fake_writer.passed_predictions[0]
+    assert pred["raw_proba"] == 0.35, f"raw_proba deve ser perigoso_any (0.35), nao risk_score (0.95). obteve {pred['raw_proba']}"
+    assert pred["predict"] == 3

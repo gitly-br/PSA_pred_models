@@ -9,7 +9,19 @@ from os import environ
 from app import get_forecast, get_forecast_input
 from streamlit_autorefresh import st_autorefresh
 import plotly.graph_objects as go
-from pages.home.utils import get_color_distribution, get_map_color, get_flood_color, get_color, plot_gauge, plot_weather_forecast, week_day_portuguese
+from pages.home.utils import (
+    collect_probability_contract_errors,
+    format_probability,
+    get_color_distribution,
+    get_flood_color,
+    get_map_color,
+    get_period_rain_distribution,
+    plot_gauge,
+    plot_weather_forecast,
+    validate_probability,
+    week_day_portuguese,
+    get_color,
+)
 from streamlit_theme import st_theme
 from authenticator import authenticator
 
@@ -24,13 +36,13 @@ st.session_state.tema = st_theme()
 
 @st.dialog("Erro")
 def not_found_dialog():
-    st.session_state.err_text = "Não há resultados para a data selecionada"
-    st.error(st.session_state.err_text)
+    st.session_state["err_text"] = "Não há resultados para a data selecionada"
+    st.error(st.session_state["err_text"])
 
 @st.dialog("Erro")
 def generic_error_dialog():
-    st.session_state.err_text = "Houve um erro ao coletar os resultados"
-    st.error(st.session_state.err_text)
+    st.session_state["err_text"] = "Houve um erro ao coletar os resultados"
+    st.error(st.session_state["err_text"])
 
 @st.cache_data
 def load_geojson(file_path):
@@ -152,7 +164,7 @@ with col1:
 
     st.date_input(
         'Data escolhida:', 
-        value=datetime.now(timezone(timedelta(hours=-3))).date(), 
+        value=st.session_state.selected_date,
         min_value=datetime(2017, 10, 6),
         format="DD/MM/YYYY",
         key="selected_date",
@@ -160,19 +172,32 @@ with col1:
     )
     
     # Exibe os dados apenas se existirem
-    if st.session_state.data:
-        today = st.session_state.data
-        tomorrow = st.session_state.data_tomorrow
-        region_data = st.session_state.region_data
+if st.session_state.data:
+    today = st.session_state.data
+    tomorrow = st.session_state.get("data_tomorrow", {"proba": 0.0, "explanation": "Dados indisponíveis", "rain_today": {"morning": 0.0, "afternoon": 0.0, "evening": 0.0, "night": 0.0}})
+    region_data = st.session_state.get("region_data", {})
 
-rain_color_distribution = get_color_distribution(today['rain_today'])
+probability_contract_errors = collect_probability_contract_errors(
+    [("today", today), ("tomorrow", tomorrow)] + [(f"region.{region}", data) for region, data in region_data.items()]
+)
+if probability_contract_errors:
+    st.error("Contrato inválido da API: `proba` deve estar no intervalo 0..1. Valores recebidos: " + ", ".join(probability_contract_errors))
+
+today_proba = validate_probability(today.get('proba'))
+tomorrow_proba = validate_probability(tomorrow.get('proba'))
+region_data = {
+    region: {**data, "proba": validate_probability(data.get("proba"))}
+    for region, data in region_data.items()
+}
+rain_distribution = today.get("rain_today") or get_period_rain_distribution(st.session_state.data_input)
+rain_color_distribution = get_color_distribution(rain_distribution)
 
 # RAIN DISTRIBUTION
 with col2:
     with st.container(border=True):
         st.markdown(
         f"""
-        <div style='background-color: rgba{str(get_color(today['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
+        <div style='background-color: rgba{str(get_color(today_proba, 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
             <div style='display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;'>
                 <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     {week_day_portuguese[datetime.strptime(st.session_state.predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.predict_date}
@@ -209,7 +234,7 @@ with col3:
     with st.container(border=True):
         st.markdown(
         f"""
-        <div style='background-color: rgba{str(get_color(tomorrow['proba'], 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
+        <div style='background-color: rgba{str(get_color(tomorrow_proba, 0.3))}; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; padding: 10px; border-radius: 10px;'>
             <div style='display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px;'>
                 <p style='font-size: 20px; font-family: "Source Sans Pro", sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     {week_day_portuguese[datetime.strptime(st.session_state.next_predict_date, '%d/%m/%Y').weekday()]}<br>{st.session_state.next_predict_date}
@@ -217,8 +242,8 @@ with col3:
             </div>
             <div style='display: flex; flex-direction: row; justify-content: space-evenly; gap: 20px;'>
                 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
-                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px; color: rgba{str(get_color(tomorrow['proba'], 0))};'>----</p>
-                    <div style='background-color: rgba{str(get_color(tomorrow['proba']))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
+                    <p style='font-size: 16px; font-family: "Source Sans Pro", sans-serif; font-weight: 500; text-align: center; margin-bottom: 5px; color: rgba{str(get_color(tomorrow_proba, 0))};'>----</p>
+                    <div style='background-color: rgba{str(get_color(tomorrow_proba))}; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center;'>
                     </div>
                 </div>
             </div>
@@ -235,7 +260,7 @@ with col4:
             st.markdown(f"""
                 <div style=display: flex; justify-content: center; align-items: center;'> 
                     <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2; color='red';'>
-                        {st.session_state.err_text}
+                        {st.session_state["err_text"]}
                     </p>
                 </div>
                 """, 
@@ -245,7 +270,7 @@ with col4:
             st.markdown(f""" 
             <div style=display: flex; justify-content: center; align-items: center;'> 
                 <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                    <b>{today['proba']*100:.0f}%</b> de possibilidade em {st.session_state.predict_date}
+                    <b>{format_probability(today_proba)}</b> de possibilidade em {st.session_state.predict_date}
                 </p>
                 <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     <i>{today['explanation']}</i>
@@ -260,7 +285,7 @@ with col4:
             st.markdown(f"""
                 <div style=display: flex; justify-content: center; align-items: center;'> 
                     <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2; color='red';'>
-                        {st.session_state.err_text}
+                        {st.session_state["err_text"]}
                     </p>
                 </div>
                 """, 
@@ -270,7 +295,7 @@ with col4:
             st.markdown(f""" 
             <div style=display: flex; justify-content: center; align-items: center;'> 
                 <p style='text-align: center; font-size: 20px; font-family: 'Source Sans Pro', sans-serif; font-weight: 600; text-align: center; margin: 10px 0; line-height: 1.2;'>
-                    <b>{tomorrow['proba']*100:.0f}%</b> de possibilidade em {st.session_state.next_predict_date}
+                    <b>{format_probability(tomorrow_proba)}</b> de possibilidade em {st.session_state.next_predict_date}
                 </p>
                 <p style='text-align: center; font-size: 16px; font-family: 'Source Sans Pro', sans-serif; font-weight: 400; text-align: center; margin: 10px 0; line-height: 1.2;'>
                     <i>{tomorrow['explanation']}</i>
@@ -337,7 +362,7 @@ with col_1:
             "fillColor": get_flood_color(region_data.get(feature['properties'].get("MODELO", ""), {}).get("proba", None)),
             "fillOpacity": 0.7,
             "color": get_flood_color(region_data.get(feature['properties'].get("MODELO", ""), {}).get("proba", None)),
-            'weight': (0.5 + region_data.get(feature['properties'].get("MODELO", ""), {}).get("proba", 0)) * 2
+            'weight': (0.5 + (region_data.get(feature['properties'].get("MODELO", ""), {}).get("proba") or 0)) * 2
         }
 
     ).add_to(m)

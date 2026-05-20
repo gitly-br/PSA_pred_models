@@ -19,6 +19,7 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+import pandas as pd
 import polars as pl
 from scipy.signal import lfilter
 from sklearn.ensemble import GradientBoostingClassifier
@@ -306,7 +307,7 @@ def build_features():
 
 def export_bacia(bacia, df_ml, out_dir: Path):
     sub = df_ml.filter(pl.col("bacia") == bacia).drop_nulls(FEATURES_V4)
-    X = sub[FEATURES_V4].to_pandas()
+    X = pd.DataFrame(sub.select(FEATURES_V4).to_dicts())
     sev = sub["severidade"].to_numpy()
 
     pipelines = {}

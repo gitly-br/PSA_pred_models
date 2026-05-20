@@ -59,23 +59,14 @@ def _apply_calibration(raw_proba: float, calibration: dict | None) -> float:
 
 def _display_probability(raw_proba: float, threshold: float | None, calibrated_proba: float | None = None) -> float:
     """
-    Display probability for the UI.
+    Probability exposed by the API for the UI.
     
-    If calibrated_proba is provided, uses it directly (already calibrated).
-    Otherwise falls back to the old threshold-based rescaling.
+    The public contract is 0..1. Formatting as percent belongs to the frontend.
+    Thresholds affect alarm decisions, not the probability scale.
     """
-    # Use calibrated probability if available
-    if calibrated_proba is not None:
-        return round(calibrated_proba * 100.0, 2)
-    
-    # Fallback to old threshold-based rescaling
-    if raw_proba <= 0:
-        return 0.0
-    if threshold is None or threshold <= 0 or threshold >= 1:
-        return round(raw_proba * 100.0, 2)
-    if raw_proba <= threshold:
-        return round(50.0 * (raw_proba / threshold), 2)
-    return round(50.0 + 50.0 * ((raw_proba - threshold) / (1.0 - threshold)), 2)
+    del threshold
+    probability = calibrated_proba if calibrated_proba is not None else raw_proba
+    return round(float(np.clip(probability, 0.0, 1.0)), 4)
 
 
 def _call_model_method(model, method_name: str, bacia: str, X):
@@ -168,6 +159,17 @@ async def run_floodcast(target_date: datetime | None = None, debug: bool = False
         else:
             proba_output = _call_model_method(model, "predict_proba", bacia, X)
             raw_proba = float(np.asarray(proba_output)[0][predict_value])
+
+        # Prefer semantically calibrated event probability when available
+        if hasattr(model, "compute_risk_components"):
+            try:
+                comps = _call_model_method(model, "compute_risk_components", bacia, X)
+                if isinstance(comps, dict):
+                    p_event = comps.get("perigoso_any")
+                    if p_event is not None:
+                        raw_proba = float(_first_scalar(p_event))
+            except Exception:
+                pass
         threshold_map = model_config.get("thresholds") or {}
         threshold_value = threshold_map.get(str(max(severity_value, 1))) or threshold_map.get("1")
 

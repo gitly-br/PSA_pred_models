@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -17,10 +18,10 @@ from .ordinal_model import ChampionOrdinalModel
 
 
 DEFAULT_ARTIFACT_PATH = Path(
-    "/workspace/notebooks/dados/results/risk_model_v1_station_contract_robust.joblib"
+    "/workspace/notebooks/modelos/champion_guarara.joblib"
 )
 DEFAULT_META_PATH = Path(
-    "/workspace/notebooks/dados/results/psa_risk_v1_station_contract_robust_metadata.json"
+    "/workspace/notebooks/modelos/champion_guarara.json"
 )
 
 
@@ -50,7 +51,17 @@ def _extract_station_ids(meta: dict[str, object], bacia: str) -> list[str]:
                 return [str(station_id) for station_id in station_ids]
 
     station_ids = meta.get("station_ids") or []
-    return [str(station_id) for station_id in station_ids]
+    if isinstance(station_ids, list) and station_ids:
+        return [str(station_id) for station_id in station_ids]
+
+    station_contract_path = Path(__file__).resolve().parents[3] / "notebooks" / "dados" / "estacoes_bacia.json"
+    if station_contract_path.exists():
+        contract = json.loads(station_contract_path.read_text(encoding="utf-8"))
+        bacia_station_ids = contract.get(bacia) or []
+        if isinstance(bacia_station_ids, list):
+            return [str(station_id) for station_id in bacia_station_ids]
+
+    return []
 
 
 def _extract_thresholds(meta: dict[str, object], bacia: str) -> dict[str, float]:
@@ -141,12 +152,12 @@ async def seed_model_registry(
     minio.ensure_bucket()
 
     try:
-        model = joblib.load(artifact_path)
+        import sklearn._loss._loss as sklearn_loss  # type: ignore[attr-defined]
+        sys.modules.setdefault("_loss", sklearn_loss)
     except Exception:
-        model = _build_compatible_champion(meta, bacia)
+        pass
 
-    if str(meta.get("modeling_family") or "") == "psa_risk_v1_station_contract_robust":
-        model = _build_compatible_champion(meta, bacia)
+    model = joblib.load(artifact_path)
 
     with tempfile.NamedTemporaryFile(suffix=".joblib", delete=False) as tmp:
         tmp_path = Path(tmp.name)

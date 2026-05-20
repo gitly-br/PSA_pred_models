@@ -3,6 +3,8 @@ import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from streamlit_theme import st_theme
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 week_day_portuguese = {
     0: 'Segunda-feira',
@@ -30,13 +32,80 @@ measure_portuguese = {
     'delta': 'variação'
 }
 
+PERIOD_KEYS = ("night", "morning", "afternoon", "evening")
+
+
+def validate_probability(value):
+    if value is None:
+        return None
+    try:
+        probability = float(value)
+    except (TypeError, ValueError):
+        return None
+    if 0.0 <= probability <= 1.0:
+        return probability
+    return None
+
+
+def format_probability(value):
+    probability = validate_probability(value)
+    if probability is None:
+        return "contrato inválido"
+    return f"{probability * 100:.0f}%"
+
+
+def collect_probability_contract_errors(payloads):
+    errors = []
+    for label, payload in payloads:
+        if not payload:
+            continue
+        value = payload.get("proba")
+        if value is not None and validate_probability(value) is None:
+            errors.append(f"{label}.proba={value!r}")
+    return errors
+
+
+def get_period_rain_distribution(hourly_data):
+    distribution = {key: 0.0 for key in PERIOD_KEYS}
+    sao_paulo_tz = ZoneInfo("America/Sao_Paulo")
+    if not isinstance(hourly_data, (list, tuple)):
+        return distribution
+
+    for index, hour_data in enumerate(hourly_data[:24]):
+        if not isinstance(hour_data, dict):
+            continue
+        try:
+            rain = float(hour_data.get("rain") or hour_data.get("precipitation_mm") or 0.0)
+        except (TypeError, ValueError):
+            rain = 0.0
+
+        if "dt" in hour_data:
+            try:
+                hour = datetime.fromtimestamp(float(hour_data["dt"]), timezone.utc).astimezone(sao_paulo_tz).hour
+            except (TypeError, ValueError, OSError):
+                hour = index
+        else:
+            hour = index
+
+        if hour < 6:
+            distribution["night"] += rain
+        elif hour < 12:
+            distribution["morning"] += rain
+        elif hour < 18:
+            distribution["afternoon"] += rain
+        else:
+            distribution["evening"] += rain
+
+    return distribution
+
 # Define as cores com base nos dados
 def get_color(value, alpha=1):
+    value = validate_probability(value)
     if value is None:
         return (0, 0, 0, 0)
-    if value < 0.45:
+    if value < 0.25:
         return (182, 226, 161, alpha)
-    elif 0.45 <= value < 0.75 :
+    elif 0.25 <= value < 0.5:
         return (235, 189, 23, alpha)
     else :
         return (253, 138, 138, alpha)
@@ -44,9 +113,9 @@ def get_color(value, alpha=1):
 def get_color_distribution(rain_distribution):
     rain_color_distribution = rain_distribution.copy()
     for key, value in rain_color_distribution.items():
-        if value < 0.42:
+        if value < 5.0:
             rain_color_distribution[key] = (182, 226, 161, 1)
-        elif 0.42 <= value < 0.75:
+        elif 5.0 <= value < 10.0:
             rain_color_distribution[key] = (235, 189, 23, 1)
         else:
             rain_color_distribution[key] = (253, 138, 138, 1)
@@ -82,17 +151,19 @@ def get_map_color_rgba(value):
         return "white"
 
 def get_flood_color(value):
+    value = validate_probability(value)
     if value is None:
         return "grey"
-    if value >= 0.75:
+    if value >= 0.5:
         return "red"
-    elif 0.75 > value >= 0.45:
+    elif 0.5 > value >= 0.25:
         return "orange"
     else:
         return "#31993a"
 
 
 def plot_gauge(value, title, model: str ,margin_dict:dict = {'l':10, 'b':20, 't':50}):
+    value = validate_probability(value)
     
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",

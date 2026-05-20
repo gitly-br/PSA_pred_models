@@ -45,6 +45,36 @@ class InferenceWriter:
         distribution["evening"] = (value_evening / value_total) * proba
         return distribution
 
+    def _forecast_period_totals(self, forecast_summary: dict) -> dict:
+        rain_by_period = forecast_summary.get("rain_by_period_mm") or {}
+        return {
+            "night": float(rain_by_period.get("night") or 0.0),
+            "morning": float(rain_by_period.get("morning") or 0.0),
+            "afternoon": float(rain_by_period.get("afternoon") or 0.0),
+            "evening": float(rain_by_period.get("evening") or 0.0),
+        }
+
+    @staticmethod
+    def _day_color_cap(proba: float | None) -> float:
+        value = float(proba or 0.0)
+        if value >= 0.5:
+            return 14.9
+        if value >= 0.25:
+            return 9.9
+        return 4.9
+
+    def _forecast_period_display(self, forecast_summary: dict, proba: float | None) -> dict[str, float]:
+        totals = self._forecast_period_totals(forecast_summary)
+        total_mm = sum(totals.values())
+        if total_mm <= 0:
+            return {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}
+
+        cap = self._day_color_cap(proba)
+        return {
+            period: round((value / total_mm) * cap, 4)
+            for period, value in totals.items()
+        }
+
     def _get_explanation(self, shap_values: list[tuple]) -> str:
         most_important_feature = shap_values[0][0]
         split_feature_name = most_important_feature.split("_")
@@ -95,16 +125,6 @@ class InferenceWriter:
             calibrated_proba_value = pred.get("calibrated_proba")
             shap_explanation = pred.get("shap_explanation")
             forecast_summary = pred.get("forecast_summary") or {}
-            total_mm = float(forecast_summary.get("total_mm") or 0.0)
-            rain_distribution = {
-                "today": {
-                    "total": total_mm,
-                    "night": 0.0,
-                    "morning": 0.0,
-                    "afternoon": 0.0,
-                    "evening": 0.0,
-                }
-            }
 
             model_result = {"predict": predict_value}
             model_result["severity"] = severity_value
@@ -115,6 +135,7 @@ class InferenceWriter:
                 model_result["raw_proba"] = raw_proba_value
             if calibrated_proba_value is not None:
                 model_result["calibrated_proba"] = calibrated_proba_value
+            model_result["forecast_summary"] = forecast_summary
             results_by_day_and_subregion[day][subregion]["models"][model_name] = model_result
 
             results_by_day_and_subregion[day][subregion]["predicts"].append(predict_value)
@@ -132,31 +153,50 @@ class InferenceWriter:
                 subregion_shap = data["shaps"][0] if data["shaps"] else None
                 subregion_severity = max(data.get("severities") or [subregion_predict])
 
-                if total_mm < 3.5:
+                # Aggregate raw/calibrated proba per model for this subregion
+                subregion_raw_probas = []
+                subregion_cal_probas = []
+                subregion_forecast_total_mm = 0.0
+                subregion_forecast_summary = {}
+                for mr in data["models"].values():
+                    if mr.get("raw_proba") is not None:
+                        subregion_raw_probas.append(mr["raw_proba"])
+                    if mr.get("calibrated_proba") is not None:
+                        subregion_cal_probas.append(mr["calibrated_proba"])
+                    forecast_summary = mr.get("forecast_summary", {})
+                    total_mm = float(forecast_summary.get("total_mm") or 0.0)
+                    if total_mm:
+                        subregion_forecast_total_mm = total_mm
+                        subregion_forecast_summary = forecast_summary
+
+                subregion_raw_proba = (sum(subregion_raw_probas) / len(subregion_raw_probas)) if subregion_raw_probas else None
+                subregion_cal_proba = (sum(subregion_cal_probas) / len(subregion_cal_probas)) if subregion_cal_probas else None
+
+                if subregion_forecast_total_mm < 3.5:
                     explanation = "Não há precipitação significativa prevista para o período"
-                    rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
+                    rain_today = self._forecast_period_display(subregion_forecast_summary, 0.0)
                     subregion_predict = 0
                     subregion_proba = 0.0
                     subregion_severity = 0
                 elif subregion_predict == 0:
                     explanation = "Há previsão de chuva, mas o modelo não detectou nenhuma condição preocupante na previsão."
-                    rain_today = {"night": 0, "morning": 0, "afternoon": 0, "evening": 0}
+                    rain_today = self._forecast_period_display(subregion_forecast_summary, subregion_proba)
                 else:
                     if subregion_shap:
                         explanation = self._get_explanation(subregion_shap)
                     else:
                         explanation = "Modelo ordinal V7 sem explicabilidade local exportada."
-                    rain_today = self._calculate_distribution(rain_distribution, subregion_proba)
+                    rain_today = self._forecast_period_display(subregion_forecast_summary, subregion_proba)
                 
                 final_results_by_day[day][subregion] = {
                     "predict": subregion_predict,
                     "severity": subregion_severity,
                     "proba": subregion_proba,
-                    "raw_proba": raw_proba_value,
-                    "calibrated_proba": calibrated_proba_value,
+                    "raw_proba": subregion_raw_proba,
+                    "calibrated_proba": subregion_cal_proba,
                     "explanation": explanation,
                     "rain_today": rain_today,
-                    "forecast_summary": forecast_summary,
+                    "forecast_summary": subregion_forecast_summary,
                     "models": data["models"]
                 }
 

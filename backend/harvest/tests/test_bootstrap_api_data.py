@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 
 import polars as pl
@@ -7,7 +8,16 @@ import polars as pl
 from harvest.bootstrap_api_data import (
     _build_forecast_documents,
     _build_historic_documents,
+    ensure_api_data_indexes,
 )
+
+
+class FakeCollection:
+    def __init__(self):
+        self.create_index_calls = []
+
+    async def create_index(self, keys, **kwargs):
+        self.create_index_calls.append((keys, kwargs))
 
 
 def test_build_historic_documents_maps_bacias():
@@ -86,3 +96,30 @@ def test_build_forecast_documents_groups_daily_rows_without_slice_dt():
     assert len(docs) == 2
     assert [len(doc["hourly"]) for doc in docs] == [2, 2]
     assert all(doc["dt_request"].tzinfo == timezone.utc for doc in docs)
+
+
+def test_ensure_api_data_indexes_creates_historic_query_indexes():
+    historic_collection = FakeCollection()
+    forecast_collection = FakeCollection()
+
+    asyncio.run(ensure_api_data_indexes(historic_collection, forecast_collection))
+
+    historic_calls = historic_collection.create_index_calls
+    historic_query_indexes = {
+        tuple(keys): kwargs for keys, kwargs in historic_calls if kwargs.get("name")
+    }
+    expected_names = {
+        (("bacia", 1), ("dt", 1)): "historic_bacia_dt_idx",
+        (("bacias", 1), ("dt", 1)): "historic_bacias_dt_idx",
+        (("station_id", 1), ("dt", 1)): "historic_station_id_dt_idx",
+    }
+    assert {
+        keys: kwargs["name"] for keys, kwargs in historic_query_indexes.items()
+    } == expected_names
+    assert all(
+        kwargs["background"] is True for kwargs in historic_query_indexes.values()
+    )
+    assert any(kwargs.get("unique") is True for _, kwargs in historic_calls)
+    assert forecast_collection.create_index_calls == [
+        ([("provider", 1), ("point_id", 1), ("dt_request", 1)], {"unique": True}),
+    ]
