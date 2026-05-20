@@ -14,6 +14,7 @@ setup(
             "psa-floodcast = floodcast.main:main_sync",
             "psa-floodcast-once = floodcast.main:main_sync",
             "psa-floodcast-scheduler = floodcast.scheduler:main_sync",
+            "psa-seed-champion = floodcast.seed_model_registry:main_sync",
         ],
     },
 )

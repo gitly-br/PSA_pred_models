@@ -6,6 +6,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 import polars as pl
+import pandas as pd
 import pytest
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
@@ -22,7 +23,7 @@ def test_regression_real_sample():
     features = model.features
     assert set(features).issubset(sample.columns), f"Features faltando: {set(features) - set(sample.columns)}"
 
-    X = sample.select(features).to_pandas()
+    X = pd.DataFrame(sample.select(features).to_dicts())
     true_sev = sample["severidade"].to_numpy()
 
     # predict retorna int 0..3
