@@ -26,6 +26,54 @@ services:
     networks:
       - psa_network
 
+  floodcast:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    entrypoint: []
+    working_dir: /workspace/backend
+    environment:
+      MONGO_URI: mongodb://psa:psa@mongo:27017/?authSource=admin
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: psa
+      MINIO_SECRET_KEY: psa12345
+      MINIO_BUCKET: psa
+      MINIO_SECURE: "false"
+      PYTHONPATH: /workspace/backend/floodcast
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - minio
+      - mongo
+    networks:
+      - psa_network
+
+  sentry:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    entrypoint: []
+    working_dir: /workspace/backend/sentry
+    command: ["python", "source/run.py", "--env", "local"]
+    environment:
+      MONGO_URI: mongodb://psa:psa@mongo:27017/?authSource=admin
+      MONGO_GITLY_CONNECTION_STRING: mongodb://psa:psa@mongo:27017/?authSource=admin
+      MONGO_GITLY_VERSION_SCHEMA: "1"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: psa
+      MINIO_SECRET_KEY: psa12345
+      MINIO_BUCKET: psa
+      MINIO_SECURE: "false"
+      PYTHONPATH: /workspace/backend/floodcast:/workspace/backend/harvest:/workspace/backend/sentry/source
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - mongo
+    ports:
+      - "8080:8080"
+    networks:
+      - psa_network
+
 networks:
   psa_network:
 
