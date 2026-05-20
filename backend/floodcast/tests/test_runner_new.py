@@ -334,3 +334,56 @@ def test_run_floodcast_fills_missing_contract_columns(monkeypatch):
     assert model.received_frame is not None
     assert fake_writer.passed_predictions[0]["predict"] == 2
     assert fake_writer.passed_predictions[0]["raw_proba"] == 0.5
+
+
+def test_run_floodcast_processes_bacias_in_parallel(monkeypatch):
+    concurrency = {"max": 0, "current": 0}
+
+    class _ConcurrentRepo(_FakeRepo):
+        async def fetch_historic_documents(self, bacia, start_date, end_date):
+            concurrency["current"] += 1
+            concurrency["max"] = max(concurrency["max"], concurrency["current"])
+            await asyncio.sleep(0.05)
+            concurrency["current"] -= 1
+            return await super().fetch_historic_documents(bacia, start_date, end_date)
+
+        async def fetch_forecast_documents(self, bacia, target_date):
+            concurrency["current"] += 1
+            concurrency["max"] = max(concurrency["max"], concurrency["current"])
+            await asyncio.sleep(0.05)
+            concurrency["current"] -= 1
+            return await super().fetch_forecast_documents(bacia, target_date)
+
+    async def run():
+        fake_writer = _FakeWriter()
+
+        async def fake_get_active_models():
+            return [
+                {
+                    "name": f"champion_{b}",
+                    "bacia": b,
+                    "region": b,
+                    "subregion": b,
+                    "artifact_uri": f"/tmp/champion-{b}.joblib",
+                    "features": _FakeModel.features,
+                }
+                for b in ("guarara", "meninos", "oratorio", "tamanduatei")
+            ]
+
+        monkeypatch.setattr(runner_module, "get_active_models", fake_get_active_models)
+        monkeypatch.setattr(runner_module, "load_artifact", lambda artifact_uri: _FakeModel())
+        monkeypatch.setattr(runner_module, "WeatherDataRepository", lambda: _ConcurrentRepo())
+        monkeypatch.setattr(runner_module, "InferenceWriter", lambda target_date=None: fake_writer)
+
+        result = await runner_module.run_floodcast(target_date=datetime(2025, 2, 4), debug=False)
+        return result, fake_writer
+
+    result, fake_writer = asyncio.run(run())
+
+    assert result is True
+    assert len(fake_writer.passed_predictions) == 4
+    assert {pred["bacia"] for pred in fake_writer.passed_predictions} == {
+        "guarara", "meninos", "oratorio", "tamanduatei"
+    }
+    assert concurrency["max"] >= 2, f"expected parallel execution, max concurrency was {concurrency['max']}"
+    assert fake_writer.passed_region_errors == {}
