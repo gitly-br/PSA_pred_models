@@ -393,9 +393,11 @@ GradBoost (`max_depth=2`, `min_samples_leaf=10`, `subsample=0.8`, `max_features=
 **Contexto:** Fase 0 da migração backend concluída (`BACKEND_MIGRATION_SESSION.md`). Champion V7 empacotado e testável.
 
 **Próximo passo:**
-1. **`BACKEND_MIGRATION_SESSION.md`** — ler seção "Sequencia de migracao" para decidir entre Fase 1 (Mongo api_data) ou Fase 2 (MinIO local mínimo).
+1. **Fase 1 — MinIO data lake + bootstrap MongoDB**: subir MinIO local, organizar bucket/prefixos e criar script idempotente que popula `api_data.historic`/`api_data.forecast` no MongoDB.
 2. **`backend/floodcast/floodcast/ordinal_model.py`** — classe do champion já está pronta.
 3. **`backend/floodcast/tests/`** — smoke tests já validam carregamento e inferência.
+
+**Regra operacional:** inferência online lê dados meteorológicos apenas do MongoDB. MinIO serve como data lake, origem de bootstrap/backfill, dumps e artefatos.
 
 **Artefatos prontos para integração:**
 - `notebooks/modelos/champion_*.joblib` — 4 champions treinados

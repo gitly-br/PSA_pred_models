@@ -6,15 +6,18 @@ Este documento registra os requisitos consolidados para a migracao do backend de
 
 ### F1. Ingestao meteorologica
 
-O sistema deve coletar e persistir dados meteorologicos operacionais em MongoDB:
+O sistema deve coletar, carregar por bootstrap e persistir dados meteorologicos operacionais em MongoDB. Para inferencia em runtime, a fonte de dados meteorologicos deve ser o MongoDB:
 
 - forecast, inicialmente via Open-Meteo;
-- dados observados/historicos de estacoes meteorologicas da Defesa Civil de Santo Andre, via API a ser fornecida;
+- dados observados/historicos de estacoes meteorologicas, inicialmente carregados por bootstrap a partir de parquets CEMADEN no MinIO;
+- dados observados futuros da Defesa Civil de Santo Andre, via API a ser fornecida, alimentando a mesma colecao operacional usada pelo CEMADEN;
 - schemas separados para forecast e observado/historico.
 
 ### F2. Retencao e arquivamento
 
-O sistema deve manter dados recentes no MongoDB por janelas configuraveis e arquivar dados antigos em Parquet no MinIO.
+O sistema deve manter dados usados em inferencia no MongoDB por janelas configuraveis e manter dados versionados/arquivados em Parquet no MinIO.
+
+MinIO deve servir como data lake e origem de bootstrap/backfill, nao como fonte online para montagem de features no backend.
 
 Politica inicial a definir:
 

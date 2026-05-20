@@ -28,7 +28,8 @@ Hoje:
 Direcao alvo:
 
 - incluir Open-Meteo como fonte de forecast;
-- coletar dados observados/historicos de estacoes meteorologicas da Defesa Civil;
+- coletar dados observados de estacoes meteorologicas da Defesa Civil quando a API estiver disponivel;
+- manter script de bootstrap/backfill que carrega historico CEMADEN do MinIO para `api_data.historic`;
 - manter collectors desacoplados de inferencia e API;
 - alimentar `api_data.forecast` e `api_data.historic`.
 
@@ -52,7 +53,8 @@ Direcao alvo:
 - carregar artefatos do MinIO;
 - identificar modelo estado da arte ou modelo especifico;
 - validar `modeling_family`;
-- montar entrada operacional a partir de dados meteorologicos;
+- montar entrada operacional a partir de dados meteorologicos lidos exclusivamente do MongoDB (`api_data.forecast` e `api_data.historic`);
+- manter MinIO fora do caminho online de montagem de features, exceto para carregamento de artefatos de modelo;
 - executar inferencia agendada ou sob demanda;
 - persistir inferencias auditaveis.
 

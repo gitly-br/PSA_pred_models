@@ -42,13 +42,16 @@ A arquitetura prevista no desenho do projeto separa quatro blocos principais:
 
 Fluxos principais:
 
+- `MinIO.weather/datasets -> bootstrap -> api_data`: arquivos historicos versionados populam MongoDB local/dev/prod.
 - `ForecastClient -> api_data.forecast -> back`: o backend usa forecast operacional recente para inferencia.
 - `estacoes meteorologicas -> api_data.historic`: base operacional/historica observada.
-- `api_data -> dump -> MinIO`: materializa datasets para treino/reprocessamento.
+- `api_data -> dump -> MinIO`: materializa dados operacionais para treino/reprocessamento.
 - `treinamento -> MinIO.modelos`: treinamento salva pipelines versionados.
 - `treinamento -> models_db.models`: treinamento registra metadados e aponta o champion.
 - `back -> models_db.models + MinIO.modelos`: backend descobre e carrega o artefato champion.
 - `back -> models_db.inference -> dash`: inferencias ficam no MongoDB e sao lidas pelo dashboard.
+
+Regra operacional central: **na hora da predicao, dados meteorologicos vêm do MongoDB**. MinIO nao e consultado pelo `FeatureAssembler` online; ele serve para bootstrap, backfill, dumps, datasets e artefatos.
 
 ## Estado atual observado no repositorio
 
@@ -76,7 +79,7 @@ Fluxos principais:
   - `oratorio`: baseline `H12/H24` sem forecast;
   - `tamanduatei`: `H24_forecast`.
 - Tentativas `rich` e `max` foram testadas e descartadas; `mean` continua sendo o teto aceito para forecast ERA5/Open-Meteo naquele experimento.
-- Pendencia critica: features `api_070`, `api_085`, `api_095` foram calculadas com `max_dia[t]`; em producao o dia atual nao pode vir de CEMADEN observado. Deve vir de forecast Open-Meteo ou a feature precisa ser redefinida/re-treinada.
+- Pendencia critica resolvida em 2026-05-19: features `api_070`, `api_085`, `api_095` nao usam mais `max_dia[t]`; o export atual aplica `shift(1)` antes do `lfilter`.
 
 ## Ajustes no plano apos considerar a arquitetura original
 
@@ -113,9 +116,11 @@ Fluxos principais:
 ## Decisoes propostas
 
 1. Criar um contrato novo de dados meteorologicos para inferencia.
-   - Passado observado: ate `D-1`, vindo de `api_data.historic`, se ainda for usado.
-   - Futuro/dia atual: forecast Open-Meteo vindo de `api_data.forecast`.
-   - API do dia atual nao deve usar CEMADEN observado.
+   - O runtime le **somente MongoDB** para montar features.
+   - `api_data.historic` representa observacoes de estacoes meteorologicas, independentemente da origem inicial ser CEMADEN ou Defesa Civil.
+   - Inicialmente, `api_data.historic` sera populado por bootstrap a partir de parquets CEMADEN no MinIO.
+   - Depois, a API da Defesa Civil alimentara a mesma colecao para o mes corrente e periodos ainda nao publicados pelo CEMADEN.
+   - `api_data.forecast` representa forecast Open-Meteo a partir da hora/data de predicao.
 
 2. Criar `OpenMeteoSource` ou `OpenMeteoForecastClient`.
    - Pode morar inicialmente em `backend/harvest/harvest/sources/openmeteo_source.py`.
@@ -133,11 +138,13 @@ Fluxos principais:
 4. Definir layout MinIO.
    - Bucket candidato: `psa`.
    - Prefixos:
-     - `models/`;
-     - `chamados/`;
-     - `weather/openmeteo/forecast/`;
-     - `weather/openmeteo/historic/`;
-     - `weather/openweather/legacy/` se for manter legado.
+      - `models/`;
+      - `datasets/`;
+      - `weather/cemaden/`;
+      - `weather/openmeteo/forecast/`;
+      - `weather/openmeteo/history/` se historico de forecast for mantido;
+      - `chamados/`;
+      - `weather/openweather/legacy/` se for manter legado.
 
 5. Exportar champion como artefato completo.
    - Deve conter pre-processamento, estimadores e thresholds.
@@ -160,26 +167,66 @@ Fluxos principais:
 - **Smoke test backend:** 5/5 testes passando (`test_model_load.py` — 4 testes de interface + `test_model_regression.py` — 1 teste com dados reais do dataset guarara).
 - **Reorganizacao do repo:** scripts separados em `pipeline/`, `experiments/`, `diagnostics/`, `tools/`; dados weather/resultados em subdiretorios; notebooks legados arquivados.
 
-**Proximo passo:** Fase 1 (Mongo `api_data`) ou Fase 2 (MinIO local minimo) — a ser decidido.
+**Proximo passo:** Fase 1 (MinIO data lake + bootstrap MongoDB).
 
-### Fase 1 - Mongo `api_data`
+### Fase 1 - MinIO data lake + bootstrap MongoDB
 
-- Definir nomes finais de bancos/colecoes.
-- Implementar coleta Open-Meteo hora em hora.
-- Implementar ou especificar coleta historica diaria de estacoes meteorologicas.
-- Criar indices e politica de retencao.
+Principio corrigido em 2026-05-19: **runtime de inferencia le apenas MongoDB**.
 
-### Fase 2 - Dump para MinIO
+MinIO armazena arquivos grandes/versionados e serve como origem de bootstrap/backfill:
+
+- modelos `.joblib` e metadados exportados;
+- parquets historicos CEMADEN;
+- parquets historicos/operacionais de forecast quando disponiveis;
+- datasets de treino/reprocessamento.
+
+MongoDB e a fonte operacional do backend:
+
+- `api_data.historic`: observacoes de estacoes meteorologicas, inicialmente populadas por bootstrap a partir de CEMADEN no MinIO;
+- `api_data.forecast`: forecast Open-Meteo, inicialmente populado por bootstrap/backfill e depois por collector operacional;
+- no futuro, a API da Defesa Civil alimenta a mesma `api_data.historic`, substituindo/complementando o CEMADEN no mes corrente.
+
+Tarefas:
 
 - Subir MinIO local no `docker-compose.yml`.
-- Criar bucket/prefixos.
-- Implementar job de dump:
-  - forecast semanal;
-  - historico diario;
-  - chamados conforme atualizacao.
-- Garantir que treinamento consiga ler MinIO como fonte.
+- Criar bucket/prefixos:
+  - `models/`;
+  - `weather/cemaden/`;
+  - `weather/openmeteo/forecast/`;
+  - `datasets/`.
+- Criar script idempotente `bootstrap_api_data`:
+  - le parquets do MinIO;
+  - popula `api_data.historic` com dados CEMADEN normalizados;
+  - popula `api_data.forecast` com forecast historico/fixture quando existir;
+  - cria indices;
+  - usa upsert/dedup para poder rodar local/dev/prod sem duplicar dados.
 
-### Fase 3 - Registro de modelos
+Primeiros passos de implementacao:
+
+1. **Infra local:** adicionar MinIO ao `docker-compose.yml` e variaveis `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`.
+2. **Cliente MinIO:** criar cliente simples para upload/download/listagem de objetos, usado por scripts e futuramente pelo `ArtifactLoader`.
+3. **Seeder de arquivos:** script local para enviar `notebooks/modelos/champion_*.joblib`, metadados `.json` e parquets CEMADEN/weather para os prefixos do bucket.
+4. **Bootstrap MongoDB:** script `bootstrap_api_data` que le do MinIO e faz upsert em `api_data.historic`/`api_data.forecast`.
+5. **Validacao objetiva:** teste ou smoke local conferindo contagem de documentos, indices criados e capacidade de buscar janela por bacia/data.
+
+Schema inicial proposto:
+
+- `api_data.historic`: um documento por leitura horaria de estacao meteorologica.
+  - chave unica: `(provider, station_id, dt)`;
+  - campos minimos: `provider`, `station_id`, `station_name`, `bacia`, `dt`, `precipitation_mm`, `source_file`, `loaded_at`.
+- `api_data.forecast`: um documento por rodada de forecast por bacia/provider.
+  - chave unica: `(provider, bacia, dt_request)`;
+  - campos minimos: `provider`, `bacia`, `dt_request`, `timezone`, `hourly[]`, `source_file`, `loaded_at`.
+
+### Fase 2 - FeatureAssembler lendo MongoDB
+
+- Criar camada `WeatherDataRepository` para buscar janelas em `api_data.historic` e `api_data.forecast`.
+- Criar `FeatureAssembler` para montar o DataFrame do champion V7 a partir exclusivamente do MongoDB.
+- Preservar contrato de features exportado em `champion_*.json`.
+- Testar montagem com fixtures pequenas sem depender de Docker.
+- Testar integracao local com Mongo populado pelo bootstrap.
+
+### Fase 3 - Registro de modelos + ArtifactLoader
 
 - Definir schema de `models_db.models`.
 - Campos minimos:
@@ -194,20 +241,20 @@ Fluxos principais:
   - `training_data_uri`;
   - `created_at`;
   - `metrics`.
-- Atualizar treinamento para gravar artefato em MinIO e metadados no Mongo.
+- Atualizar script de export/registro para gravar artefato em MinIO e metadados no Mongo.
+- Criar `ArtifactLoader` para MinIO/S3.
+- Trocar `grab_from_gdrive()` por loader MinIO.
 
 ### Fase 4 - Backend `floodcast`
 
-- Criar `ArtifactLoader` para MinIO/S3.
-- Trocar `grab_from_gdrive()` por loader MinIO.
-- Adaptar `ForecastLoader` para ler `api_data.forecast`/`api_data.historic`.
+- Adaptar `ForecastLoader`/caso de uso para chamar `FeatureAssembler`.
 - Adaptar `ModelPredictor` para artefato V7 ordinal.
 - Adaptar `InferenceWriter` para `obj_version: "0.3"`.
 
 ### Fase 5 - Validacao local ponta a ponta
 
 - Rodar Mongo + MinIO local.
-- Popular `api_data` com amostras.
+- Popular `api_data` via `bootstrap_api_data`.
 - Registrar um champion fake ou real em `models_db.models`.
 - Executar `floodcast --date YYYY-MM-DD`.
 - Conferir `models_db.inference`.
@@ -235,15 +282,14 @@ Fluxos principais:
 
 ## Proxima acao recomendada
 
-A Fase 0 esta concluida. O proximo passo tecnico e decidir entre:
+A Fase 0 esta concluida. O proximo passo tecnico deve ser a **Fase 1 — MinIO data lake + bootstrap MongoDB**:
 
-1. **Fase 1 — Mongo `api_data`**: implementar `OpenMeteoSource` e schema `api_data.forecast` para alimentar o backend com dados operacionais. Isso desbloqueia a inferencia ponta a ponta mas requer mais mudanca no `harvest`.
-2. **Fase 2 — MinIO local minimo**: subir MinIO no `docker-compose.yml`, criar `ArtifactLoader`, e trocar `grab_from_gdrive()` no `floodcast`. Menor risco, remove dependencia externa imediata.
+1. Subir MinIO local e criar bucket/prefixos.
+2. Colocar no MinIO os modelos e parquets historicos (CEMADEN e forecast historico/fixture quando existir).
+3. Criar `bootstrap_api_data` para popular MongoDB a partir do MinIO.
+4. Garantir que o backend de inferencia consulte apenas MongoDB para dados meteorologicos.
 
-Recomendacao: Fase 2 primeiro (MinIO minimo), porque:
-- Remove Google Drive (ponto de falha externo) com baixo risco;
-- O champion ja carrega via `joblib` — so precisa mudar a origem do arquivo;
-- Nao depende da API da Defesa Civil (que ainda esta pendente de coordenadas).
+Motivo: o runtime correto nao deve ler Parquet/MinIO para montar features. MinIO e origem versionada para bootstrap/backfill; MongoDB e a fonte operacional.
 
 ## Sequencia de migracao local -> dev -> prod
 
@@ -260,28 +306,28 @@ Como o maior risco funcional esta no contrato do modelo e nas features operacion
 
 ### Ordem recomendada
 
-1. **Contrato e artefato do modelo local**
+1. **Contrato e artefato do modelo local** ✅ concluido
    - Corrigir a definicao das features operacionais, especialmente API sem CEMADEN do dia atual.
    - Exportar um champion `joblib` completo para uma bacia.
    - Criar um teste/script local que carrega o artefato e roda inferencia para uma data conhecida.
    - Saida esperada: sabemos exatamente qual objeto o backend precisa montar para o modelo novo.
 
-2. **MinIO local minimo para artefatos**
+2. **MinIO data lake + bootstrap MongoDB**
    - Subir MinIO no `docker-compose`.
-   - Criar bucket/prefixo `models/`.
-   - Trocar o download Google Drive por `ArtifactLoader` MinIO/S3 no `floodcast`.
-   - Neste corte, nao precisa ainda implementar dump completo de forecast/historico/chamados.
+   - Criar bucket/prefixos `models/`, `weather/cemaden/`, `weather/openmeteo/forecast/`, `datasets/`.
+   - Enviar artefatos champion e parquets historicos para MinIO.
+   - Criar script idempotente para popular `api_data.historic` e `api_data.forecast` a partir do MinIO.
+   - Criar indices Mongo e validar contagem/janelas carregadas.
 
-3. **Leitura operacional local**
-   - Criar/ajustar colecoes `api_data.forecast` e, se necessario, `api_data.historic`.
-   - Implementar `OpenMeteoSource`/collector e popular dados locais.
-   - Adaptar `ForecastLoader` para montar a entrada do novo pipeline.
-   - Rodar inferencia local ponta a ponta e gravar `inference`.
+3. **Leitura operacional local via MongoDB**
+   - Criar `WeatherDataRepository` para consultar `api_data`.
+   - Criar `FeatureAssembler` para montar features V7 exclusivamente a partir do MongoDB.
+   - Rodar inferencia local ponta a ponta e gravar `models_db.inference`.
 
-4. **Dump para MinIO**
-   - Implementar dumps depois que o caminho de inferencia estiver claro.
-   - Forecast semanal, historico diario e chamados conforme atualizacao.
-   - Usar dumps principalmente para treino/reprocessamento/reprodutibilidade, nao como dependencia inicial do backend online.
+4. **Collectors operacionais e dumps**
+   - Implementar `OpenMeteoSource`/collector para manter `api_data.forecast` atualizado.
+   - Quando a API da Defesa Civil estiver disponivel, alimentar a mesma `api_data.historic`.
+   - Implementar dumps de MongoDB para MinIO para treino/reprocessamento/reprodutibilidade.
 
 5. **Ambiente dev na Saving Cloud**
    - Provisionar Mongo/MinIO dev ou apontar para servicos dev existentes.
