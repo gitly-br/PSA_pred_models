@@ -1,0 +1,376 @@
+{
+  "modeling_family": "psa_risk_v1_station_contract_robust",
+  "obj_version": "0.2-exp",
+  "bacias": {
+    "guarara": {
+      "station_ids": [
+        "352940105A",
+        "354780901A",
+        "354780907A",
+        "354780903A",
+        "354780905A",
+        "354780910A",
+        "354780912A",
+        "354780914A",
+        "354780915A",
+        "354780916A",
+        "354780918A",
+        "354870810A",
+        "354870805A",
+        "354870803G",
+        "354870817A",
+        "354870818A",
+        "354870822A"
+      ]
+    },
+    "oratorio": {
+      "station_ids": [
+        "352940104A",
+        "352940105A",
+        "352940109A",
+        "354780901A",
+        "354780907A",
+        "354780904A",
+        "354780905A",
+        "354780906A",
+        "354780908A",
+        "354780914A",
+        "354780919A"
+      ]
+    },
+    "meninos": {
+      "station_ids": [
+        "354780901A",
+        "354780903A",
+        "354780904A",
+        "354780910A",
+        "354780911A",
+        "354870814A",
+        "354870818A",
+        "354870821A",
+        "354870803G",
+        "354870822A"
+      ]
+    },
+    "tamanduatei": {
+      "station_ids": [
+        "352940104A",
+        "352940105A",
+        "354780901A",
+        "354780907A",
+        "354780903A",
+        "354780904A",
+        "354780905A",
+        "354780906A",
+        "354780910A",
+        "354780912A",
+        "354780914A",
+        "354780915A",
+        "354780916A",
+        "354780918A",
+        "354780919A",
+        "354870810A",
+        "354870818A",
+        "354870803G",
+        "354870822A"
+      ]
+    }
+  },
+  "forecast_horizons": [
+    24,
+    48
+  ],
+  "risk_components": [
+    "pancada",
+    "prolongada",
+    "saturante",
+    "perigoso_any"
+  ],
+  "feature_contract": {
+    "cemaden_passado": [
+      "api_070",
+      "api_085",
+      "api_095",
+      "max_day_lag1",
+      "max_day_lag2",
+      "max_day_lag3",
+      "acum_dia_lag1",
+      "mean_day_lag1",
+      "std_day_lag1",
+      "n_chovendo_max_lag1",
+      "pico_1h_lag1",
+      "horas_intensas_lag1",
+      "acum_7d",
+      "acum_30d",
+      "mes_sin",
+      "mes_cos"
+    ],
+    "openmeteo_forecast": [
+      "om_precip_sum_h24",
+      "om_rain_max_h24",
+      "om_temp_mean_h24",
+      "om_humidity_mean_h24",
+      "om_wind_max_h24",
+      "om_pressure_mean_h24",
+      "om_precip_sum_h48",
+      "om_rain_max_h48",
+      "om_temp_mean_h48",
+      "om_humidity_mean_h48",
+      "om_wind_max_h48",
+      "om_pressure_mean_h48"
+    ],
+    "componentes_risco": [
+      "comp_pancada",
+      "comp_prolongada",
+      "comp_saturacao"
+    ]
+  },
+  "artifact_path": "/home/rnicola/Documents/Projects/PSA/notebooks/modelos/psa_risk_v1_station_contract_robust.joblib",
+  "trained_on_cutoff": "2023-07-02",
+  "model_selection": {
+    "guarara|pancada": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "guarara|prolongada": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "guarara|saturante": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "guarara|perigoso_any": {
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons"
+    },
+    "oratorio|pancada": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "oratorio|prolongada": {
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons"
+    },
+    "oratorio|saturante": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "oratorio|perigoso_any": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "meninos|pancada": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "meninos|prolongada": {
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons"
+    },
+    "meninos|saturante": {
+      "variant": "ALL",
+      "model": "gradboost_cons"
+    },
+    "meninos|perigoso_any": {
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons"
+    },
+    "tamanduatei|pancada": {
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons"
+    },
+    "tamanduatei|prolongada": {
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons"
+    },
+    "tamanduatei|saturante": {
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons"
+    },
+    "tamanduatei|perigoso_any": {
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons"
+    }
+  },
+  "thresholds": {
+    "guarara|pancada": 0.4429489879355323,
+    "guarara|prolongada": 0.3274852796318443,
+    "guarara|saturante": 0.5315062687112599,
+    "guarara|perigoso_any": 0.5380781216423337,
+    "meninos|pancada": 0.16287904333706948,
+    "meninos|prolongada": 0.4530573417317949,
+    "meninos|saturante": 0.5536561849161702,
+    "meninos|perigoso_any": 0.5375873229219897,
+    "oratorio|pancada": 0.29302579115301514,
+    "oratorio|prolongada": 0.3260058795275131,
+    "oratorio|saturante": 0.7235819679659823,
+    "oratorio|perigoso_any": 0.5804228000231529,
+    "tamanduatei|pancada": 0.28775128253747073,
+    "tamanduatei|prolongada": 0.3187973219684653,
+    "tamanduatei|saturante": 0.5131624408354811,
+    "tamanduatei|perigoso_any": 0.6218270502778049
+  },
+  "train_metrics": [
+    {
+      "bacia": "guarara",
+      "label": "pancada",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.47534186719023874,
+      "threshold": 0.4429489879355323,
+      "n_train": 3650,
+      "n_pos_train": 168
+    },
+    {
+      "bacia": "guarara",
+      "label": "prolongada",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.4505632080389291,
+      "threshold": 0.3274852796318443,
+      "n_train": 3650,
+      "n_pos_train": 345
+    },
+    {
+      "bacia": "guarara",
+      "label": "saturante",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.8434424139808969,
+      "threshold": 0.5315062687112599,
+      "n_train": 3650,
+      "n_pos_train": 344
+    },
+    {
+      "bacia": "guarara",
+      "label": "perigoso_any",
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons",
+      "prauc_train": 0.7364514396016337,
+      "threshold": 0.5380781216423337,
+      "n_train": 3650,
+      "n_pos_train": 489
+    },
+    {
+      "bacia": "meninos",
+      "label": "pancada",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.49609449494154606,
+      "threshold": 0.16287904333706948,
+      "n_train": 3650,
+      "n_pos_train": 169
+    },
+    {
+      "bacia": "meninos",
+      "label": "prolongada",
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons",
+      "prauc_train": 0.5315002993738597,
+      "threshold": 0.4530573417317949,
+      "n_train": 3650,
+      "n_pos_train": 351
+    },
+    {
+      "bacia": "meninos",
+      "label": "saturante",
+      "variant": "ALL",
+      "model": "gradboost_cons",
+      "prauc_train": 0.8477549920138193,
+      "threshold": 0.5536561849161702,
+      "n_train": 3650,
+      "n_pos_train": 339
+    },
+    {
+      "bacia": "meninos",
+      "label": "perigoso_any",
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons",
+      "prauc_train": 0.7461294487038092,
+      "threshold": 0.5375873229219897,
+      "n_train": 3650,
+      "n_pos_train": 481
+    },
+    {
+      "bacia": "oratorio",
+      "label": "pancada",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.5036463873127863,
+      "threshold": 0.29302579115301514,
+      "n_train": 3650,
+      "n_pos_train": 168
+    },
+    {
+      "bacia": "oratorio",
+      "label": "prolongada",
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons",
+      "prauc_train": 0.5009842011669081,
+      "threshold": 0.3260058795275131,
+      "n_train": 3650,
+      "n_pos_train": 353
+    },
+    {
+      "bacia": "oratorio",
+      "label": "saturante",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.8298656601186661,
+      "threshold": 0.7235819679659823,
+      "n_train": 3650,
+      "n_pos_train": 344
+    },
+    {
+      "bacia": "oratorio",
+      "label": "perigoso_any",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.7269921310751957,
+      "threshold": 0.5804228000231529,
+      "n_train": 3650,
+      "n_pos_train": 496
+    },
+    {
+      "bacia": "tamanduatei",
+      "label": "pancada",
+      "variant": "CEMADEN_ONLY",
+      "model": "gradboost_cons",
+      "prauc_train": 0.44196585415961104,
+      "threshold": 0.28775128253747073,
+      "n_train": 3650,
+      "n_pos_train": 171
+    },
+    {
+      "bacia": "tamanduatei",
+      "label": "prolongada",
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons",
+      "prauc_train": 0.5360532302574792,
+      "threshold": 0.3187973219684653,
+      "n_train": 3650,
+      "n_pos_train": 351
+    },
+    {
+      "bacia": "tamanduatei",
+      "label": "saturante",
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons",
+      "prauc_train": 0.8458809103879226,
+      "threshold": 0.5131624408354811,
+      "n_train": 3650,
+      "n_pos_train": 350
+    },
+    {
+      "bacia": "tamanduatei",
+      "label": "perigoso_any",
+      "variant": "CEMADEN_OM",
+      "model": "gradboost_cons",
+      "prauc_train": 0.7394641479674794,
+      "threshold": 0.6218270502778049,
+      "n_train": 3650,
+      "n_pos_train": 505
+    }
+  ]
+}

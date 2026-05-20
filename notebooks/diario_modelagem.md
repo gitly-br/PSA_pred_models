@@ -353,3 +353,41 @@ Esta seção consolida apenas resultados presentes nos relatórios textuais loca
 - Seguir validando o **Risk Model V1 station-contract** como desenho principal de modelo operacional.
 - O contrato bacia -> `station_ids` é requisito obrigatório e deve estar sincronizado entre JSON e Mongo.
 - O runtime atual não deve limitar o desenho do modelo; limitações de `runner.py`, `predict_proba` e features servidas devem virar requisitos de evolução do backend, não motivo para descartar a linha de modelagem.
+
+---
+
+## 15. Validação externa 2026 e exportação joblib (2026-05-20)
+
+### Arquivo de validação
+
+- `notebooks/dados/validacao/chamados_validacao_2026.parquet`
+- 39 registros, 16 colunas
+- Datas cobrindo chamados reais de 2026 e controles solicitados pelo usuário.
+
+### Resultado da pontuação
+
+- Script: `notebooks/scripts/experiments/_validacao_chamados_2026_risk_v1.py`
+- Saídas:
+  - `notebooks/dados/results/validacao_chamados_2026_risk_v1_scores.parquet`
+  - `notebooks/dados/results/validacao_chamados_2026_risk_v1_station_rain.parquet`
+  - `notebooks/dados/results/validacao_chamados_2026_risk_v1_station_scores.parquet`
+  - `notebooks/dados/results/relatorio_validacao_chamados_2026_risk_v1.md`
+
+### Leitura objetiva
+
+- O score principal `prob_perigoso_any` ficou baixo em controles secos de 2025 e subiu em parte dos dias de enchente de 2026.
+- Houve acerto forte em dias como `2026-01-16`, `2026-03-07`, `2026-03-08` e parte de `2026-01-15`.
+- Houve subestimação em dias relevantes como `2026-03-06` e `2026-04-01`.
+- O arquivo não entrega probabilidade por estação individual; ele valida por bacia/contrato, com chuva por estação no parquet auxiliar.
+
+### Export joblib
+
+- Script: `notebooks/scripts/tools/_export_risk_model_v1_joblib.py`
+- Artefato: `notebooks/modelos/psa_risk_v1_station_contract_robust.joblib`
+- Metadata: `notebooks/dados/results/psa_risk_v1_station_contract_robust_metadata.json`
+- Smoke test: passou.
+
+### Decisão atualizada
+
+- O candidato está pronto para **shadow mode** com contrato explícito de estações.
+- Ainda não é substituto final do dashboard sem adaptação do backend e nova validação operacional, mas já é um artefato exportável e audível.

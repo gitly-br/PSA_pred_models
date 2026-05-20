@@ -1,0 +1,1516 @@
+{
+  "cemaden": {
+    "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/cemaden_abcd.parquet",
+    "shape": [
+      7091424,
+      7
+    ],
+    "dt_min": "2016-01-01T00:00:00",
+    "dt_max": "2026-05-19T23:50:00",
+    "needed_station_count": 23,
+    "present_station_count": 592,
+    "missing_stations": []
+  },
+  "openmeteo_point_count": 5,
+  "openmeteo_target_end": "2026-05-19",
+  "historic_months": 124,
+  "forecast_months": 125,
+  "historic_summary": [
+    {
+      "kind": "historic",
+      "month": "2016_01",
+      "rows": 65869,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_02",
+      "rows": 123424,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_04",
+      "rows": 33444,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_05",
+      "rows": 53377,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_06",
+      "rows": 53965,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_07",
+      "rows": 29252,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_08",
+      "rows": 43335,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_09",
+      "rows": 37990,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_10",
+      "rows": 54484,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_11",
+      "rows": 57181,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2016_12",
+      "rows": 55502,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2016_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_01",
+      "rows": 74901,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_02",
+      "rows": 47492,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_03",
+      "rows": 58481,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_04",
+      "rows": 57289,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_05",
+      "rows": 54373,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_06",
+      "rows": 46324,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_07",
+      "rows": 37658,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_08",
+      "rows": 42312,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_09",
+      "rows": 30492,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_10",
+      "rows": 38019,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_11",
+      "rows": 39176,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2017_12",
+      "rows": 47155,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2017_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_01",
+      "rows": 49623,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_02",
+      "rows": 38672,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_03",
+      "rows": 45319,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_04",
+      "rows": 39167,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_05",
+      "rows": 35387,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_06",
+      "rows": 34714,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_07",
+      "rows": 33811,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_08",
+      "rows": 39796,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_09",
+      "rows": 42720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_10",
+      "rows": 50723,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_11",
+      "rows": 45509,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2018_12",
+      "rows": 45192,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2018_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_01",
+      "rows": 48005,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_02",
+      "rows": 50846,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_03",
+      "rows": 44008,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_04",
+      "rows": 37912,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_05",
+      "rows": 39027,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_06",
+      "rows": 34987,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_07",
+      "rows": 24157,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_08",
+      "rows": 29184,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_09",
+      "rows": 33975,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_10",
+      "rows": 26537,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_11",
+      "rows": 19813,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2019_12",
+      "rows": 25788,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2019_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_01",
+      "rows": 29640,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_02",
+      "rows": 47415,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_03",
+      "rows": 39845,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_04",
+      "rows": 32839,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_05",
+      "rows": 33731,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_06",
+      "rows": 36329,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_07",
+      "rows": 31801,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_08",
+      "rows": 36223,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_09",
+      "rows": 35277,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_10",
+      "rows": 41174,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_11",
+      "rows": 40218,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2020_12",
+      "rows": 46473,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2020_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_01",
+      "rows": 43217,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_02",
+      "rows": 44476,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_03",
+      "rows": 41104,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_04",
+      "rows": 41418,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_05",
+      "rows": 40231,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_06",
+      "rows": 36981,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_07",
+      "rows": 44941,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_08",
+      "rows": 47588,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_09",
+      "rows": 42976,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_10",
+      "rows": 50909,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_11",
+      "rows": 48433,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2021_12",
+      "rows": 57199,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2021_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_01",
+      "rows": 62828,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_02",
+      "rows": 43038,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_03",
+      "rows": 54606,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_04",
+      "rows": 44748,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_05",
+      "rows": 44348,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_06",
+      "rows": 43956,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_07",
+      "rows": 42829,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_08",
+      "rows": 50690,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_09",
+      "rows": 57840,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_10",
+      "rows": 50123,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_11",
+      "rows": 52963,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2022_12",
+      "rows": 55812,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2022_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_01",
+      "rows": 49888,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_02",
+      "rows": 49522,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_03",
+      "rows": 45148,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_04",
+      "rows": 40640,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_05",
+      "rows": 40298,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_06",
+      "rows": 39627,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_07",
+      "rows": 36799,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_08",
+      "rows": 40959,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_09",
+      "rows": 43128,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_10",
+      "rows": 53991,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_11",
+      "rows": 48888,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2023_12",
+      "rows": 44895,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2023_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_01",
+      "rows": 55419,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_02",
+      "rows": 43997,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_03",
+      "rows": 46542,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_04",
+      "rows": 39856,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_05",
+      "rows": 43761,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_06",
+      "rows": 35857,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_07",
+      "rows": 42607,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_08",
+      "rows": 38556,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_09",
+      "rows": 37970,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_10",
+      "rows": 43460,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_11",
+      "rows": 41466,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2024_12",
+      "rows": 42147,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2024_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_01",
+      "rows": 35091,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_02",
+      "rows": 36485,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_03",
+      "rows": 39793,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_04",
+      "rows": 42789,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_05",
+      "rows": 35575,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_05.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_06",
+      "rows": 35978,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_06.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_07",
+      "rows": 31433,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_07.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_08",
+      "rows": 30839,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_08.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_09",
+      "rows": 29152,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_09.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_10",
+      "rows": 34009,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_10.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_11",
+      "rows": 32207,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_11.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2025_12",
+      "rows": 34195,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2025_12.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2026_01",
+      "rows": 468164,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2026_01.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2026_02",
+      "rows": 432271,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2026_02.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2026_03",
+      "rows": 426792,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2026_03.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2026_04",
+      "rows": 356344,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2026_04.parquet"
+    },
+    {
+      "kind": "historic",
+      "month": "2026_05",
+      "rows": 254300,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/historic/cemaden_2026_05.parquet"
+    }
+  ],
+  "forecast_summary": [
+    {
+      "kind": "forecast",
+      "month": "2016_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_02",
+      "rows": 3480,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2016_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2016_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2017_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2017_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2018_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2018_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2019_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2019_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_02",
+      "rows": 3480,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2020_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2020_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2021_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2021_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2022_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2022_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2023_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2023_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_02",
+      "rows": 3480,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2024_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2024_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_05",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_05.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_06",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_06.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_07",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_07.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_08",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_08.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_09",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_09.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_10",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_10.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_11",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_11.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2025_12",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2025_12.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2026_01",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2026_01.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2026_02",
+      "rows": 3360,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2026_02.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2026_03",
+      "rows": 3720,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2026_03.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2026_04",
+      "rows": 3600,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2026_04.parquet"
+    },
+    {
+      "kind": "forecast",
+      "month": "2026_05",
+      "rows": 2280,
+      "path": "/home/rnicola/Documents/Projects/PSA/notebooks/dados/weather/monthly/forecast/openmeteo_2026_05.parquet"
+    }
+  ]
+}

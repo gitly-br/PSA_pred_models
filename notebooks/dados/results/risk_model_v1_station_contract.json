@@ -1,0 +1,176 @@
+{
+  "modeling_family": "psa_risk_v1_station_contract",
+  "obj_version": "0.1-exp",
+  "data_cutoff": "2023-07-02",
+  "bacias": {
+    "guarara": {
+      "station_ids": [
+        "352940105A",
+        "354780901A",
+        "354780907A",
+        "354780903A",
+        "354780905A",
+        "354780910A",
+        "354780912A",
+        "354780914A",
+        "354780915A",
+        "354780916A",
+        "354780918A",
+        "354870810A",
+        "354870805A",
+        "354870803G",
+        "354870817A",
+        "354870818A",
+        "354870822A"
+      ],
+      "thresholds": {
+        "pancada_mm": 12.19,
+        "prolongada_mm": 19.77,
+        "saturante_mm": 38.139999999999986
+      }
+    },
+    "oratorio": {
+      "station_ids": [
+        "352940104A",
+        "352940105A",
+        "352940109A",
+        "354780901A",
+        "354780907A",
+        "354780904A",
+        "354780905A",
+        "354780906A",
+        "354780908A",
+        "354780914A",
+        "354780919A"
+      ],
+      "thresholds": {
+        "pancada_mm": 10.98,
+        "prolongada_mm": 15.959999999999997,
+        "saturante_mm": 31.920000000000016
+      }
+    },
+    "meninos": {
+      "station_ids": [
+        "354780901A",
+        "354780903A",
+        "354780904A",
+        "354780910A",
+        "354780911A",
+        "354870814A",
+        "354870818A",
+        "354870821A",
+        "354870803G",
+        "354870822A"
+      ],
+      "thresholds": {
+        "pancada_mm": 11.76,
+        "prolongada_mm": 17.58,
+        "saturante_mm": 33.42000000000001
+      }
+    },
+    "tamanduatei": {
+      "station_ids": [
+        "352940104A",
+        "352940105A",
+        "354780901A",
+        "354780907A",
+        "354780903A",
+        "354780904A",
+        "354780905A",
+        "354780906A",
+        "354780910A",
+        "354780912A",
+        "354780914A",
+        "354780915A",
+        "354780916A",
+        "354780918A",
+        "354780919A",
+        "354870810A",
+        "354870818A",
+        "354870803G",
+        "354870822A"
+      ],
+      "thresholds": {
+        "pancada_mm": 12.41,
+        "prolongada_mm": 21.55,
+        "saturante_mm": 40.15000000000006
+      }
+    }
+  },
+  "features": {
+    "cemaden_passado": [
+      "api_070",
+      "api_085",
+      "api_095",
+      "max_day_lag1",
+      "max_day_lag2",
+      "max_day_lag3",
+      "acum_dia_lag1",
+      "mean_day_lag1",
+      "std_day_lag1",
+      "n_chovendo_max_lag1",
+      "pico_1h_lag1",
+      "horas_intensas_lag1",
+      "acum_7d",
+      "acum_30d",
+      "mes_sin",
+      "mes_cos"
+    ],
+    "openmeteo_forecast": [
+      "om_precip_sum_h24",
+      "om_rain_max_h24",
+      "om_temp_mean_h24",
+      "om_humidity_mean_h24",
+      "om_wind_max_h24",
+      "om_pressure_mean_h24",
+      "om_precip_sum_h48",
+      "om_rain_max_h48",
+      "om_temp_mean_h48",
+      "om_humidity_mean_h48",
+      "om_wind_max_h48",
+      "om_pressure_mean_h48"
+    ],
+    "componentes_risco": [
+      "comp_pancada",
+      "comp_prolongada",
+      "comp_saturacao"
+    ]
+  },
+  "forecast_horizons": [
+    24,
+    48
+  ],
+  "risk_components": [
+    "pancada",
+    "prolongada",
+    "saturante",
+    "perigoso_any"
+  ],
+  "thresholds_calibration": {
+    "pct_pancada": 0.95,
+    "pct_prolongada": 0.9,
+    "pct_saturante": 0.9,
+    "by_bacia": {
+      "guarara": {
+        "pancada": 12.19,
+        "prolongada": 19.77,
+        "saturante": 38.139999999999986
+      },
+      "oratorio": {
+        "pancada": 10.98,
+        "prolongada": 15.959999999999997,
+        "saturante": 31.920000000000016
+      },
+      "meninos": {
+        "pancada": 11.76,
+        "prolongada": 17.58,
+        "saturante": 33.42000000000001
+      },
+      "tamanduatei": {
+        "pancada": 12.41,
+        "prolongada": 21.55,
+        "saturante": 40.15000000000006
+      }
+    }
+  }
+}

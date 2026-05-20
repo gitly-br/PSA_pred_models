@@ -1,0 +1,549 @@
+{
+  "data_calibracao": "2026-05-20 11:10",
+  "calibrador_recomendado": "piecewise",
+  "motivo": "melhor compromisso entre Brier, PR-AUC e preservacao de Spearman com max_dia",
+  "candidato_primario": "combinador_mean",
+  "candidatos_avaliados": [
+    "risk_score_raw_mean",
+    "risk_score_raw_weighted"
+  ],
+  "corte_temporal": "2024-07-01",
+  "params_por_bacia": {
+    "tamanduatei": {
+      "combinador_mean": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 1.3696999700032961,
+          "intercept": -2.8280542240231865
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.03569605568821486,
+            0.2406229897008129,
+            0.2411970661405823,
+            0.2966695461150122,
+            0.30309609827315637,
+            0.4086807327181541,
+            0.41056703320498755,
+            0.5985956769445507
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.12,
+            0.12,
+            0.17857142857142858,
+            0.17857142857142858,
+            0.25,
+            0.25
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      },
+      "combinador_weighted": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 1.6662808807017153,
+          "intercept": -2.863225650140023
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.017630478491346073,
+            0.16963105498875242,
+            0.17168416552898116,
+            0.20273189811891748,
+            0.21204325153728226,
+            0.35554620455855535,
+            0.3596731235048313,
+            0.38679947366694134,
+            0.38772560002109047,
+            0.5703648464400398,
+            0.5774949904013479,
+            0.6563870751870503
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.1,
+            0.1,
+            0.12121212121212122,
+            0.12121212121212122,
+            0.14285714285714285,
+            0.14285714285714285,
+            0.2608695652173913,
+            0.2608695652173913,
+            0.2857142857142857,
+            0.2857142857142857
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      }
+    },
+    "meninos": {
+      "combinador_mean": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 0.1353535679579188,
+          "intercept": -4.113065825968881
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.007815334798419537,
+            0.14661507066053703,
+            0.14815305062697867,
+            0.21608593626188446,
+            0.21669045671450407,
+            0.4308300822564093
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.02127659574468085,
+            0.02127659574468085,
+            0.0625,
+            0.0625
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      },
+      "combinador_weighted": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 0.14302329155726085,
+          "intercept": -4.1130503946680985
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.004506508234864873,
+            0.14248240328554695,
+            0.1437346413884585,
+            0.611758472463685
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.04477611940298507,
+            0.04477611940298507
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      }
+    },
+    "guarara": {
+      "combinador_mean": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 1.3844685890255806,
+          "intercept": -2.871193869852932
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.025714018361828832,
+            0.15484924055718643,
+            0.15540658259848758,
+            0.23506679350139095,
+            0.23595754472384703,
+            0.3340107237708105,
+            0.33767304020248523,
+            0.47192994226125506,
+            0.4728263119628779,
+            0.4986295257608377,
+            0.505941495657366,
+            0.5520618023845548
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.02127659574468085,
+            0.02127659574468085,
+            0.16666666666666666,
+            0.16666666666666666,
+            0.2,
+            0.2,
+            0.25,
+            0.25,
+            0.3333333333333333,
+            0.3333333333333333
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      },
+      "combinador_weighted": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 1.7856151358069772,
+          "intercept": -2.938710314645617
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.012692986640870147,
+            0.137247427258749,
+            0.13870149613591348,
+            0.3169519799265071,
+            0.32262190050426615,
+            0.5184185028185958,
+            0.519327804212087,
+            0.6449977024136377
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.06,
+            0.06,
+            0.25,
+            0.25,
+            0.3333333333333333,
+            0.3333333333333333
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      }
+    },
+    "oratorio": {
+      "combinador_mean": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 1.4517652277158761,
+          "intercept": -2.9325427756327973
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.04827808679483256,
+            0.15526458777870775,
+            0.15566352239574177,
+            0.24429847296205517,
+            0.24828309296431975,
+            0.26400152176853026,
+            0.26457342106216164,
+            0.46606241345489935,
+            0.4683540281222278,
+            0.5202543949900329
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.05,
+            0.05,
+            0.125,
+            0.125,
+            0.2,
+            0.2,
+            0.5,
+            0.5
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      },
+      "combinador_weighted": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 2.0745377952275166,
+          "intercept": -3.0457557092628287
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.016402129819928432,
+            0.1322693739360388,
+            0.13331631995234478,
+            0.19404653785504236,
+            0.19731600524388943,
+            0.23605130865873314,
+            0.23640900612270146,
+            0.3413320181164776,
+            0.34369715146446045,
+            0.5201922444216351,
+            0.5651894673342844,
+            0.5803985280223192
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.02857142857142857,
+            0.02857142857142857,
+            0.10526315789473684,
+            0.10526315789473684,
+            0.1388888888888889,
+            0.1388888888888889,
+            0.225,
+            0.225,
+            0.5,
+            0.5
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      }
+    },
+    "global": {
+      "combinador_mean": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 3.3890705260479934,
+          "intercept": -3.516505127608854
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.007815334798419537,
+            0.14714660519853465,
+            0.14815305062697867,
+            0.21612389840648308,
+            0.21669045671450407,
+            0.22481333768815445,
+            0.22569048649728485,
+            0.23585942159538018,
+            0.23595754472384703,
+            0.2406229897008129,
+            0.24077691931922,
+            0.29491914554333454,
+            0.2949352639788314,
+            0.4086807327181541,
+            0.41056703320498755,
+            0.45023304771747824,
+            0.4520896579491543,
+            0.5985956769445507
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.02717391304347826,
+            0.02717391304347826,
+            0.05,
+            0.05,
+            0.07407407407407407,
+            0.07407407407407407,
+            0.09090909090909091,
+            0.09090909090909091,
+            0.12658227848101267,
+            0.12658227848101267,
+            0.17757009345794392,
+            0.17757009345794392,
+            0.2,
+            0.2,
+            0.20588235294117646,
+            0.20588235294117646
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      },
+      "combinador_weighted": {
+        "bruto": {
+          "type": "identity"
+        },
+        "platt": {
+          "type": "logistic",
+          "coef": 3.6365570425153795,
+          "intercept": -3.5649138656322954
+        },
+        "isotonic": {
+          "type": "isotonic",
+          "x_thresholds": [
+            0.004506508234864873,
+            0.13300466320709162,
+            0.13331631995234478,
+            0.16963105498875242,
+            0.17126995383751262,
+            0.19639787614490178,
+            0.19683870589229763,
+            0.23605130865873314,
+            0.23640900612270146,
+            0.31933798294575366,
+            0.32262190050426615,
+            0.34246222218976957,
+            0.34369715146446045,
+            0.35914082343217996,
+            0.3596731235048313,
+            0.5580076375836465,
+            0.5584835793600922,
+            0.6563870751870503
+          ],
+          "y_thresholds": [
+            0.0,
+            0.0,
+            0.03614457831325301,
+            0.03614457831325301,
+            0.047619047619047616,
+            0.047619047619047616,
+            0.10714285714285714,
+            0.10714285714285714,
+            0.11267605633802817,
+            0.11267605633802817,
+            0.11764705882352941,
+            0.11764705882352941,
+            0.14285714285714285,
+            0.14285714285714285,
+            0.1941747572815534,
+            0.1941747572815534,
+            0.2777777777777778,
+            0.2777777777777778
+          ]
+        },
+        "quantile": {
+          "type": "quantile",
+          "n_quantiles": 100,
+          "note": "empirical CDF mapping from train"
+        },
+        "piecewise": {
+          "type": "piecewise_linear_bins",
+          "n_bins": 5,
+          "note": "monotonic bins on raw score, no leak"
+        },
+        "piecewise_operacional": {
+          "type": "piecewise_operacional",
+          "note": "P30->0.30, P70->0.70, linear, no leak"
+        }
+      }
+    }
+  }
+}
