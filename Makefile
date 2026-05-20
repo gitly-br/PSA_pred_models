@@ -1,7 +1,7 @@
 # Makefile for environment management
 
 SHELL := /bin/bash
-.PHONY: envs local dev prod help
+.PHONY: envs local dev prod help bootstrap-local-weather
 
 # Default target
 help:
@@ -10,6 +10,7 @@ help:
 	@echo "  local - Source local environment variables"
 	@echo "  dev   - Source development environment variables"
 	@echo "  prod  - Source production environment variables"
+	@echo "  bootstrap-local-weather - Seed MinIO and bootstrap api_data"
 	@echo "  help  - Show this help message"
 
 # Create environment files from template
@@ -35,3 +36,6 @@ envs:
 	fi
 	@echo "Done! Please edit the environment files with your actual values."
 	@echo "After that, just use source .env.local/dev/prod to source the variables"
+
+bootstrap-local-weather:
+	@PYTHONPATH=backend/harvest uv run --with pytest --with polars --with minio --with motor --with pymongo python -m harvest.bootstrap_local_weather
