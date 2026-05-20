@@ -57,7 +57,7 @@ Direcao alvo:
 - validar `modeling_family`;
 - montar entrada operacional a partir de dados meteorologicos lidos exclusivamente do MongoDB (`api_data.forecast` e `api_data.historic`);
 - manter MinIO fora do caminho online de montagem de features, exceto para carregamento de artefatos de modelo;
-- executar inferencia agendada ou sob demanda;
+- executar inferencia agendada via scheduler do Compose e sob demanda via comando one-shot;
 - persistir inferencias auditaveis.
 
 Requisitos relacionados: F3, F4, N2, N3, N4.

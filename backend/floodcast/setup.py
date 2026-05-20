@@ -12,6 +12,8 @@ setup(
     entry_points={
         "console_scripts": [
             "psa-floodcast = floodcast.main:main_sync",
+            "psa-floodcast-once = floodcast.main:main_sync",
+            "psa-floodcast-scheduler = floodcast.scheduler:main_sync",
         ],
     },
 )

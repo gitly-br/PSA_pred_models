@@ -256,7 +256,8 @@ Schema inicial proposto:
 - Rodar Mongo + MinIO local.
 - Popular `api_data` via `bootstrap_api_data`.
 - Registrar um champion fake ou real em `models_db.models`.
-- Executar `floodcast --date YYYY-MM-DD`.
+- Executar `floodcast --date YYYY-MM-DD` como caminho one-shot sob demanda.
+- Executar `floodcast-scheduler` com intervalo curto em modo teste e com alinhamento ao topo da hora em modo periodico real.
 - Conferir `models_db.inference`.
 - Conferir dashboard consumindo `/region/<region_name>`.
 
