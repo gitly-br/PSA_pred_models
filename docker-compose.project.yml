@@ -87,6 +87,20 @@ services:
     networks:
       - psa_network
 
+  frontend-v3:
+    build:
+      context: ./frontend-v3
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_USE_MOCK_DATA: "false"
+    ports:
+      - "8081:80"
+    depends_on:
+      - sentry
+    networks:
+      - psa_network
+
 networks:
   psa_network:
 

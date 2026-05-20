@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Theme palette aligned with design_base references. */
+  :root {
+    --background: 195 24% 96%;
+    --foreground: 220 28% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 28% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 28% 11%;
+
+    --primary: 220 45% 12%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 28 94% 56%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 195 20% 92%;
+    --muted-foreground: 218 12% 43%;
+
+    --accent: 28 94% 56%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 142 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --danger: 0 72% 51%;
+    --danger-foreground: 0 0% 100%;
+
+    --safe: 142 60% 40%;
+    --moderate: 38 92% 50%;
+    --critical: 0 72% 51%;
+
+    --border: 200 18% 88%;
+    --input: 200 18% 88%;
+    --ring: 28 94% 56%;
+
+    --radius: 0.75rem;
+
+    --map-stroke: 220 32% 18%;
+
+    --sidebar-bg: 38 90% 96%;
+    --sidebar-fg: 220 26% 18%;
+    --sidebar-border: 38 35% 88%;
+    --sidebar-accent: 28 94% 56%;
+    --sidebar-accent-fg: 0 0% 100%;
+    --sidebar-muted: 218 12% 43%;
+
+    --sidebar-background: 38 90% 96%;
+    --sidebar-foreground: 220 26% 18%;
+    --sidebar-primary: 220 45% 12%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 28 94% 56%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 38 35% 88%;
+    --sidebar-ring: 28 94% 56%;
+
+    --gauge-bg: 220 15% 92%;
+    --gauge-track: 220 10% 85%;
+    --gauge-safe: 142 60% 40%;
+    --gauge-moderate: 38 92% 50%;
+    --gauge-critical: 0 72% 51%;
+
+    --chart-1: 28 94% 56%;
+    --chart-2: 220 45% 12%;
+    --chart-3: 142 60% 40%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 200 70% 50%;
+
+    --font-heading: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  .dark {
+    --background: 150 10% 7%;
+    --foreground: 35 18% 92%;
+
+    --card: 135 6% 13%;
+    --card-foreground: 35 18% 92%;
+
+    --popover: 135 6% 13%;
+    --popover-foreground: 35 18% 92%;
+
+    --primary: 35 18% 92%;
+    --primary-foreground: 150 10% 7%;
+
+    --secondary: 28 100% 76%;
+    --secondary-foreground: 150 10% 7%;
+
+    --muted: 135 5% 19%;
+    --muted-foreground: 35 10% 70%;
+
+    --accent: 28 100% 76%;
+    --accent-foreground: 150 10% 7%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 142 50% 48%;
+    --success-foreground: 220 25% 9%;
+
+    --warning: 34 96% 58%;
+    --warning-foreground: 220 25% 9%;
+
+    --danger: 0 62% 50%;
+    --danger-foreground: 210 40% 98%;
+
+    --safe: 142 50% 48%;
+    --moderate: 34 96% 58%;
+    --critical: 0 62% 50%;
+
+    --border: 135 5% 25%;
+    --input: 135 5% 21%;
+    --ring: 28 100% 76%;
+
+    --map-stroke: 220 25% 28%;
+
+    --sidebar-bg: 160 12% 6%;
+    --sidebar-fg: 35 18% 90%;
+    --sidebar-border: 135 5% 22%;
+    --sidebar-accent: 28 100% 76%;
+    --sidebar-accent-fg: 150 10% 7%;
+    --sidebar-muted: 35 10% 68%;
+
+    --sidebar-background: 160 12% 6%;
+    --sidebar-foreground: 35 18% 90%;
+    --sidebar-primary: 35 18% 92%;
+    --sidebar-primary-foreground: 150 10% 7%;
+    --sidebar-accent: 28 100% 76%;
+    --sidebar-accent-foreground: 150 10% 7%;
+    --sidebar-border: 135 5% 22%;
+    --sidebar-ring: 28 100% 76%;
+
+    --gauge-bg: 135 5% 17%;
+    --gauge-track: 135 4% 28%;
+    --gauge-safe: 142 50% 48%;
+    --gauge-moderate: 34 96% 58%;
+    --gauge-critical: 0 62% 50%;
+
+    --chart-1: 28 100% 76%;
+    --chart-2: 205 70% 58%;
+    --chart-3: 142 50% 50%;
+    --chart-4: 0 62% 55%;
+    --chart-5: 200 65% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Kepler.gl embed overrides */
+.kepler-embed {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--muted) / 0.35);
+}
+
+/* Evita tela preta: UI do Kepler permanece no tema claro */
+.kepler-embed .mapboxgl-map,
+.kepler-embed .maplibregl-map {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+.kepler-embed .side-panel--container {
+  display: none !important;
+}
+
+.kepler-embed .bottom-widget--container {
+  display: none !important;
+}
+
+.kepler-embed .map-control {
+  z-index: 5;
+}
+
+.kepler-embed .kepler-gl .map-control .map-draw-controls,
+.kepler-embed .kepler-gl .map-control .split-map-controls,
+.kepler-embed .kepler-gl .map-control .locale-panel {
+  display: none !important;
+}
+
+/* Controles do mapa legíveis no tema escuro */
+.dark .kepler-embed .map-control .map-control-button,
+.dark .kepler-embed .map-control .map-control-button:hover {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  box-shadow: 0 1px 4px hsl(0 0% 0% / 0.35);
+}
+
+.dark .kepler-embed .map-control .map-control-button svg,
+.dark .kepler-embed .map-control .map-control-button svg path {
+  fill: hsl(var(--foreground)) !important;
+  stroke: hsl(var(--foreground)) !important;
+}
+
+.dark .kepler-embed .map-control .map-control-button.active svg,
+.dark .kepler-embed .map-control .map-control-button.active svg path {
+  fill: hsl(var(--primary)) !important;
+  stroke: hsl(var(--primary)) !important;
+}
+
+/* Leaflet overrides (fallback) */
+.leaflet-container {
+  @apply rounded-lg;
+  font-family: var(--font-body) !important;
+  z-index: 1;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
