@@ -233,6 +233,7 @@ Schema inicial proposto:
   - `name`;
   - `region`;
   - `subregion`/`bacia`;
+  - `station_ids` obrigatorio para a bacia, alinhado ao contrato JSON de estacoes;
   - `version`;
   - `is_champion`;
   - `artifact_uri`;
@@ -470,3 +471,28 @@ O modelo `ChampionOrdinalModel` e composto por 3 classificadores binarios (`>=1`
 - Dados de treino: `notebooks/dados/chuva_bacias/chuva_*.parquet` (CEMADEN 2016-2025).
 
 **Nota:** esta pendencia foi registrada para que uma nova sessao possa continuar diretamente do ponto correto, sem repetir o diagnostico.
+
+---
+
+## Atualizacao da rodada de modelagem 2026-05-20
+
+### Dados parciais 2026 e contrato de estacoes
+
+- O dataset local contem holdout parcial de 2026 de **2026-01-01 a 2026-05-19**. A cobertura foi registrada em `notebooks/dados/results/relatorio_risk_model_v1_station_contract.md` e varia por bacia/mes conforme estacoes presentes no contrato.
+- O contrato de `station_ids` por bacia passou a ser obrigatorio para inferencia/modelagem operacional. A fonte local de verdade e `notebooks/dados/estacoes_bacia.json`.
+- A colecao Mongo `floodcast.models` precisa manter `station_ids` alinhado ao JSON. O relatorio `notebooks/dados/results/relatorio_mongo_station_ids_update.md` registra update local de 4 champions, com 0 divergencias pos-update.
+- Contagens do contrato apos update local: guarara 17, meninos 10, oratorio 11, tamanduatei 19.
+
+### Resultados recentes registrados
+
+- **Combinador de risco meteorologico**: `combinador_mean` foi recomendado no relatorio experimental por melhor Spearman com `max_dia` entre combinadores (0.351 agregado), mas ainda com PR-AUC modesto e incerteza na cauda.
+- **Calibracao para serving**: calibrador `piecewise` foi recomendado no relatorio de calibracao, mas com limitacao critica: o score bruto raramente ultrapassa 0.60, entao thresholds absolutos 30%/70% ainda exigem cautela.
+- **Auditoria dashboard**: recomendacao de shadow para `combinador_mean_bruto`; `combinador_mean_calibrado`, `combinador_max` e candidatos alarmistas foram descartados para exposicao direta. A auditoria reforcou que `raw_proba` + rescale threshold-based nao deve ser tratado como probabilidade operacional.
+- **Serving validator**: veredito `nao_servivel_ainda` para o combinador calibrado. Ele precisa de artefato real, features adicionais e contrato semantico antes de virar modelo servido.
+- **Risk Model V1 station-contract com 2026**: relatorio gerado com treino ate 2023-07-02, teste historico ate 2025-12-31 e holdout parcial 2026 ate 2026-05-19. Os resultados indicam sinal forte para `perigoso_any` e `saturante` em 2026, mas ha inversoes pontuais em `pancada` de oratorio; nao substituir validacao robusta paralela por esse recorte parcial.
+
+### Decisao atual
+
+- Seguir validando o **Risk Model V1 station-contract** como linha principal de desenho de modelo operacional, garantindo que bacia -> `station_ids` seja contrato explicito e persistido no Mongo.
+- Nao tratar o runtime atual como limitador do desenho do modelo. Limites do backend (`runner.py`, features disponiveis, semantica de `predict_proba`) devem orientar o plano de servibilidade, mas nao bloquear a modelagem se o contrato do modelo exigir evolucao controlada do runtime.
+- Validacoes paralelas ainda nao devem ser resumidas como conclusivas ate existirem relatorios finais. Registrar apenas evidencias presentes nos relatorios textuais locais.

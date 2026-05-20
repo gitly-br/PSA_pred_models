@@ -258,3 +258,98 @@ Serão lançados agentes paralelos com contratos mais específicos:
 4. **Modelos especialistas pancada/prolongada**: relançar experimento anterior, pois o agente retornou sem relatório.
 
 Critério de aceite desta rodada: cada agente deve retornar evidência objetiva. Se o contrato não for cumprido, o agente deve ser relançado com correção.
+
+---
+
+## 13. Experimento: Forecast Detector de Perfil Perigoso (Agente kimi-k2.6, 2026-05-20)
+
+### Script
+`notebooks/scripts/experiments/_forecast_detector_perfil_perigoso.py`
+
+### Metodologia
+- **Target**: labels meteorológicos futuros definidos por CEMADEN observado nas próximas janelas H6/H12/H24/H48:
+  - `pancada`: max_dia futuro > p95 histórico por bacia
+  - `prolongada`: acum_dia futuro > p90 histórico por bacia
+  - `saturante`: acum_48h futuro > p90 histórico por bacia
+  - `perigoso_any`: OR dos três
+- **Features de forecast**: OpenWeather forecast history (único forecast real disponível com `forecast_dt`/`slice_dt`), agregado por horizonte: `fc_rain_sum_hH`, `fc_prob_mean_hH`, etc.
+- **Features meteorológicas**: OpenMeteo/ERA5 multipoint do dia anterior (lag1) — sem leak temporal
+- **Features baseline**: CEMADEN passado (lags, APIs, acumulados)
+- **Modelos**: LogisticRegression, GradientBoosting, Regra calibrada (threshold ótimo em `fc_rain_sum`)
+- **Avaliação**: PR-AUC, Recall/Precision em threshold F1-ótimo (TimeSeriesSplit), Spearman ρ com intensidade futura
+- **Leak temporal**: tratado como falha crítica; todas as features estritamente anteriores ao target
+
+### Resultados Principais
+
+| Métrica | Valor |
+|---------|-------|
+| PR-AUC médio FC_ONLY | **0.485** |
+| PR-AUC médio PAST_ONLY | **0.231** |
+| PR-AUC médio ALL | **0.475** |
+| Spearman ρ médio FC_ONLY | **0.430** |
+
+**Melhor horizonte**: H48 (PR-AUC médio 0.600)  
+**Melhor perfil**: `perigoso_any` (PR-AUC médio 0.644)  
+**Melhor bacia em H48**: oratorio (PR-AUC 0.78)
+
+### Interpretação
+
+1. **O forecast tem sinal discriminativo superior ao passado** para prever eventos meteorológicos futuros. Isso é esperado: o target é futuro, e o passado sozinho não prediz bem o futuro meteorológico (exceto por persistência).
+2. **H24 e H48 são os horizontes viáveis** para alerta preventivo baseado em forecast. H6 e H12 são muito curtos e o forecast não captura bem eventos convectivos pontuais.
+3. **Perfil `pancada` é o mais difícil de prever** (PR-AUC ~0.24), consistente com a limitação de resolução espacial do forecast (1 ponto para toda a região).
+4. **A combinação forecast + passado (ALL) não supera FC_ONLY** de forma significativa, sugerindo que o forecast já captura a informação preditiva disponível para este setup.
+
+### Limitações identificadas
+- OpenWeather forecast history tem **apenas 1 ponto espacial** (Santo André centro), não capturando variabilidade intra-bacia
+- **Resolução espacial insuficiente** para eventos convectivos locais (pancada)
+- **Período limitado** (2017-10 a 2024-03), com poucos eventos extremos no teste
+- Não há forecast OpenMeteo genuíno disponível — usamos OpenWeather como proxy de forecast real e ERA5-Land como proxy meteorológico
+
+### Recomendação
+- **Seguir com a abordagem** para horizontes H24-H48 e perfis prolongados/saturantes
+- **Não usar forecast sozinho para pancadas H6-H12** — manter nowcasting CEMADEN
+- **Investigar forecast de maior resolução espacial** (GFS, ICON, mesoscale) para melhorar predição intra-bacia
+- **Coletar forecast operacional OpenMeteo real** para validar se o sinal se mantém fora da reanálise perfeita
+
+### Artefatos
+- `notebooks/dados/results/forecast_detector_perfil_perigoso.parquet`
+- `notebooks/dados/results/forecast_detector_prauc_por_horizonte.png`
+- `notebooks/dados/results/forecast_detector_comparacao_variantes.png`
+- `notebooks/dados/results/forecast_detector_spearman_vs_prauc.png`
+- `notebooks/dados/results/forecast_detector_heatmap_bacia_horizonte.png`
+- `notebooks/dados/results/RELATORIO_forecast_detector_perfil_perigoso.md`
+
+---
+
+## 14. Consolidação da rodada — station-contract, dashboard e Risk Model V1 (2026-05-20)
+
+### Escopo consolidado
+
+Esta seção consolida apenas resultados presentes nos relatórios textuais locais da rodada. Não registra validações paralelas como concluídas quando não há relatório final correspondente.
+
+### Dados parciais 2026
+
+- O holdout 2026 usado pelo Risk Model V1 cobre **2026-01-01 a 2026-05-19**.
+- A cobertura por bacia/mes está documentada em `notebooks/dados/results/relatorio_risk_model_v1_station_contract.md`.
+- O recorte 2026 é parcial e deve ser tratado como evidência de holdout recente, não como validação robusta final.
+
+### Contrato obrigatório de `station_ids`
+
+- `notebooks/dados/estacoes_bacia.json` passou a ser o contrato explícito de estações por bacia para modelagem/inferência.
+- `floodcast.models` precisa manter `station_ids` alinhado a esse JSON para que o backend monte features por bacia de forma reprodutível.
+- Relatório local de update Mongo: `notebooks/dados/results/relatorio_mongo_station_ids_update.md`.
+- Estado local pós-update reportado: 4 champions atualizados, 0 divergências, contagens guarara=17, meninos=10, oratorio=11, tamanduatei=19.
+
+### Resultados recentes registrados
+
+- **Combinador** (`relatorio_combinador_risco_meteorologico.md`): `combinador_mean` recomendado no relatório por melhor Spearman com `max_dia` entre combinadores, mas ainda com PR-AUC modesto e pouca evidência na cauda extrema.
+- **Calibração** (`relatorio_calibracao_scores_serving.md`): `piecewise` recomendado como calibrador experimental, com ressalva crítica de que o score bruto raramente passa de 0.60.
+- **Auditoria dashboard** (`relatorio_auditoria_probabilidade_dashboard.md`): `combinador_mean_bruto` recomendado apenas para shadow; candidatos calibrados/max foram descartados para exposição direta por alarmismo. A auditoria também registrou que a `proba` atual do backend não representa uma probabilidade operacional de risco.
+- **Serving validator** (`relatorio_serving_validator_risco_meteorologico.md`): combinador calibrado classificado como `nao_servivel_ainda`, pois falta artefato único e o backend ainda não monta todas as features necessárias.
+- **Risk Model V1 station-contract** (`relatorio_risk_model_v1_station_contract.md`): inclui teste histórico até 2025 e holdout parcial 2026. Há sinal forte em `perigoso_any`/`saturante` no recorte 2026, mas também inversões pontuais em `pancada` de oratorio; manter validação por contrato antes de promover.
+
+### Decisão atual
+
+- Seguir validando o **Risk Model V1 station-contract** como desenho principal de modelo operacional.
+- O contrato bacia -> `station_ids` é requisito obrigatório e deve estar sincronizado entre JSON e Mongo.
+- O runtime atual não deve limitar o desenho do modelo; limitações de `runner.py`, `predict_proba` e features servidas devem virar requisitos de evolução do backend, não motivo para descartar a linha de modelagem.

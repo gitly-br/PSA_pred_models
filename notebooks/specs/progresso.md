@@ -1,5 +1,15 @@
 # Progresso do Pipeline
 
+## Fase ativa: validação Risk Model V1 station-contract (sessão 2026-05-20)
+
+**Status:** dados parciais de 2026 encontrados até 2026-05-19 e registrados no relatório `relatorio_risk_model_v1_station_contract.md`. O contrato de `station_ids` por bacia é agora obrigatório; `notebooks/dados/estacoes_bacia.json` é a referência local, e `floodcast.models.station_ids` deve permanecer sincronizado com esse JSON.
+
+**Resultados registrados nesta rodada:** combinador, calibração, auditoria dashboard, serving validator e Risk Model V1 com holdout parcial 2026 possuem relatórios textuais em `notebooks/dados/results/`. A decisão atual é seguir validando Risk Model V1 station-contract e não tratar limitações do runtime atual como limitador do desenho do modelo.
+
+**Próximo passo:** validar robustamente o contrato station-contract antes de promoção, incluindo consistência JSON ↔ Mongo, features por bacia montadas com os `station_ids` corretos e avaliação separada para `perigoso_any`, `saturante`, `prolongada` e `pancada`.
+
+**Pendências conhecidas:** o combinador calibrado ainda não é servível; a probabilidade atual do dashboard não representa probabilidade operacional de risco; o recorte 2026 é parcial e não substitui validação robusta paralela.
+
 ## Fase ativa: validação API Santo André para inferência em produção (sessão 2026-05-06)
 
 **Status:** Champions V7 fixados (F2 0.69-0.78). Estratégias para melhorar forecast ERA5 testadas e teto aceito (rich/max não bate v1 mean). Validação da API da defesa civil em curso — bloqueada por falta de coordenadas das estações.
