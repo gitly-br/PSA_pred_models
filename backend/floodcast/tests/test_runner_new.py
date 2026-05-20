@@ -176,9 +176,9 @@ def test_run_floodcast_reuses_prefetched_documents(monkeypatch):
         monkeypatch.setattr(runner_module, "InferenceWriter", lambda target_date=None: fake_writer)
 
         result = await runner_module.run_floodcast(target_date=datetime(2025, 2, 4), debug=False)
-        return result
+        return result, fake_writer
 
-    result = asyncio.run(run())
+    result, fake_writer = asyncio.run(run())
 
     assert result is True
     assert calls["historic"] == 1
@@ -260,6 +260,7 @@ def test_run_floodcast_raises_when_all_data_missing(monkeypatch):
         monkeypatch.setattr(runner_module, "get_active_models", fake_get_active_models)
         monkeypatch.setattr(runner_module, "load_artifact", lambda artifact_uri: _FakeModel())
         monkeypatch.setattr(runner_module, "WeatherDataRepository", lambda: _EmptyRepo())
+        monkeypatch.setattr(runner_module, "InferenceWriter", lambda target_date=None: _FakeWriter())
 
         return await runner_module.run_floodcast(target_date=datetime(2024, 3, 12), debug=False)
 
@@ -386,4 +387,52 @@ def test_run_floodcast_processes_bacias_in_parallel(monkeypatch):
         "guarara", "meninos", "oratorio", "tamanduatei"
     }
     assert concurrency["max"] >= 2, f"expected parallel execution, max concurrency was {concurrency['max']}"
+    assert fake_writer.passed_region_errors == {}
+
+
+def test_run_floodcast_fetches_historic_and_forecast_in_parallel(monkeypatch):
+    async def run():
+        fake_writer = _FakeWriter()
+        started_historic = asyncio.Event()
+        started_forecast = asyncio.Event()
+        release = asyncio.Event()
+
+        class _OverlappingRepo(_FakeRepo):
+            async def fetch_historic_documents(self, bacia, start_date, end_date):
+                started_historic.set()
+                await release.wait()
+                return await super().fetch_historic_documents(bacia, start_date, end_date)
+
+            async def fetch_forecast_documents(self, bacia, target_date):
+                started_forecast.set()
+                await release.wait()
+                return await super().fetch_forecast_documents(bacia, target_date)
+
+        async def fake_get_active_models():
+            return [
+                {
+                    "name": "champion_guarara",
+                    "bacia": "guarara",
+                    "region": "guarara",
+                    "subregion": "guarara",
+                    "artifact_uri": "/tmp/champion.joblib",
+                    "features": _FakeModel.features,
+                }
+            ]
+
+        monkeypatch.setattr(runner_module, "get_active_models", fake_get_active_models)
+        monkeypatch.setattr(runner_module, "load_artifact", lambda artifact_uri: _FakeModel())
+        monkeypatch.setattr(runner_module, "WeatherDataRepository", lambda: _OverlappingRepo())
+        monkeypatch.setattr(runner_module, "InferenceWriter", lambda target_date=None: fake_writer)
+
+        task = asyncio.create_task(runner_module.run_floodcast(target_date=datetime(2025, 2, 4), debug=False))
+        await asyncio.wait_for(started_historic.wait(), timeout=1.0)
+        await asyncio.wait_for(started_forecast.wait(), timeout=1.0)
+        release.set()
+        result = await asyncio.wait_for(task, timeout=1.0)
+        return result, fake_writer
+
+    result, fake_writer = asyncio.run(run())
+
+    assert result is True
     assert fake_writer.passed_region_errors == {}

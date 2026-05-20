@@ -120,21 +120,28 @@ async def run_floodcast(target_date: datetime | None = None, debug: bool = False
         model = load_artifact(model_config["artifact_uri"])
         station_ids = model_config.get("station_ids") or getattr(model, "station_ids", [])
         features = model_config.get("features") or getattr(model, "features", None) or getattr(model, "all_feature_order", [])
-        historic_docs = []
-        forecast_docs = []
-        missing_sources: list[str] = []
-        try:
-            historic_docs = await repository.fetch_historic_documents(bacia, run_date.date() - timedelta(days=90), run_date.date())
-        except WeatherDataUnavailableError:
-            missing_sources.append("historico")
-        if not historic_docs and "historico" not in missing_sources:
-            missing_sources.append("historico")
-        try:
-            forecast_docs = await repository.fetch_forecast_documents(bacia, run_date.date())
-        except WeatherDataUnavailableError:
-            missing_sources.append("forecast")
-        if not forecast_docs and "forecast" not in missing_sources:
-            missing_sources.append("forecast")
+        async def _fetch_documents(fetcher, missing_source: str):
+            try:
+                docs = await fetcher
+            except WeatherDataUnavailableError:
+                return [], missing_source
+            if not docs:
+                return [], missing_source
+            return docs, None
+
+        historic_result, forecast_result = await asyncio.gather(
+            _fetch_documents(
+                repository.fetch_historic_documents(bacia, run_date.date() - timedelta(days=90), run_date.date()),
+                "historico",
+            ),
+            _fetch_documents(
+                repository.fetch_forecast_documents(bacia, run_date.date()),
+                "forecast",
+            ),
+        )
+        historic_docs, historic_missing = historic_result
+        forecast_docs, forecast_missing = forecast_result
+        missing_sources = [source for source in (historic_missing, forecast_missing) if source is not None]
         if missing_sources:
             return {"type": "error", "bacia": bacia, "missing_sources": missing_sources}
 
