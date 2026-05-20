@@ -10,19 +10,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc wget cron \
     && rm -rf /var/lib/apt/lists/*
 
+# Install uv for faster dependency resolution
+RUN pip install --no-cache-dir uv
+
 WORKDIR /backend
 
 # Setup floodcast
 COPY floodcast /backend/floodcast
-RUN pip install --no-cache-dir ./floodcast
+RUN uv pip install --system ./floodcast
 
 # Setup harvest
 COPY harvest /backend/harvest
-RUN pip install --no-cache-dir ./harvest
+RUN uv pip install --system ./harvest
 
 # Setup sentry
 COPY sentry /backend/sentry
-RUN pip install --no-cache-dir -r sentry/requirements.txt
+RUN uv pip install --system -r sentry/requirements.txt
 
 # Ensure log file exists
 RUN touch /var/log/cron.log
@@ -40,4 +43,3 @@ EXPOSE 8000 6457 27017
 
 # Set the entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
-

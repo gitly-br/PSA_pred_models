@@ -12,10 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc wget cron \
     && rm -rf /var/lib/apt/lists/*
 
+# Install uv for faster dependency resolution
+RUN pip install --no-cache-dir uv
+
 # Copy requirements first for better layer caching
 COPY requirements.txt .
 # Install Python dependencies efficiently
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system -r requirements.txt
 
 # Copy only necessary files (avoid unnecessary build context)
 COPY deployment /deployment
