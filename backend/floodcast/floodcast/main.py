@@ -5,7 +5,7 @@ import sys
 
 from floodcast import custom_transformers
 
-from .runner import run_floodcast
+from .runner import DataAvailabilityError, run_floodcast
 
 sys.modules["__main__"] = custom_transformers
 
@@ -27,7 +27,11 @@ async def main():
             print("Invalid date format. Please use YYYY-MM-DD.")
             return
 
-    await run_floodcast(target_date=target_date, debug=args.debug)
+    try:
+        await run_floodcast(target_date=target_date, debug=args.debug)
+    except DataAvailabilityError as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(2)
 
 
 def main_sync():
