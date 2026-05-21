@@ -9,6 +9,40 @@ import io
 # Create a new Sanic blueprint
 chamados_pbi_bp = Blueprint('chamados_pbi', url_prefix='/chamados_pbi')
 
+@chamados_pbi_bp.get('/status')
+async def get_status(request):
+    return response.json({
+        'ready': False,
+        'mode': 'unconfigured',
+        'power_bi': {
+            'embed': '',
+            'api': None,
+            'configured': False,
+            'reachable': False,
+            'reachability_error': 'Power BI nao configurado neste backend',
+            'model_id': None,
+        },
+        'minio': {
+            'configured': False,
+            'host': '',
+            'port': '',
+            'bucket': '',
+            'object_key': '',
+            'reachable': False,
+            'reachability_error': 'MinIO nao configurado para chamados',
+            'host_override': None,
+        },
+        'local_csv': {
+            'path': None,
+            'exists': False,
+            'prefer_local': False,
+        },
+    })
+
+@chamados_pbi_bp.get('/occurrences')
+async def get_occurrences(request):
+    return response.json([])
+
 @chamados_pbi_bp.get('/get_csv')
 async def get_csv(request):
 

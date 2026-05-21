@@ -37,7 +37,7 @@ let cachedRegionData: { date: string; data: RegionApiResponse } | null = null;
 let cachedForecastData: { date: string; data: ForecastHourlyItem[] } | null = null;
 let cachedAvailableDates: string[] | null = null;
 
-const API_TIMEOUT_MS = 8000;
+const API_TIMEOUT_MS = 30000;
 const MOCK_DATE_WINDOW_DAYS = 30;
 
 export class ApiRequestError extends Error {

@@ -23,7 +23,7 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
-const today = new Date();
+const today = new Date(2026, 4, 18);
 
 function dateFromInput(value: string): Date {
   return new Date(`${value}T12:00:00`);

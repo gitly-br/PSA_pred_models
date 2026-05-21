@@ -6,8 +6,8 @@ services:
       MINIO_ROOT_USER: psa
       MINIO_ROOT_PASSWORD: psa12345
     ports:
-      - "19000:9000"
-      - "19001:9001"
+      - "19002:9000"
+      - "19003:9001"
     volumes:
       - project_minio_data:/data
     networks:
@@ -17,7 +17,7 @@ services:
     image: mongo:7.0
     init: true
     ports:
-      - "16521:27017"
+      - "16522:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: psa
       MONGO_INITDB_ROOT_PASSWORD: psa
@@ -56,10 +56,10 @@ services:
     working_dir: /workspace/backend/sentry
     command: ["python", "source/run.py", "--env", "local"]
     environment:
-      MONGO_URI: mongodb://psa:psa@mongo:27017/?authSource=admin
-      MONGO_GITLY_CONNECTION_STRING: mongodb://psa:psa@mongo:27017/?authSource=admin
+      MONGO_URI: mongodb://psa:psa@host.docker.internal:16521/?authSource=admin
+      MONGO_GITLY_CONNECTION_STRING: mongodb://psa:psa@host.docker.internal:16521/?authSource=admin
       MONGO_GITLY_VERSION_SCHEMA: "1"
-      MINIO_ENDPOINT: minio:9000
+      MINIO_ENDPOINT: host.docker.internal:19000
       MINIO_ACCESS_KEY: psa
       MINIO_SECRET_KEY: psa12345
       MINIO_BUCKET: psa
@@ -70,24 +70,13 @@ services:
     depends_on:
       - mongo
     ports:
-      - "8080:8080"
+      - "8082:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - psa_network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    environment:
-      API_URL: http://sentry:8080
-    depends_on:
-      - sentry
-    ports:
-      - "8501:8501"
-    networks:
-      - psa_network
-
-  frontend-v3:
     build:
       context: ./frontend-v3
       dockerfile: Dockerfile

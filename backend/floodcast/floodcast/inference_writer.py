@@ -68,10 +68,11 @@ class InferenceWriter:
         total_mm = sum(totals.values())
         if total_mm <= 0:
             return {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}
-
-        cap = self._day_color_cap(proba)
+        p = float(proba or 0.0)
+        if p <= 0:
+            return {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}
         return {
-            period: round((value / total_mm) * cap, 4)
+            period: round((value / total_mm) * p, 4)
             for period, value in totals.items()
         }
 
@@ -214,28 +215,43 @@ class InferenceWriter:
                         int(item[1].get("predict") or 0),
                     ),
                 )
+                max_proba_name, max_proba_item = max(
+                    regional_items,
+                    key=lambda item: (
+                        float(item[1].get("proba") or 0.0),
+                        int(item[1].get("predict") or 0),
+                    ),
+                )
                 final_results_by_day[day]["all"] = {
                     "predict": int(winner.get("predict") or 0),
                     "severity": int(winner.get("severity") or winner.get("predict") or 0),
-                    "proba": float(winner.get("proba") or 0.0),
-                    "raw_proba": winner.get("raw_proba"),
-                    "calibrated_proba": winner.get("calibrated_proba"),
+                    "proba": float(max_proba_item.get("proba") or 0.0),
+                    "raw_proba": max_proba_item.get("raw_proba") or winner.get("raw_proba"),
+                    "calibrated_proba": max_proba_item.get("calibrated_proba") or winner.get("calibrated_proba"),
                     "explanation": winner.get("explanation", ""),
-                    "rain_today": winner.get("rain_today", {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}),
+                    "rain_today": max_proba_item.get("rain_today", {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}),
                     "winner_region": winner_name,
-                    "forecast_summary": winner.get("forecast_summary", {}),
+                    "forecast_summary": max_proba_item.get("forecast_summary", {}),
                     "models": {name: result["models"] for name, result in regional_items},
                 }
             else:
+                best_name, best = max(
+                    regional_items,
+                    key=lambda item: (
+                        float(item[1].get("proba") or 0.0),
+                        int(item[1].get("predict") or 0),
+                    ),
+                ) if regional_items else (None, None)
                 final_results_by_day[day]["all"] = {
-                    "predict": 0,
-                    "severity": 0,
-                    "proba": 0.0,
-                    "raw_proba": 0.0,
-                    "explanation": "Não há precipitação significativa prevista para o período",
-                    "rain_today": {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0},
-                    "winner_region": None,
-                    "forecast_summary": {"point_count": 0, "total_mm": 0.0, "max_point_total_mm": 0.0, "min_point_total_mm": 0.0},
+                    "predict": int(best.get("predict") or 0) if best else 0,
+                    "severity": int(best.get("severity") or best.get("predict") or 0) if best else 0,
+                    "proba": float(best.get("proba") or 0.0) if best else 0.0,
+                    "raw_proba": best.get("raw_proba") if best else 0.0,
+                    "calibrated_proba": best.get("calibrated_proba") if best else None,
+                    "explanation": best.get("explanation") if best else "Não há precipitação significativa prevista para o período",
+                    "rain_today": best.get("rain_today", {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}) if best else {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0},
+                    "winner_region": best_name,
+                    "forecast_summary": best.get("forecast_summary", {"point_count": 0, "total_mm": 0.0, "max_point_total_mm": 0.0, "min_point_total_mm": 0.0}) if best else {"point_count": 0, "total_mm": 0.0, "max_point_total_mm": 0.0, "min_point_total_mm": 0.0},
                     "models": {name: result["models"] for name, result in regional_items},
                 }
         
