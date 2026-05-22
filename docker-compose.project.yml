@@ -28,7 +28,7 @@ services:
 
   floodcast:
     build:
-      context: ./backend
+      context: ./worktrees/integrate-flood-watch-hub/backend
       dockerfile: Dockerfile
     entrypoint: []
     working_dir: /workspace/backend
@@ -40,8 +40,11 @@ services:
       MINIO_BUCKET: psa
       MINIO_SECURE: "false"
       PYTHONPATH: /workspace/backend/floodcast
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_EXPLANATION_MODEL: ${OPENROUTER_EXPLANATION_MODEL:-google/gemini-2.5-flash-lite}
+      OPENROUTER_EXPLANATION_TIMEOUT_SECONDS: ${OPENROUTER_EXPLANATION_TIMEOUT_SECONDS:-8.0}
     volumes:
-      - ./:/workspace
+      - ./worktrees/integrate-flood-watch-hub:/workspace
     depends_on:
       - minio
       - mongo
@@ -50,7 +53,7 @@ services:
 
   sentry:
     build:
-      context: ./backend
+      context: ./worktrees/integrate-flood-watch-hub/backend
       dockerfile: Dockerfile
     entrypoint: []
     working_dir: /workspace/backend/sentry
@@ -66,7 +69,7 @@ services:
       MINIO_SECURE: "false"
       PYTHONPATH: /workspace/backend/floodcast:/workspace/backend/harvest:/workspace/backend/sentry/source
     volumes:
-      - ./:/workspace
+      - ./worktrees/integrate-flood-watch-hub:/workspace
     depends_on:
       - mongo
     ports:
@@ -78,7 +81,11 @@ services:
 
   frontend:
     build:
+<<<<<<< Updated upstream
       context: ./frontend-v3
+=======
+      context: ./worktrees/integrate-flood-watch-hub/frontend-v3
+>>>>>>> Stashed changes
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: /api
