@@ -64,7 +64,7 @@ def test_get_active_models_returns_normalized_champion_docs(monkeypatch):
                     "bacia": "guarara",
                     "artifact_uri": "file:///tmp/champion.joblib",
                     "features": ["api_070"],
-                    "thresholds": {"1": 0.2},
+                    "thresholds": {"1": 0.2, "2": 0.03},
                     "station_ids": ["st-1"],
                     "is_champion": True,
                     "active": True,
@@ -94,6 +94,7 @@ def test_get_active_models_returns_normalized_champion_docs(monkeypatch):
     assert docs[0]["subregion"] == "guarara"
     assert docs[0]["artifact_uri"] == "file:///tmp/champion.joblib"
     assert docs[0]["features"] == ["api_070"]
+    assert docs[0]["thresholds"] == {"1": 0.2, "2": 0.1}
 
 
 def test_upsert_model_spec_persists_champion_flags(monkeypatch):
@@ -107,7 +108,7 @@ def test_upsert_model_spec_persists_champion_flags(monkeypatch):
             bacia="guarara",
             artifact_uri="minio://psa/models/champion_guarara.joblib",
             features=["api_070", "api_085"],
-            thresholds={"1": 0.2},
+            thresholds={"1": 0.2, "2": 0.04},
             station_ids=["st-1"],
         )
 
@@ -124,6 +125,7 @@ def test_upsert_model_spec_persists_champion_flags(monkeypatch):
     assert update["$set"]["region"] == "guarara"
     assert update["$set"]["subregion"] == "guarara"
     assert update["$set"]["artifact_uri"] == spec.artifact_uri
+    assert update["$set"]["thresholds"] == {"1": 0.2, "2": 0.1}
     assert update["$set"]["is_champion"] is True
     assert update["$set"]["active"] is True
     assert isinstance(update["$set"]["created_at"], datetime)

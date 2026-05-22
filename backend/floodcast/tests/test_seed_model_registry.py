@@ -21,3 +21,17 @@ def test_extract_robust_metadata_contract():
     thresholds = _extract_thresholds(meta, "guarara")
     assert set(thresholds) == {"1", "2", "3"}
     assert thresholds["1"] > 0
+
+
+def test_extract_thresholds_applies_floor():
+    meta = {
+        "thresholds": {
+            "1": 0.03,
+            "2": 0.2,
+            "3": 0.09,
+        }
+    }
+
+    thresholds = _extract_thresholds(meta, "guarara")
+
+    assert thresholds == {"1": 0.1, "2": 0.2, "3": 0.1}

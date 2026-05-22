@@ -127,6 +127,7 @@ class MinIOWeatherFallback:
         bacia: str,
         start_date: date,
         end_date: date,
+        fields: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         frame = self._get_historic_frame()
         if frame is None:
@@ -153,20 +154,23 @@ class MinIOWeatherFallback:
         for row in filtered.to_dicts():
             sid = str(row.get("codEstacao") or "unknown")
             bacias = self.station_bacias.get(sid, [])
-            docs.append(
-                {
-                    "provider": "cemaden",
-                    "station_id": sid,
-                    "station_name": row.get("nomeEstacao"),
-                    "municipio": row.get("municipio"),
-                    "bacia": bacias[0] if bacias else None,
-                    "bacias": bacias,
-                    "latitude": row.get("latitude"),
-                    "longitude": row.get("longitude"),
-                    "dt": row.get("dt"),
-                    "precipitation_mm": row.get("valor_mm") or 0.0,
-                }
-            )
+            full_doc = {
+                "provider": "cemaden",
+                "station_id": sid,
+                "station_name": row.get("nomeEstacao"),
+                "municipio": row.get("municipio"),
+                "bacia": bacias[0] if bacias else None,
+                "bacias": bacias,
+                "latitude": row.get("latitude"),
+                "longitude": row.get("longitude"),
+                "dt": row.get("dt"),
+                "precipitation_mm": row.get("valor_mm") or 0.0,
+            }
+            if fields is not None:
+                doc = {k: full_doc.get(k) for k in fields if k in full_doc}
+            else:
+                doc = full_doc
+            docs.append(doc)
         if not docs:
             raise WeatherDataUnavailableError(f"Sem dados historicos em parquet para {bacia}")
         return docs

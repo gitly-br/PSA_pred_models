@@ -10,11 +10,14 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import pandas as pd
+import polars as pl
 from sklearn.ensemble import GradientBoostingClassifier
 
 from .model_registry import ChampionModelSpec, upsert_model_spec
 from .ordinal_model import ChampionOrdinalModel
+
+
+THRESHOLD_FLOOR = 0.1
 
 
 DEFAULT_ARTIFACT_PATH = Path(
@@ -65,17 +68,20 @@ def _extract_station_ids(meta: dict[str, object], bacia: str) -> list[str]:
 
 
 def _extract_thresholds(meta: dict[str, object], bacia: str) -> dict[str, float]:
+    def _floor(value: object) -> float:
+        return max(float(value), THRESHOLD_FLOOR)
+
     thresholds = meta.get("thresholds")
     if isinstance(thresholds, dict) and any("|" in str(key) for key in thresholds):
         if all(f"{bacia}|{label}" in thresholds for label in ("pancada", "prolongada", "saturante")):
             return {
-                "1": float(thresholds[f"{bacia}|pancada"]),
-                "2": float(thresholds[f"{bacia}|prolongada"]),
-                "3": float(thresholds[f"{bacia}|saturante"]),
+                "1": _floor(thresholds[f"{bacia}|pancada"]),
+                "2": _floor(thresholds[f"{bacia}|prolongada"]),
+                "3": _floor(thresholds[f"{bacia}|saturante"]),
             }
 
     if isinstance(thresholds, dict) and all(str(key).isdigit() for key in thresholds):
-        return {str(key): float(value) for key, value in thresholds.items()}
+        return {str(key): _floor(value) for key, value in thresholds.items()}
 
     threshold_calibration = meta.get("thresholds_calibration")
     if isinstance(threshold_calibration, dict):
@@ -84,9 +90,9 @@ def _extract_thresholds(meta: dict[str, object], bacia: str) -> dict[str, float]
             bacia_thresholds = by_bacia.get(bacia)
             if isinstance(bacia_thresholds, dict):
                 return {
-                    "1": float(bacia_thresholds.get("pancada", 0.5)),
-                    "2": float(bacia_thresholds.get("prolongada", 0.5)),
-                    "3": float(bacia_thresholds.get("saturante", 0.5)),
+                    "1": _floor(bacia_thresholds.get("pancada", 0.5)),
+                    "2": _floor(bacia_thresholds.get("prolongada", 0.5)),
+                    "3": _floor(bacia_thresholds.get("saturante", 0.5)),
                 }
 
     return {}
@@ -96,8 +102,8 @@ def _build_compatible_champion(meta: dict[str, object], bacia: str) -> ChampionO
     features = _extract_features(meta)
     seed = abs(hash(bacia)) % (2**32)
     rng = np.random.default_rng(seed)
-    X = pd.DataFrame(rng.normal(size=(512, len(features))), columns=features)
-    score = X.sum(axis=1).to_numpy()
+    X = pl.DataFrame({feature: rng.normal(size=512) for feature in features})
+    score = X.select(pl.sum_horizontal(pl.all())).to_numpy().ravel()
 
     thresholds = {
         1: float(_extract_thresholds(meta, bacia).get("1", 0.25)) + (seed % 7) * 0.005,

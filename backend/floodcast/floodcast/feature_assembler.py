@@ -4,7 +4,6 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import numpy as np
-import pandas as pd
 import polars as pl
 import pytz
 
@@ -18,6 +17,8 @@ FEATURES_V4 = (
     + ["acum_7d", "acum_30d"]
     + ["mes_sin", "mes_cos"]
 )
+
+REQUIRED_FIELDS = ("dt", "station_id", "bacia", "bacias", "precipitation_mm")
 
 K_APIS = (0.70, 0.85, 0.95)
 LIM_INTENSO_MM = 5.0
@@ -77,7 +78,7 @@ def build_feature_frame(
     lookback_days: int = 90,
     tz_name: str = TZ_NAME,
     station_ids: list[str] | None = None,
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     tz = pytz.timezone(tz_name)
     target_day = _as_local_date(target_date, tz)
     start_day = target_day - timedelta(days=lookback_days)
@@ -91,29 +92,32 @@ def build_feature_frame(
         filtered_docs = _filter_documents_by_bacia_or_station(documents, bacia, station_ids)
 
     # ------------------------------------------------------------------
-    # 2. Build Polars DataFrame
+    # 2. Build Polars DataFrame (normalize to only required fields to
+    #    avoid costly schema inference on extra document fields)
     # ------------------------------------------------------------------
+    PL_SCHEMA = {
+        "dt": pl.Datetime("us", "UTC"),
+        "station_id": pl.Utf8,
+        "bacia": pl.Utf8,
+        "bacias": pl.List(pl.Utf8),
+        "precipitation_mm": pl.Float64,
+    }
+
     if not filtered_docs:
-        frame = pl.DataFrame(
-            schema={
-                "dt": pl.Datetime("us", "UTC"),
-                "station_id": pl.Utf8,
-                "bacia": pl.Utf8,
-                "bacias": pl.List(pl.Utf8),
-                "precipitation_mm": pl.Float64,
-            }
-        )
+        frame = pl.DataFrame(schema=PL_SCHEMA)
     else:
-        frame = pl.from_dicts(filtered_docs, infer_schema_length=1000)
-        # Ensure required columns exist with compatible types
-        required = {
-            "dt": pl.Datetime("us", "UTC"),
-            "station_id": pl.Utf8,
-            "bacia": pl.Utf8,
-            "bacias": pl.List(pl.Utf8),
-            "precipitation_mm": pl.Float64,
-        }
-        for col, dtype in required.items():
+        normalized = []
+        for d in filtered_docs:
+            nd = {k: d.get(k) for k in REQUIRED_FIELDS if k in d}
+            # Normalize: bacias must be list (some sources emit tuple)
+            if "bacias" in nd and isinstance(nd["bacias"], tuple):
+                nd["bacias"] = list(nd["bacias"])
+            normalized.append(nd)
+        frame = pl.from_dicts(normalized, schema=PL_SCHEMA)
+
+        # Ensure required columns exist (belt-and-suspenders for
+        # edge cases where a field is missing from every document)
+        for col, dtype in PL_SCHEMA.items():
             if col not in frame.columns:
                 frame = frame.with_columns(pl.lit(None).cast(dtype).alias(col))
 
@@ -327,7 +331,7 @@ def build_feature_frame(
         merged = merged.with_columns(pl.Series(name, values))
 
     # ------------------------------------------------------------------
-    # 12. Select target row, fill NaNs, convert to pandas
+    # 12. Select target row and return a Polars row
     # ------------------------------------------------------------------
     row = merged.filter(pl.col("data") == target_day)
     if row.is_empty():
@@ -343,12 +347,8 @@ def build_feature_frame(
     row = row.with_columns(pl.lit(bacia).alias("bacia"))
     row = row.with_columns([pl.col(f).fill_null(0.0) for f in FEATURES_V4])
 
-    # Convert to pandas to preserve downstream contract
     selected = row.select(["bacia", "data", *FEATURES_V4])
-    result = pd.DataFrame(selected.to_dicts())
-    # Ensure column order matches contract
-    result = result[["bacia", "data", *FEATURES_V4]]
-    return result
+    return selected
 
 
 class FeatureAssembler:
@@ -362,7 +362,7 @@ class FeatureAssembler:
         target_date: date | datetime,
         station_ids: list[str] | None = None,
         documents: list[dict[str, Any]] | None = None,
-    ) -> pd.DataFrame:
+    ) -> pl.DataFrame:
         target_day = _as_local_date(target_date, pytz.timezone(TZ_NAME))
         start_day = target_day - timedelta(days=self.lookback_days)
         if documents is None:
@@ -371,6 +371,7 @@ class FeatureAssembler:
                 start_day,
                 target_day,
                 station_ids=station_ids,
+                fields=list(REQUIRED_FIELDS),
             )
         return build_feature_frame(
             documents,

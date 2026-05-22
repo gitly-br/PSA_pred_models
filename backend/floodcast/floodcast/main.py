@@ -3,11 +3,7 @@ import asyncio
 from datetime import datetime
 import sys
 
-from floodcast import custom_transformers
-
 from .runner import DataAvailabilityError, run_floodcast
-
-sys.modules["__main__"] = custom_transformers
 
 
 async def main():

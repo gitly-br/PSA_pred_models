@@ -59,6 +59,7 @@ function transformDayPrediction(
   const rainToday = allData?.rain_today;
 
   const pipelineMsg =
+    allData?.short_explanation ??
     allData?.explanation ??
     (proba < 0.2
       ? 'Não há precipitação significativa prevista para o período'
@@ -86,7 +87,7 @@ function transformDayPrediction(
       cacheScope: `${APP_CONFIG.REGION_NAME}:all`,
       regionDisplay: APP_CONFIG.CITY_NAME,
       proba01: Math.min(1, Math.max(0, proba)),
-      pipelineExplanation: allData?.explanation ?? '',
+      pipelineExplanation: allData?.short_explanation ?? allData?.explanation ?? '',
       fatoresSimples,
     },
   };

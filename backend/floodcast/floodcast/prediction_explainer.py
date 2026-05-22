@@ -61,29 +61,52 @@ def _derive_operational_factors(prediction: dict) -> dict[str, list[str]]:
     return {"observado": _dedup(observed), "previsto": _dedup(forecasted)}
 
 
+def _humanize_feature_name(name: str) -> str:
+    if name.startswith("api_"):
+        return "chuva acumulada recente"
+    if name in {"acum_7d", "acum_30d"}:
+        return "chuva acumulada nos ultimos dias"
+    if name == "pico_1h_lag1":
+        return "pancada forte recente"
+    if name == "horas_intensas_lag1":
+        return "horas de chuva intensa recentes"
+    if name == "n_chovendo_max_lag1":
+        return "chuva persistente recente"
+    if name.startswith("max_day_lag"):
+        return "pico diario de chuva ontem"
+    return name.replace("_", " ")
+
+
 def build_explanation_prompt(prediction: dict) -> str:
     shap_values = prediction.get("shap_explanation") or []
     factors = _derive_operational_factors(prediction)
     if shap_values:
-        shap_text = ", ".join(name for name, _value in shap_values[:3])
+        top_shap = shap_values[:3]
+        shap_text = ", ".join(name for name, _value in top_shap)
+        shap_hints = ", ".join(
+            f"{name}={_humanize_feature_name(name)}" for name, _value in top_shap
+        )
     else:
         shap_text = "sem SHAP"
+        shap_hints = "sem SHAP"
 
     observado = ", ".join(factors["observado"]) if factors["observado"] else "nenhum"
     previsto = ", ".join(factors["previsto"]) if factors["previsto"] else "nenhum"
 
     return (
         "Explique em uma frase curta, em portugues do Brasil, por que o alerta foi ou nao acionado. "
-        "Use linguagem leiga e direta. Nao mencione data, porcentagem, severidade, milimetros, numeros ou detalhes internos. "
-        "Frase generica e proibida: 'a chuva que caiu pode causar'. "
+        "Use linguagem leiga, direta e concreta. Nao mencione escala, limiar, valor, porcentagem, severidade, milimetros, numeros ou detalhes internos. "
+        "Descreva apenas os 2 ou 3 features mais importantes que o SHAP apontou. "
+        "Nao use frases genericas, conclusoes abstratas ou consequencias. "
         "Nao mencione deslizamento, solo saturado, escoamento ou absorcao. "
-        "Sinais observados ja aconteceram: use verbo no passado e mencione o tipo de chuva (ex: 'choveu nos ultimos dias', 'houve chuva acumulada'). "
-        "Sinais previstos vao acontecer: mencione o periodo do dia quando possivel (ex: 'vai chover a tarde', 'havera chuva concentrada'). "
+        "Saida desejada: 'Houve muita chuva nos ultimos dias e vai continuar chovendo no periodo da tarde.'. "
+        "Sinais observados ja aconteceram: use verbo no passado e cite a chuva recente. "
+        "Sinais previstos vao acontecer: use verbo no futuro e cite o periodo do dia quando houver concentracao. "
         "Nunca misture passado e futuro na mesma frase. "
-        "Se nao houver alerta, diga que a chuva ainda nao formou um padrao preocupante para alagamento. "
         f"sinais_observados={observado}; "
         f"sinais_previstos={previsto}; "
         f"fatores_SHAP={shap_text}; "
+        f"fatores_SHAP_descricao={shap_hints}; "
         "responda apenas com a justificativa final, sem bullet points e sem numeros."
     )
 

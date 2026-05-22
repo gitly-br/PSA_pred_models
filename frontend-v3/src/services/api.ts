@@ -113,6 +113,7 @@ function buildAllRegionDay(raw: unknown): RegionAllData | undefined {
     proba: (r.proba as number) ?? 0,
     rain_today: (r.rain_today as RegionAllData['rain_today']) ?? { night: 0, morning: 0, afternoon: 0, evening: 0 },
     explanation: (r.explanation as string) ?? '',
+    short_explanation: (r.short_explanation as string) ?? undefined,
     models: flattenModels(r.models),
   };
 }
@@ -122,6 +123,8 @@ function buildBasinDay(raw: unknown): RegionBasinData | undefined {
   const r = raw as Record<string, unknown>;
   return {
     proba: (r.proba as number) ?? 0,
+    explanation: (r.explanation as string) ?? undefined,
+    short_explanation: (r.short_explanation as string) ?? undefined,
     models: r.models as RegionBasinData['models'],
   };
 }

@@ -46,6 +46,7 @@ class WeatherDataRepository:
         start_date: date,
         end_date: date,
         station_ids: list[str] | None = None,
+        fields: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         start_utc, end_utc = self._to_utc_bounds(start_date, end_date)
         query = {"dt": {"$gte": start_utc, "$lt": end_utc}}
@@ -53,8 +54,14 @@ class WeatherDataRepository:
             query["station_id"] = {"$in": station_ids}
         else:
             query["$or"] = [{"bacia": bacia}, {"bacias": bacia}]
+
+        projection = None
+        if fields is not None:
+            projection = {f: 1 for f in fields}
+            projection["_id"] = 0
+
         docs: list[dict[str, Any]] = []
-        async for doc in self.collection.find(query):
+        async for doc in self.collection.find(query, projection=projection):
             if station_ids and not doc.get("bacia") and not doc.get("bacias"):
                 doc = dict(doc)
                 doc["bacia"] = bacia
@@ -63,7 +70,9 @@ class WeatherDataRepository:
 
         # Fallback to MinIO if MongoDB has no data for this period
         if not docs:
-            docs = self._get_minio_fallback().fetch_historic_documents(bacia, start_date, end_date)
+            docs = self._get_minio_fallback().fetch_historic_documents(
+                bacia, start_date, end_date, fields=fields,
+            )
 
         return docs
 

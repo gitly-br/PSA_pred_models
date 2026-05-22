@@ -20,7 +20,7 @@ DEFAULT_MONGO_URI = "mongodb://psa:psa@localhost:16521/?authSource=admin"
 
 
 async def bootstrap_local_weather(
-    cemaden_file: Path,
+    cemaden_source: Path,
     forecast_source: Path,
     station_bacias_path: Path | None = None,
     historic_prefix: str = "weather/cemaden/",
@@ -72,13 +72,32 @@ async def bootstrap_local_weather(
                         f"{prefix.rstrip('/')}/{staged_file.name}",
                     )
 
-        await asyncio.gather(
-            _stage_and_upload(cemaden_file, historic_prefix),
-            *(
-                _stage_and_upload(point_file, forecast_prefix)
-                for point_file in _forecast_files(forecast_source)
-            ),
-        )
+            async def _upload_monthly(source_file: Path, prefix: str) -> None:
+                async with semaphore:
+                    if not source_file.exists():
+                        return
+                    await asyncio.to_thread(
+                        minio.upload_file,
+                        source_file,
+                        f"{prefix.rstrip('/')}/{source_file.name}",
+                    )
+
+            if cemaden_source.is_dir():
+                cemaden_files = sorted(cemaden_source.glob("cemaden_*.parquet"))
+                cemaden_files = [f for f in cemaden_files if _file_month_in_range(f.name, "", start_date, end_date)]
+                await asyncio.gather(*(
+                    _upload_monthly(f, historic_prefix) for f in cemaden_files
+                ))
+            else:
+                await _stage_and_upload(cemaden_source, historic_prefix)
+
+            forecast_files = _forecast_files(forecast_source)
+            if forecast_source.is_dir():
+                forecast_files = [f for f in forecast_files if _file_month_in_range(f.name, "", start_date, end_date)]
+            if forecast_files:
+                await asyncio.gather(*(
+                    _stage_and_upload(f, forecast_prefix) for f in forecast_files
+                ))
 
         await mongo.get_data_collection("forecast").delete_many({})
 
@@ -89,10 +108,24 @@ async def bootstrap_local_weather(
             historic_prefix=historic_prefix,
             forecast_prefix=forecast_prefix,
             point_bacias=point_bacias,
+            workers=workers,
         )
         return counters
     finally:
         await mongo.close()
+
+
+def _file_month_in_range(filename: str, prefix: str, start_date: date, end_date: date) -> bool:
+    import re
+
+    stem = filename.replace(prefix, "").replace(".parquet", "")
+    m = re.search(r"(\d{4})_(\d{2})", stem)
+    if not m:
+        return True
+    file_date = date(int(m.group(1)), int(m.group(2)), 1)
+    month_end = date(file_date.year, file_date.month, 28) + timedelta(days=4)
+    month_end = month_end.replace(day=1) - timedelta(days=1)
+    return file_date <= end_date and month_end >= start_date
 
 
 def _filter_parquet_to_year(source_file: Path, year: int, output_dir: Path) -> Path:
@@ -112,6 +145,9 @@ def _filter_parquet_to_year(source_file: Path, year: int, output_dir: Path) -> P
 
 def _forecast_files(forecast_source: Path) -> list[Path]:
     if forecast_source.is_dir():
+        monthly = sorted(forecast_source.glob("openmeteo_*.parquet"))
+        if monthly:
+            return monthly
         return sorted(forecast_source.glob("pt_*.parquet"))
     return [forecast_source]
 
@@ -159,19 +195,19 @@ def _filter_parquet_to_window(source_file: Path, start_date: date, end_date: dat
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Seed MinIO with local parquets and bootstrap api_data")
-    parser.add_argument("--cemaden-file", default=str((REPO_ROOT / "notebooks/dados/cemaden_abcd.parquet")))
-    parser.add_argument("--forecast-source", default=str((REPO_ROOT / "notebooks/dados/weather/openmeteo_multipoint")))
+    parser.add_argument("--cemaden-dir", default=str((REPO_ROOT / "notebooks/dados/weather/monthly/historic")))
+    parser.add_argument("--forecast-dir", default=str((REPO_ROOT / "notebooks/dados/weather/monthly/forecast")))
     parser.add_argument("--station-bacias", default=None)
     parser.add_argument("--historic-prefix", default="weather/cemaden/")
     parser.add_argument("--forecast-prefix", default="weather/openweather/forecast/")
     parser.add_argument("--start-date", default="2025-01-01")
-    parser.add_argument("--end-date", default="2025-02-28")
-    parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--end-date", default="2026-05-31")
+    parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args()
 
     counters = await bootstrap_local_weather(
-        cemaden_file=Path(args.cemaden_file).resolve(),
-        forecast_source=Path(args.forecast_source).resolve(),
+        cemaden_source=Path(args.cemaden_dir).resolve(),
+        forecast_source=Path(args.forecast_dir).resolve(),
         station_bacias_path=Path(args.station_bacias).resolve() if args.station_bacias else None,
         historic_prefix=args.historic_prefix,
         forecast_prefix=args.forecast_prefix,

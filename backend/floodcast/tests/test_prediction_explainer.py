@@ -61,12 +61,14 @@ def test_build_explanation_prompt_is_compact_and_contains_key_context():
     assert "acum_7d" in prompt
     assert "sinais_observados" in prompt
     assert "sinais_previstos" in prompt
+    assert "fatores_SHAP_descricao" in prompt
     assert "chuva acumulada nos ultimos dias" in prompt
     assert "chuva concentrada em um periodo curto" in prompt
     assert "bacia carregada" not in prompt
     assert "solo saturado" in prompt
     assert "escoamento" in prompt
-    assert len(prompt) < 1200
+    assert "escala" in prompt
+    assert len(prompt) < 1600
 
 
 def test_build_explanation_prompt_handles_missing_shap():

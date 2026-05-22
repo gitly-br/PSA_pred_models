@@ -6,8 +6,8 @@ services:
       MINIO_ROOT_USER: psa
       MINIO_ROOT_PASSWORD: psa12345
     ports:
-      - "19002:9000"
-      - "19003:9001"
+      - "19000:9000"
+      - "19001:9001"
     volumes:
       - project_minio_data:/data
     networks:
@@ -17,7 +17,7 @@ services:
     image: mongo:7.0
     init: true
     ports:
-      - "16522:27017"
+      - "16521:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: psa
       MONGO_INITDB_ROOT_PASSWORD: psa
@@ -28,9 +28,9 @@ services:
 
   floodcast:
     build:
-      context: ./worktrees/integrate-flood-watch-hub/backend
+      context: ./backend
       dockerfile: Dockerfile
-    entrypoint: []
+    entrypoint: ["python", "-m", "floodcast.main"]
     working_dir: /workspace/backend
     environment:
       MONGO_URI: mongodb://psa:psa@mongo:27017/?authSource=admin
@@ -44,7 +44,7 @@ services:
       OPENROUTER_EXPLANATION_MODEL: ${OPENROUTER_EXPLANATION_MODEL:-google/gemini-2.5-flash-lite}
       OPENROUTER_EXPLANATION_TIMEOUT_SECONDS: ${OPENROUTER_EXPLANATION_TIMEOUT_SECONDS:-8.0}
     volumes:
-      - ./worktrees/integrate-flood-watch-hub:/workspace
+      - ./:/workspace
     depends_on:
       - minio
       - mongo
@@ -53,43 +53,43 @@ services:
 
   sentry:
     build:
-      context: ./worktrees/integrate-flood-watch-hub/backend
+      context: ./backend
       dockerfile: Dockerfile
     entrypoint: []
     working_dir: /workspace/backend/sentry
     command: ["python", "source/run.py", "--env", "local"]
     environment:
-      MONGO_URI: mongodb://psa:psa@host.docker.internal:16521/?authSource=admin
-      MONGO_GITLY_CONNECTION_STRING: mongodb://psa:psa@host.docker.internal:16521/?authSource=admin
+      MONGO_URI: mongodb://psa:psa@mongo:27017/?authSource=admin
+      MONGO_GITLY_CONNECTION_STRING: mongodb://psa:psa@mongo:27017/?authSource=admin
       MONGO_GITLY_VERSION_SCHEMA: "1"
-      MINIO_ENDPOINT: host.docker.internal:19000
+      MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: psa
       MINIO_SECRET_KEY: psa12345
       MINIO_BUCKET: psa
       MINIO_SECURE: "false"
       PYTHONPATH: /workspace/backend/floodcast:/workspace/backend/harvest:/workspace/backend/sentry/source
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_EXPLANATION_MODEL: ${OPENROUTER_EXPLANATION_MODEL:-google/gemini-2.5-flash-lite}
     volumes:
-      - ./worktrees/integrate-flood-watch-hub:/workspace
+      - ./:/workspace
     depends_on:
       - mongo
     ports:
-      - "8082:8080"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "8080:8080"
     networks:
       - psa_network
 
   frontend:
     build:
-<<<<<<< Updated upstream
       context: ./frontend-v3
-=======
-      context: ./worktrees/integrate-flood-watch-hub/frontend-v3
->>>>>>> Stashed changes
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: /api
         VITE_USE_MOCK_DATA: "false"
+        VITE_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+        VITE_OPENROUTER_MODEL: ${OPENROUTER_EXPLANATION_MODEL:-google/gemini-2.5-flash-lite}
+        VITE_OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-}
+        VITE_OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-PSA}
     ports:
       - "8081:80"
     depends_on:

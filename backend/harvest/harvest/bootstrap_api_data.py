@@ -189,6 +189,7 @@ async def bootstrap_api_data(
     point_bacias: dict[str, list[str]] | None = None,
     historic_prefix: str = DEFAULT_HISTORIC_PREFIX,
     forecast_prefix: str = DEFAULT_FORECAST_PREFIX,
+    workers: int = 4,
 ) -> dict[str, int]:
     station_bacias = station_bacias or {}
     point_bacias = point_bacias or {}
@@ -201,27 +202,56 @@ async def bootstrap_api_data(
 
     counters = {"historic": 0, "forecast": 0}
 
-    for object_name in minio.list_objects(historic_prefix):
-        if not object_name.endswith(".parquet"):
-            continue
-        frame = _load_parquet_bytes(minio.get_object_bytes(object_name))
-        documents = _build_historic_documents(frame, object_name, station_bacias=station_bacias)
-        counters["historic"] += await _upsert_many(
-            historic_collection,
-            documents,
-            [("provider", 1), ("station_id", 1), ("dt", 1)],
-        )
+    semaphore = asyncio.Semaphore(max(1, workers))
 
-    for object_name in minio.list_objects(forecast_prefix):
-        if not object_name.endswith(".parquet"):
-            continue
-        frame = _load_parquet_bytes(minio.get_object_bytes(object_name))
-        documents = _build_forecast_documents(frame, object_name, point_bacias=point_bacias)
-        counters["forecast"] += await _upsert_many(
-            forecast_collection,
-            documents,
-            [("provider", 1), ("point_id", 1), ("dt_request", 1)],
-        )
+    async def _process_object(
+        object_name: str,
+        collection,
+        builder,
+        builder_kwargs: dict[str, Any],
+        index_fields: list[tuple[str, int]],
+    ) -> int:
+        async with semaphore:
+            raw_bytes = await asyncio.to_thread(minio.get_object_bytes, object_name)
+            frame = await asyncio.to_thread(_load_parquet_bytes, raw_bytes)
+            documents = await asyncio.to_thread(builder, frame, object_name, **builder_kwargs)
+            return await _upsert_many(collection, documents, index_fields)
+
+    historic_objects = [
+        object_name
+        for object_name in minio.list_objects(historic_prefix)
+        if object_name.endswith(".parquet")
+    ]
+    if historic_objects:
+        historic_counts = await asyncio.gather(*(
+            _process_object(
+                object_name,
+                historic_collection,
+                _build_historic_documents,
+                {"station_bacias": station_bacias},
+                [("provider", 1), ("station_id", 1), ("dt", 1)],
+            )
+            for object_name in historic_objects
+        ))
+        counters["historic"] += sum(historic_counts)
+
+    forecast_objects = [
+        object_name
+        for object_name in minio.list_objects(forecast_prefix)
+        if object_name.endswith(".parquet")
+    ]
+    if forecast_objects:
+        forecast_counts = await asyncio.gather(*(
+            _process_object(
+                object_name,
+                forecast_collection,
+                _build_forecast_documents,
+                {"point_bacias": point_bacias},
+                [("provider", 1), ("point_id", 1), ("dt_request", 1)],
+            )
+            for object_name in forecast_objects
+        ))
+        counters["forecast"] += sum(forecast_counts)
 
     return counters
 
@@ -231,6 +261,7 @@ async def main() -> None:
     parser.add_argument("--station-bacias", help="Path to estacoes_bacia.json", default=None)
     parser.add_argument("--historic-prefix", default=DEFAULT_HISTORIC_PREFIX)
     parser.add_argument("--forecast-prefix", default=DEFAULT_FORECAST_PREFIX)
+    parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
@@ -257,6 +288,7 @@ async def main() -> None:
             station_bacias=station_bacias,
             historic_prefix=args.historic_prefix,
             forecast_prefix=args.forecast_prefix,
+            workers=args.workers,
         )
         print(json.dumps(counters, ensure_ascii=False))
     finally:

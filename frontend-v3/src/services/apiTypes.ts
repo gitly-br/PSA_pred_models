@@ -33,11 +33,14 @@ export interface RegionAllData {
   };
   proba: number; // 0-1 float
   explanation?: string;
+  short_explanation?: string;
   models?: Record<string, RegionModelEntry>;
 }
 
 export interface RegionBasinData {
   proba: number; // 0-1 float
+  explanation?: string;
+  short_explanation?: string;
   models?: Record<string, { proba: number }>;
 }
 
