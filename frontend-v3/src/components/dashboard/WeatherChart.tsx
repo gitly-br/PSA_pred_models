@@ -34,7 +34,7 @@ export default function WeatherChart({ data }: WeatherChartProps) {
       <CardHeader className="pb-2">
         <CardTitle className="font-heading text-base">Previsão do Tempo</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Dados climáticos de Santo André fornecidos por OpenWeather.
+          Dados climáticos de Santo André fornecidos por OpenMeteo.
         </p>
       </CardHeader>
       <CardContent>

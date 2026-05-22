@@ -24,7 +24,7 @@ async def bootstrap_local_weather(
     forecast_source: Path,
     station_bacias_path: Path | None = None,
     historic_prefix: str = "weather/cemaden/",
-    forecast_prefix: str = "weather/openweather/forecast/",
+    forecast_prefix: str = "weather/openmeteo/forecast/",
     start_date: date = date(2025, 1, 1),
     end_date: date = date(2025, 2, 28),
     workers: int = 2,
@@ -199,7 +199,7 @@ async def main() -> None:
     parser.add_argument("--forecast-dir", default=str((REPO_ROOT / "notebooks/dados/weather/monthly/forecast")))
     parser.add_argument("--station-bacias", default=None)
     parser.add_argument("--historic-prefix", default="weather/cemaden/")
-    parser.add_argument("--forecast-prefix", default="weather/openweather/forecast/")
+    parser.add_argument("--forecast-prefix", default="weather/openmeteo/forecast/")
     parser.add_argument("--start-date", default="2025-01-01")
     parser.add_argument("--end-date", default="2026-05-31")
     parser.add_argument("--workers", type=int, default=4)

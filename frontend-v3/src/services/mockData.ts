@@ -25,6 +25,7 @@ export interface PredictionDay {
     noite: number;
   };
   message: string;
+  longExplanation?: string;
   explainMeta?: PredictionExplainMeta;
 }
 
@@ -125,6 +126,7 @@ export function generatePredictionDays(selectedDate: Date): PredictionDay[] {
         noite: seededInt(seed + 4, 0, probability + 10) / 100,
       },
       message,
+      longExplanation: message,
       explainMeta: {
         cacheDateIso: format(date, 'yyyy-MM-dd'),
         cacheScope: `mock:${offset}:santoandre:all`,

@@ -1,11 +1,12 @@
 # Makefile for environment management
 
 SHELL := /bin/bash
-.PHONY: envs local dev prod help bootstrap-local-weather
+.PHONY: env envs local dev prod help bootstrap-local-weather
 
 # Default target
 help:
 	@echo "Available targets:"
+	@echo "  env   - Generate .env from .env.local"
 	@echo "  envs  - Create environment files from .env.example"
 	@echo "  local - Source local environment variables"
 	@echo "  dev   - Source development environment variables"
@@ -14,6 +15,14 @@ help:
 	@echo "  help  - Show this help message"
 
 # Create environment files from template
+env:
+	@if [ ! -f .env.local ]; then \
+		echo "Missing .env.local"; \
+		exit 1; \
+	fi
+	@sed 's/^export //' .env.local > .env
+	@echo "✓ Generated .env from .env.local"
+
 envs:
 	@echo "Creating environment files from .env.example..."
 	@if [ ! -f .env.local ]; then \

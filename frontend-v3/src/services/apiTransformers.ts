@@ -59,6 +59,7 @@ function transformDayPrediction(
   const rainToday = allData?.rain_today;
 
   const pipelineMsg =
+    allData?.headline ??
     allData?.short_explanation ??
     allData?.explanation ??
     (proba < 0.2
@@ -66,6 +67,8 @@ function transformDayPrediction(
       : proba < 0.5
         ? 'Precipitação leve prevista, atenção moderada'
         : 'Alta precipitação prevista, atenção redobrada');
+
+  const longExplanation = allData?.analise_completa ?? allData?.explanation ?? pipelineMsg;
 
   const shapPairs = pickPrimaryModelShap(allData?.models);
   const fatoresSimples = buildFactorsSimpleText(shapPairs);
@@ -82,6 +85,7 @@ function transformDayPrediction(
       noite: rainToday ? clamp01(rainToday.evening) : clamp01(proba),
     },
     message: pipelineMsg,
+    longExplanation,
     explainMeta: {
       cacheDateIso: format(date, 'yyyy-MM-dd'),
       cacheScope: `${APP_CONFIG.REGION_NAME}:all`,
@@ -125,8 +129,12 @@ export function transformPredictionsFromWeather(
       },
       message:
         totalRain > 0
-          ? `Dados OpenWeather disponíveis. Chuva acumulada prevista: ${totalRain.toFixed(1)} mm.`
-          : 'Dados OpenWeather disponíveis. Sem chuva acumulada prevista no período.',
+          ? `Dados OpenMeteo disponíveis. Chuva acumulada prevista: ${totalRain.toFixed(1)} mm.`
+          : 'Dados OpenMeteo disponíveis. Sem chuva acumulada prevista no período.',
+      longExplanation:
+        totalRain > 0
+          ? `Chuva acumulada prevista de ${totalRain.toFixed(1)} mm ao longo do período.`
+          : 'Sem chuva acumulada prevista no período.',
     };
   });
 }

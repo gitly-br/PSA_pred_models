@@ -114,6 +114,7 @@ function buildAllRegionDay(raw: unknown): RegionAllData | undefined {
     rain_today: (r.rain_today as RegionAllData['rain_today']) ?? { night: 0, morning: 0, afternoon: 0, evening: 0 },
     explanation: (r.explanation as string) ?? '',
     short_explanation: (r.short_explanation as string) ?? undefined,
+    headline: (r.headline as string) ?? undefined,
     models: flattenModels(r.models),
   };
 }
@@ -125,6 +126,7 @@ function buildBasinDay(raw: unknown): RegionBasinData | undefined {
     proba: (r.proba as number) ?? 0,
     explanation: (r.explanation as string) ?? undefined,
     short_explanation: (r.short_explanation as string) ?? undefined,
+    headline: (r.headline as string) ?? undefined,
     models: r.models as RegionBasinData['models'],
   };
 }
@@ -207,7 +209,7 @@ export const api = {
       const data = await fetchRegionData(date);
       return transformPredictions(data, date);
     } catch (error) {
-      console.warn('Region inference unavailable, using OpenWeather only:', error);
+      console.warn('Region inference unavailable, using OpenMeteo forecast only:', error);
       const hourlyData = await fetchForecastData(date);
       return transformPredictionsFromWeather(hourlyData, date);
     }

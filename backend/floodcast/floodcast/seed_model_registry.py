@@ -17,7 +17,7 @@ from .model_registry import ChampionModelSpec, upsert_model_spec
 from .ordinal_model import ChampionOrdinalModel
 
 
-THRESHOLD_FLOOR = 0.1
+THRESHOLD_FLOOR = 0.15
 
 
 DEFAULT_ARTIFACT_PATH = Path(
@@ -110,6 +110,7 @@ def _build_compatible_champion(meta: dict[str, object], bacia: str) -> ChampionO
         2: float(_extract_thresholds(meta, bacia).get("2", 0.25)) + (seed % 5) * 0.005,
         3: float(_extract_thresholds(meta, bacia).get("3", 0.25)) + (seed % 3) * 0.005,
     }
+    threshold_calibration = max(max(thresholds.values()), THRESHOLD_FLOOR)
 
     pipelines = {}
     for level, offset in ((1, -0.5), (2, 0.0), (3, 0.5)):
@@ -127,6 +128,7 @@ def _build_compatible_champion(meta: dict[str, object], bacia: str) -> ChampionO
     return ChampionOrdinalModel(
         pipelines=pipelines,
         thresholds=thresholds,
+        threshold_calibration=threshold_calibration,
         features=features,
         bacia=bacia,
         modeling_family=str(meta.get("modeling_family") or "psa_v7_ordinal"),

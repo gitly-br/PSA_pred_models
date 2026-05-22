@@ -177,7 +177,7 @@ class MinIOWeatherFallback:
 
     def fetch_forecast_documents(self, bacia: str, target_date: date) -> list[dict[str, Any]]:
         start_utc, end_utc = _utc_bounds(target_date, target_date + timedelta(days=1))
-        for prefix in ("weather/openweather/forecast/", "weather/openmeteo/forecast/"):
+        for prefix in ("weather/openmeteo/forecast/",):
             frames = self._get_forecast_frames(prefix)
             if not frames:
                 continue
@@ -231,7 +231,7 @@ class MinIOWeatherFallback:
 
                 docs.append(
                     {
-                        "provider": "openweather" if "openweather" in prefix else "openmeteo",
+                        "provider": "openmeteo",
                         "point_id": point_id,
                         "bacia": bacias[0] if bacias else None,
                         "bacias": bacias,

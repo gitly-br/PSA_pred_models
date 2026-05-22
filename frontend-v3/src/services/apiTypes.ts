@@ -34,6 +34,8 @@ export interface RegionAllData {
   proba: number; // 0-1 float
   explanation?: string;
   short_explanation?: string;
+  headline?: string;
+  analise_completa?: string;
   models?: Record<string, RegionModelEntry>;
 }
 
@@ -41,10 +43,12 @@ export interface RegionBasinData {
   proba: number; // 0-1 float
   explanation?: string;
   short_explanation?: string;
+  headline?: string;
+  analise_completa?: string;
   models?: Record<string, { proba: number }>;
 }
 
-// GET /forecast-data/santoandre/openweather?date=YYYY-MM-DD
+// GET /forecast-data?date=YYYY-MM-DD
 export interface ForecastHourlyItem {
   temp: number;
   rain: number;

@@ -9,7 +9,7 @@ from typing import Any
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://psa:psa@localhost:16521/?authSource=admin")
 DB_NAME = "floodcast"
 COLLECTION_NAME = "models"
-THRESHOLD_FLOOR = 0.1
+THRESHOLD_FLOOR = 0.15
 
 
 @dataclass(frozen=True)
@@ -36,6 +36,12 @@ def _normalize_doc(doc: dict[str, Any]) -> dict[str, Any]:
             for key, value in raw_thresholds.items()
         }
 
+    threshold_calibration = doc.get("threshold_calibration")
+    if threshold_calibration is None and thresholds:
+        threshold_calibration = max(thresholds.values())
+    if threshold_calibration is not None:
+        threshold_calibration = max(float(threshold_calibration), THRESHOLD_FLOOR)
+
     return {
         "name": name,
         "bacia": bacia,
@@ -44,6 +50,7 @@ def _normalize_doc(doc: dict[str, Any]) -> dict[str, Any]:
         "artifact_uri": str(doc.get("artifact_uri") or ""),
         "features": list(doc.get("features") or []),
         "thresholds": thresholds,
+        "threshold_calibration": threshold_calibration,
         "station_ids": list(doc.get("station_ids") or []),
         "modeling_family": str(doc.get("modeling_family") or "psa_v7_ordinal"),
         "obj_version": str(doc.get("obj_version") or "0.3"),
@@ -63,6 +70,7 @@ async def upsert_model_spec(spec: ChampionModelSpec) -> None:
         str(key): max(float(value), THRESHOLD_FLOOR)
         for key, value in spec.thresholds.items()
     }
+    threshold_calibration = max(thresholds.values()) if thresholds else THRESHOLD_FLOOR
     await collection.update_one(
         {"name": spec.name, "bacia": spec.bacia},
         {
@@ -74,6 +82,7 @@ async def upsert_model_spec(spec: ChampionModelSpec) -> None:
                 "artifact_uri": spec.artifact_uri,
                 "features": spec.features,
                 "thresholds": thresholds,
+                "threshold_calibration": threshold_calibration,
                 "station_ids": spec.station_ids,
                 "modeling_family": spec.modeling_family,
                 "obj_version": spec.obj_version,

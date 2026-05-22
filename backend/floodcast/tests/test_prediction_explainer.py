@@ -4,6 +4,8 @@ import asyncio
 
 from floodcast.prediction_explainer import (
     build_explanation_prompt,
+    build_dashboard_explanation_prompt,
+    generate_dashboard_explanation,
     generate_short_explanation,
     normalize_short_explanation,
     _derive_operational_factors,
@@ -155,7 +157,7 @@ def test_generate_short_explanation_success_uses_openrouter_contract(monkeypatch
         }
 
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
-    monkeypatch.setenv("OPENROUTER_EXPLANATION_MODEL", "cheap/model")
+    monkeypatch.setenv("OPENROUTER_DASHBOARD_MODEL", "deepseek/deepseek-v4-flash")
     monkeypatch.setenv("OPENROUTER_EXPLANATION_TIMEOUT_SECONDS", "1.5")
 
     result = asyncio.run(generate_short_explanation(_prediction(), http_post=fake_post))
@@ -163,11 +165,46 @@ def test_generate_short_explanation_success_uses_openrouter_contract(monkeypatch
     assert result == "Risco moderado: chuva à tarde e API recente elevada."
     assert captured["url"].endswith("/chat/completions")
     assert captured["headers"]["Authorization"] == "Bearer test-key"
-    assert captured["payload"]["model"] == "cheap/model"
+    assert captured["payload"]["model"] == "deepseek/deepseek-v4-flash"
     assert captured["timeout"] == 1.5
     assert captured["payload"]["messages"][-1]["content"] == build_explanation_prompt(_prediction())
     assert "2026-05-02" not in captured["payload"]["messages"][-1]["content"]
     assert "12.5" not in captured["payload"]["messages"][-1]["content"]
+
+
+def test_generate_dashboard_explanation_success_uses_openrouter_contract(monkeypatch):
+    captured = {}
+
+    async def fake_post(url, headers, payload, timeout):
+        captured["url"] = url
+        captured["headers"] = headers
+        captured["payload"] = payload
+        captured["timeout"] = timeout
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": '{"headline":"Chuva forte à tarde","analise_completa":"Choveu nos últimos dias e a chuva continua à tarde. Mantenha monitoramento."}'
+                    }
+                }
+            ]
+        }
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("OPENROUTER_EXPLANATION_MODEL", "openai/gpt-4o-mini")
+    monkeypatch.setenv("OPENROUTER_EXPLANATION_TIMEOUT_SECONDS", "1.5")
+
+    result = asyncio.run(generate_dashboard_explanation(_prediction(), http_post=fake_post))
+
+    assert result == {
+        "headline": "Chuva forte à tarde",
+        "analise_completa": "Choveu nos últimos dias e a chuva continua à tarde. Mantenha monitoramento.",
+    }
+    assert captured["url"].endswith("/chat/completions")
+    assert captured["headers"]["Authorization"] == "Bearer test-key"
+    assert captured["payload"]["model"] == "openai/gpt-4o-mini"
+    assert captured["timeout"] == 1.5
+    assert captured["payload"]["messages"][-1]["content"] == build_dashboard_explanation_prompt(_prediction())
 
 
 def test_generate_short_explanation_http_error_returns_none(monkeypatch):

@@ -13,7 +13,7 @@ from .model_registry import get_active_models
 from .artifact_loader import load_artifact
 from .explainability import compute_shap_explanation
 from .minio_weather_fallback import WeatherDataUnavailableError
-from .prediction_explainer import generate_short_explanation
+from .prediction_explainer import generate_dashboard_explanation, generate_short_explanation
 
 try:
     from .inference_writer import InferenceWriter
@@ -75,7 +75,7 @@ def _display_probability(raw_proba: float, threshold: float | None, calibrated_p
 
     threshold = float(np.clip(threshold, 0.1, 1.0))
     if probability <= threshold:
-        apparent = 0.5 * (probability / threshold)
+        apparent = 0.4 * (probability / threshold)
         return round(float(np.clip(apparent, 0.0, 1.0)), 4)
 
     upper_span = 1.0 - threshold
@@ -83,7 +83,7 @@ def _display_probability(raw_proba: float, threshold: float | None, calibrated_p
         return 1.0
 
     normalized = (probability - threshold) / upper_span
-    apparent = 0.5 + 0.5 * (1.0 - (1.0 - normalized) ** 2)
+    apparent = 0.4 + 0.6 * (1.0 - (1.0 - normalized) ** 2)
     return round(float(np.clip(apparent, 0.0, 1.0)), 4)
 
 
@@ -215,9 +215,11 @@ async def run_floodcast(target_date: datetime | None = None, debug: bool = False
                         raw_proba = float(_first_scalar(p_event))
             except Exception:
                 pass
-        threshold_map = model_config.get("thresholds") or {}
-        threshold_value = threshold_map.get(str(max(severity_value, 1))) or threshold_map.get("1")
-        threshold_value = float(np.clip(float(threshold_value), 0.1, 1.0)) if threshold_value is not None else None
+        threshold_value = model_config.get("threshold_calibration")
+        if threshold_value is None:
+            threshold_map = model_config.get("thresholds") or {}
+            threshold_value = max((float(value) for value in threshold_map.values()), default=None)
+        threshold_value = float(np.clip(float(threshold_value), 0.15, 1.0)) if threshold_value is not None else None
 
         # Apply calibration if available
         calibration = model_config.get("calibration")
@@ -273,9 +275,27 @@ async def run_floodcast(target_date: datetime | None = None, debug: bool = False
             "forecast_summary": forecast_summary,
         }
         try:
-            prediction["short_explanation"] = await generate_short_explanation(prediction)
+            total_mm = float(forecast_summary.get("total_mm") or 0.0)
+            if total_mm < 3.5:
+                fixed_short = "Sem risco de alagamento."
+                fixed_long = "Não há previsão de chuva significativa para este período, portanto, o risco é zero."
+                prediction["headline"] = fixed_short
+                prediction["explanation"] = fixed_long
+                prediction["short_explanation"] = fixed_short
+            else:
+                dashboard_explanation = await generate_dashboard_explanation(prediction)
+                if dashboard_explanation:
+                    prediction["headline"] = dashboard_explanation["headline"]
+                    prediction["explanation"] = dashboard_explanation["explanation"]
+                    prediction["short_explanation"] = dashboard_explanation["headline"]
+                else:
+                    prediction["headline"] = None
+                    prediction["explanation"] = None
+                    prediction["short_explanation"] = await generate_short_explanation(prediction)
         except Exception:
-            logger.warning("Short explanation failed for bacia=%s", bacia, exc_info=True)
+            logger.warning("Dashboard explanation failed for bacia=%s", bacia, exc_info=True)
+            prediction["headline"] = None
+            prediction["explanation"] = None
             prediction["short_explanation"] = None
         return {"type": "prediction", "data": prediction}
 

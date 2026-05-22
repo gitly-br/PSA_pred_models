@@ -86,10 +86,6 @@ services:
       args:
         VITE_API_BASE_URL: /api
         VITE_USE_MOCK_DATA: "false"
-        VITE_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-        VITE_OPENROUTER_MODEL: ${OPENROUTER_EXPLANATION_MODEL:-google/gemini-2.5-flash-lite}
-        VITE_OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-}
-        VITE_OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-PSA}
     ports:
       - "8081:80"
     depends_on:

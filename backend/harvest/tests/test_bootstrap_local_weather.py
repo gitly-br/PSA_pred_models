@@ -71,10 +71,10 @@ def test_bootstrap_local_weather_seeds_and_bootstraps(monkeypatch, tmp_path):
 
     assert result == {"historic": 7, "forecast": 3}
     assert dummy_minio.bucket_ensured is True
-    assert dummy_minio.deleted == ["weather/cemaden/", "weather/openweather/forecast/"]
+    assert dummy_minio.deleted == ["weather/cemaden/", "weather/openmeteo/forecast/"]
     assert sorted(dummy_minio.uploaded) == sorted([
         ("cemaden.parquet", "weather/cemaden/cemaden.parquet", None),
-        ("forecast.parquet", "weather/openweather/forecast/forecast.parquet", None),
+        ("forecast.parquet", "weather/openmeteo/forecast/forecast.parquet", None),
     ])
     assert captured["historic_prefix"] == "weather/cemaden/"
-    assert captured["forecast_prefix"] == "weather/openweather/forecast/"
+    assert captured["forecast_prefix"] == "weather/openmeteo/forecast/"

@@ -76,6 +76,19 @@ class InferenceWriter:
             for period, value in totals.items()
         }
 
+    @staticmethod
+    def _pick_most_dangerous_model(models: dict[str, dict]) -> dict | None:
+        if not models:
+            return None
+
+        def _score(model: dict) -> tuple[int, float, int]:
+            severity = int(model.get("severity") or model.get("predict") or 0)
+            proba = float(model.get("proba") or 0.0)
+            predict = int(model.get("predict") or 0)
+            return severity, proba, predict
+
+        return max(models.values(), key=_score)
+
     def _get_explanation(self, shap_values: list[tuple]) -> str:
         most_important_feature = shap_values[0][0]
         split_feature_name = most_important_feature.split("_")
@@ -126,12 +139,16 @@ class InferenceWriter:
             calibrated_proba_value = pred.get("calibrated_proba")
             shap_explanation = pred.get("shap_explanation")
             short_explanation = pred.get("short_explanation")
+            headline = pred.get("headline") or short_explanation
+            explanation = pred.get("explanation")
             forecast_summary = pred.get("forecast_summary") or {}
 
             model_result = {"predict": predict_value}
             model_result["severity"] = severity_value
             model_result["shap"] = shap_explanation
-            model_result["short_explanation"] = short_explanation
+            model_result["short_explanation"] = headline
+            model_result["headline"] = headline
+            model_result["explanation"] = explanation
             if proba_value is not None:
                 model_result["proba"] = proba_value
             if raw_proba_value is not None:
@@ -155,14 +172,13 @@ class InferenceWriter:
                 subregion_proba = sum(data["probas"]) / len(data["probas"]) if data["probas"] else None
                 subregion_shap = data["shaps"][0] if data["shaps"] else None
                 subregion_severity = max(data.get("severities") or [subregion_predict])
-                subregion_short_explanation = next(
-                    (
-                        mr.get("short_explanation")
-                        for mr in data["models"].values()
-                        if mr.get("short_explanation")
-                    ),
-                    None,
+                dominant_model = self._pick_most_dangerous_model(data["models"])
+                subregion_short_explanation = (
+                    dominant_model.get("headline") or dominant_model.get("short_explanation")
+                    if dominant_model
+                    else None
                 )
+                subregion_explanation = dominant_model.get("explanation") if dominant_model else None
 
                 # Aggregate raw/calibrated proba per model for this subregion
                 subregion_raw_probas = []
@@ -184,7 +200,7 @@ class InferenceWriter:
                 subregion_cal_proba = (sum(subregion_cal_probas) / len(subregion_cal_probas)) if subregion_cal_probas else None
 
                 if subregion_forecast_total_mm < 3.5:
-                    explanation = "Não há precipitação significativa prevista para o período"
+                    explanation = "Não há previsão de chuva significativa para este período, portanto, o risco é zero."
                     rain_today = self._forecast_period_display(subregion_forecast_summary, 0.0)
                     subregion_predict = 0
                     subregion_proba = 0.0
@@ -198,6 +214,8 @@ class InferenceWriter:
                     else:
                         explanation = "Modelo ordinal V7 sem explicabilidade local exportada."
                     rain_today = self._forecast_period_display(subregion_forecast_summary, subregion_proba)
+                if subregion_forecast_total_mm >= 3.5 and subregion_explanation:
+                    explanation = subregion_explanation
                 
                 final_results_by_day[day][subregion] = {
                     "predict": subregion_predict,
@@ -208,6 +226,8 @@ class InferenceWriter:
                     "explanation": explanation,
                     "shap_explanation": subregion_shap,
                     "short_explanation": subregion_short_explanation,
+                    "headline": subregion_short_explanation,
+                    "explanation": explanation,
                     "rain_today": rain_today,
                     "forecast_summary": subregion_forecast_summary,
                     "models": data["models"]
@@ -240,9 +260,10 @@ class InferenceWriter:
                     "proba": float(max_proba_item.get("proba") or 0.0),
                     "raw_proba": max_proba_item.get("raw_proba") or winner.get("raw_proba"),
                     "calibrated_proba": max_proba_item.get("calibrated_proba") or winner.get("calibrated_proba"),
-                    "explanation": winner.get("explanation", ""),
                     "shap_explanation": winner.get("shap_explanation") or max_proba_item.get("shap_explanation"),
-                    "short_explanation": winner.get("short_explanation"),
+                    "short_explanation": winner.get("headline") or winner.get("short_explanation"),
+                    "headline": winner.get("headline") or winner.get("short_explanation"),
+                    "explanation": winner.get("explanation"),
                     "rain_today": max_proba_item.get("rain_today", {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}),
                     "winner_region": winner_name,
                     "forecast_summary": max_proba_item.get("forecast_summary", {}),
@@ -262,9 +283,10 @@ class InferenceWriter:
                     "proba": float(best.get("proba") or 0.0) if best else 0.0,
                     "raw_proba": best.get("raw_proba") if best else 0.0,
                     "calibrated_proba": best.get("calibrated_proba") if best else None,
-                    "explanation": best.get("explanation") if best else "Não há precipitação significativa prevista para o período",
                     "shap_explanation": best.get("shap_explanation") if best else None,
-                    "short_explanation": best.get("short_explanation") if best else None,
+                    "short_explanation": (best.get("headline") or best.get("short_explanation")) if best else None,
+                    "headline": (best.get("headline") or best.get("short_explanation")) if best else None,
+                    "explanation": best.get("explanation") if best else None,
                     "rain_today": best.get("rain_today", {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0}) if best else {"night": 0.0, "morning": 0.0, "afternoon": 0.0, "evening": 0.0},
                     "winner_region": best_name,
                     "forecast_summary": best.get("forecast_summary", {"point_count": 0, "total_mm": 0.0, "max_point_total_mm": 0.0, "min_point_total_mm": 0.0}) if best else {"point_count": 0, "total_mm": 0.0, "max_point_total_mm": 0.0, "min_point_total_mm": 0.0},
