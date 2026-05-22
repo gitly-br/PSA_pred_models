@@ -49,9 +49,10 @@ class _FakeRobustContractModel:
         assert bacia == "guarara"
         self.received_frame = X
         assert list(X.columns) == self.features
-        assert float(X.iloc[0]["acum_dia_lag1"]) == 0.0
-        assert float(X.iloc[0]["om_precip_sum_h24"]) == 0.0
-        assert float(X.iloc[0]["comp_pancada"]) == 0.0
+        row = X.row(0, named=True)
+        assert float(row["acum_dia_lag1"]) == 0.0
+        assert float(row["om_precip_sum_h24"]) == 0.0
+        assert float(row["comp_pancada"]) == 0.0
         return [2]
 
     def risk_score(self, bacia, X):
@@ -60,7 +61,7 @@ class _FakeRobustContractModel:
 
 
 class _FakeRepo:
-    async def fetch_historic_documents(self, bacia, start_date, end_date):
+    async def fetch_historic_documents(self, bacia, start_date, end_date, station_ids=None, fields=None, **kwargs):
         return [
             {
                 "provider": "cemaden",
@@ -72,7 +73,7 @@ class _FakeRepo:
             }
         ]
 
-    async def fetch_forecast_documents(self, bacia, target_date):
+    async def fetch_forecast_documents(self, bacia, target_date, **kwargs):
         return [
             {
                 "provider": "openmeteo",
@@ -146,13 +147,13 @@ def test_run_floodcast_reuses_prefetched_documents(monkeypatch):
     calls = {"historic": 0, "forecast": 0}
 
     class _CountingRepo(_FakeRepo):
-        async def fetch_historic_documents(self, bacia, start_date, end_date):
+        async def fetch_historic_documents(self, bacia, start_date, end_date, station_ids=None, fields=None, **kwargs):
             calls["historic"] += 1
-            return await super().fetch_historic_documents(bacia, start_date, end_date)
+            return await super().fetch_historic_documents(bacia, start_date, end_date, station_ids=station_ids, fields=fields, **kwargs)
 
-        async def fetch_forecast_documents(self, bacia, target_date):
+        async def fetch_forecast_documents(self, bacia, target_date, **kwargs):
             calls["forecast"] += 1
-            return await super().fetch_forecast_documents(bacia, target_date)
+            return await super().fetch_forecast_documents(bacia, target_date, **kwargs)
 
     async def run():
         fake_writer = _FakeWriter()
@@ -245,10 +246,10 @@ def test_run_floodcast_raises_when_all_data_missing(monkeypatch):
             ]
 
         class _EmptyRepo:
-            async def fetch_historic_documents(self, bacia, start_date, end_date):
+            async def fetch_historic_documents(self, bacia, start_date, end_date, station_ids=None, fields=None, **kwargs):
                 return []
 
-            async def fetch_forecast_documents(self, bacia, target_date):
+            async def fetch_forecast_documents(self, bacia, target_date, **kwargs):
                 return []
 
             async def summarize_forecast(self, bacia, target_date):
@@ -340,28 +341,33 @@ def test_run_floodcast_fills_missing_contract_columns(monkeypatch):
 
 def test_display_probability_keeps_api_contract_0_to_1():
     assert runner_module._display_probability(0.83, threshold=None) == 0.83
-    assert runner_module._display_probability(0.83, threshold=0.2) == 0.83
-    assert runner_module._display_probability(0.83, threshold=0.2, calibrated_proba=0.42) == 0.42
+    assert runner_module._display_probability(0.83, threshold=0.2) == 0.9774
+    assert runner_module._display_probability(0.83, threshold=0.2, calibrated_proba=0.42) == 0.7372
     assert runner_module._display_probability(1.5, threshold=None) == 1.0
+
+
+def test_display_probability_applies_threshold_floor_and_compression():
+    assert runner_module._display_probability(0.05, threshold=0.2) == 0.125
+    assert runner_module._display_probability(0.8, threshold=0.05) == 0.9753
 
 
 def test_run_floodcast_processes_bacias_in_parallel(monkeypatch):
     concurrency = {"max": 0, "current": 0}
 
     class _ConcurrentRepo(_FakeRepo):
-        async def fetch_historic_documents(self, bacia, start_date, end_date):
-            concurrency["current"] += 1
-            concurrency["max"] = max(concurrency["max"], concurrency["current"])
-            await asyncio.sleep(0.05)
-            concurrency["current"] -= 1
-            return await super().fetch_historic_documents(bacia, start_date, end_date)
+            async def fetch_historic_documents(self, bacia, start_date, end_date, station_ids=None, fields=None, **kwargs):
+                concurrency["current"] += 1
+                concurrency["max"] = max(concurrency["max"], concurrency["current"])
+                await asyncio.sleep(0.05)
+                concurrency["current"] -= 1
+                return await super().fetch_historic_documents(bacia, start_date, end_date, station_ids=station_ids, fields=fields, **kwargs)
 
-        async def fetch_forecast_documents(self, bacia, target_date):
-            concurrency["current"] += 1
-            concurrency["max"] = max(concurrency["max"], concurrency["current"])
-            await asyncio.sleep(0.05)
-            concurrency["current"] -= 1
-            return await super().fetch_forecast_documents(bacia, target_date)
+            async def fetch_forecast_documents(self, bacia, target_date, **kwargs):
+                concurrency["current"] += 1
+                concurrency["max"] = max(concurrency["max"], concurrency["current"])
+                await asyncio.sleep(0.05)
+                concurrency["current"] -= 1
+                return await super().fetch_forecast_documents(bacia, target_date, **kwargs)
 
     async def run():
         fake_writer = _FakeWriter()
@@ -406,15 +412,15 @@ def test_run_floodcast_fetches_historic_and_forecast_in_parallel(monkeypatch):
         release = asyncio.Event()
 
         class _OverlappingRepo(_FakeRepo):
-            async def fetch_historic_documents(self, bacia, start_date, end_date):
-                started_historic.set()
-                await release.wait()
-                return await super().fetch_historic_documents(bacia, start_date, end_date)
+                async def fetch_historic_documents(self, bacia, start_date, end_date, station_ids=None, fields=None, **kwargs):
+                    started_historic.set()
+                    await release.wait()
+                    return await super().fetch_historic_documents(bacia, start_date, end_date, station_ids=station_ids, fields=fields, **kwargs)
 
-            async def fetch_forecast_documents(self, bacia, target_date):
-                started_forecast.set()
-                await release.wait()
-                return await super().fetch_forecast_documents(bacia, target_date)
+                async def fetch_forecast_documents(self, bacia, target_date, **kwargs):
+                    started_forecast.set()
+                    await release.wait()
+                    return await super().fetch_forecast_documents(bacia, target_date, **kwargs)
 
         async def fake_get_active_models():
             return [
