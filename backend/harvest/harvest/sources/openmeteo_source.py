@@ -28,10 +28,10 @@ class OpenMeteoSource(SourceBase):
 
     def _load_point_mapping(self) -> dict[str, list[str]]:
         """
-        Load point-to-bacias mapping from index.json.
+        Load point-to-bacias mapping from openmeteo_grid_points.json.
         Returns dict mapping point_id (LAT_LON) -> list of bacias.
         """
-        index_path = Path(__file__).parent.parent.parent.parent / "notebooks" / "dados" / "weather" / "monthly" / "forecast" / "index.json"
+        index_path = Path(__file__).parent.parent / "openmeteo_grid_points.json"
         if not index_path.exists():
             return {}
 

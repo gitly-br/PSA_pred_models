@@ -47,15 +47,17 @@ class DefesaCivilSource(SourceBase):
         if not api_id or not sistema_id:
             raise HarvestError("DEFESA_CIVIL_API_ID or DEFESA_CIVIL_SISTEMA_ID not set")
 
-        now = dt.datetime.now(dt.timezone.utc)
-        one_hour_ago = now - dt.timedelta(hours=1)
+        import pytz
+        tz = pytz.timezone("America/Sao_Paulo")
+        now_local = dt.datetime.now(tz)
+        one_hour_ago = now_local - dt.timedelta(hours=1)
 
         base_url = self.src_config.url
         periodicidade = self.src_config.args.get("periodicidade", 60)
 
         params = {
             "data_inicio": one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),
-            "data_fim": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "data_fim": now_local.strftime("%Y-%m-%d %H:%M:%S"),
             "periodicidade": periodicidade,
         }
         headers = {
@@ -93,7 +95,7 @@ class DefesaCivilSource(SourceBase):
             intervalo_str = reading.get("intervalo")
             if intervalo_str:
                 dt_value = dt.datetime.strptime(intervalo_str, "%Y-%m-%d %H:%M:%S")
-                dt_value = dt_value.replace(tzinfo=dt.timezone.utc)
+                dt_value = tz.localize(dt_value).astimezone(dt.timezone.utc)
             else:
                 dt_value = loaded_at
 

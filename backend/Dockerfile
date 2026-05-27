@@ -34,10 +34,6 @@ RUN touch /var/log/cron.log
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Copy floodcast cookies
-RUN mkdir -p /root/.cache/gdown
-COPY floodcast/cookies.txt /root/.cache/gdown/cookies.txt
-
 # Expose all necessary ports
 EXPOSE 8000 6457 27017
 

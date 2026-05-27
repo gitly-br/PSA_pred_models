@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from pymongo import UpdateOne
@@ -12,6 +13,8 @@ from harvest.sources.defesa_civil_source import DefesaCivilSource
 from harvest.sources.openmeteo_source import OpenMeteoSource
 from harvest.config_loader import SourceConfig
 from harvest.utils import slugify
+
+logger = logging.getLogger(__name__)
 
 
 HISTORIC_INDEXES = (
@@ -79,6 +82,8 @@ class Harvester:
                 await coll.create_index(keys, name=name, unique=True, background=True)
 
     async def _upsert_historic(self, documents: list[dict[str, Any]]) -> int:
+        if not documents:
+            return 0
         coll = self.mongo.get_data_collection("historic")
         await self._ensure_api_data_indexes("api_data.historic")
         operations = [
@@ -93,6 +98,8 @@ class Harvester:
         return result.upserted_count + result.modified_count
 
     async def _upsert_forecast(self, documents: list[dict[str, Any]]) -> int:
+        if not documents:
+            return 0
         coll = self.mongo.get_data_collection("forecast")
         await self._ensure_api_data_indexes("api_data.forecast")
         operations = [
@@ -148,7 +155,8 @@ class Harvester:
                     else:
                         summary[src.type]["inserted"] += 1
 
-            except HarvestError:
+            except HarvestError as exc:
+                logger.debug(f"HarvestError for {src.type}: {exc}")
                 summary[src.type]["failed"] += 1
                 continue
 
