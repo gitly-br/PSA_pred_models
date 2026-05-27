@@ -146,7 +146,6 @@ class OpenMeteoSource(SourceBase):
                 documents.append({
                     "provider": "openmeteo",
                     "point_id": point_id,
-                    "bacia": bacias[0] if bacias else None,
                     "bacias": bacias,
                     "dt_request": dt_request,
                     "timezone": "UTC",
