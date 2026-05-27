@@ -55,12 +55,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    entrypoint: ["psa-harvest-scheduler", "--top-of-hour", "--run-immediately"]
+    entrypoint: ["psa-harvest-scheduler", "--interval-seconds", "3600", "--top-of-hour", "--run-immediately"]
     working_dir: /workspace/backend
     environment:
       MONGO_URI: mongodb://psa:psa@mongo:27017/?authSource=admin
       CONFIG_DB_NAME: harvest_config
       DATA_DB_NAME: api_data
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
       DEFESA_CIVIL_API_ID: ${DEFESA_CIVIL_API_ID}
       DEFESA_CIVIL_SISTEMA_ID: ${DEFESA_CIVIL_SISTEMA_ID:-2}
       PYTHONPATH: /workspace/backend/harvest
