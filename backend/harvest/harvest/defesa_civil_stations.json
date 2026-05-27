@@ -1,0 +1,14 @@
+{
+  "15": {
+    "name": "Area 15 - Guarará",
+    "bacias": ["guarara"],
+    "latitude": null,
+    "longitude": null
+  },
+  "22": {
+    "name": "Area A – Bairro Jardim",
+    "bacias": [],
+    "latitude": null,
+    "longitude": null
+  }
+}
