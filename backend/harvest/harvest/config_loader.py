@@ -14,6 +14,7 @@ class SourceConfig:
     ttl_days: int | None
     url: str
     args: dict[str, Any]
+    target: str | None = None
 
 class ConfigLoader:
     """
@@ -89,6 +90,7 @@ class ConfigLoader:
                     ttl_days=src.get("ttl_days"),
                     url=url,
                     args=args,
+                    target=type_definition.get("target"),
                 )
             )
 

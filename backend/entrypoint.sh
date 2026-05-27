@@ -5,6 +5,8 @@ cat > /etc/cron.d/crontab << EOF
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 MONGO_URI=${MONGO_URI}
 OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+DEFESA_CIVIL_API_ID=${DEFESA_CIVIL_API_ID}
+DEFESA_CIVIL_SISTEMA_ID=${DEFESA_CIVIL_SISTEMA_ID}
 
 */30 * * * * root psa-harvest >> /var/log/cron.log 2>&1
 5,35 0 * * * root psa-floodcast >> /var/log/cron.log 2>&1
