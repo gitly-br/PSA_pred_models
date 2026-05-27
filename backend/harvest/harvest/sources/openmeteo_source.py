@@ -107,7 +107,7 @@ class OpenMeteoSource(SourceBase):
 
         loaded_at = dt.datetime.now(dt.timezone.utc)
         dt_request = dt.datetime.now(dt.timezone.utc).replace(
-            hour=0, minute=0, second=0, microsecond=0
+            minute=0, second=0, microsecond=0
         )
 
         documents: list[dict[str, Any]] = []
