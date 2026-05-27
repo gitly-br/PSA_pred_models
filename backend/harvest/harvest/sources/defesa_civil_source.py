@@ -104,7 +104,6 @@ class DefesaCivilSource(SourceBase):
                 "provider": "defesa_civil",
                 "station_id": estacao_id,
                 "station_name": reading.get("localidade") or station_info.get("name"),
-                "bacia": bacias[0] if bacias else None,
                 "bacias": bacias,
                 "latitude": station_info.get("latitude"),
                 "longitude": station_info.get("longitude"),

@@ -53,7 +53,7 @@ class WeatherDataRepository:
         if station_ids:
             query["station_id"] = {"$in": station_ids}
         else:
-            query["$or"] = [{"bacia": bacia}, {"bacias": bacia}]
+            query["bacias"] = bacia
 
         projection = None
         if fields is not None:
@@ -80,7 +80,7 @@ class WeatherDataRepository:
         start_utc, end_utc = self._to_utc_bounds(target_date, target_date + timedelta(days=1))
         query = {
             "dt_request": {"$gte": start_utc, "$lt": end_utc},
-            "$or": [{"bacia": bacia}, {"bacias": bacia}],
+            "bacias": bacia,
         }
         docs: list[dict[str, Any]] = []
         collection = self.client[DB_NAME][FORECAST_COLLECTION_NAME]

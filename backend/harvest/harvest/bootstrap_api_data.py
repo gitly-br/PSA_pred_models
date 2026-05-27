@@ -76,7 +76,6 @@ def _build_historic_documents(
                 "station_id": station_id,
                 "station_name": row.get("nomeEstacao") or row.get("station_name"),
                 "municipio": row.get("municipio"),
-                "bacia": bacias[0] if bacias else None,
                 "bacias": bacias,
                 "latitude": row.get("latitude"),
                 "longitude": row.get("longitude"),
@@ -143,7 +142,6 @@ def _build_forecast_documents(
             {
                 "provider": "openmeteo",
                 "point_id": point_id,
-                "bacia": bacias[0] if bacias else None,
                 "bacias": bacias,
                 "dt_request": dt_request,
                 "timezone": "UTC",
