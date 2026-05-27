@@ -9,12 +9,6 @@ from harvest.mongo_client import MongoClientWrapper
 
 SOURCE_TYPES = [
     {
-        "type": "openweather",
-        "url": "https://api.openweathermap.org/data/3.0/onecall",
-        "required_args": ["lat", "lon", "units"],
-        "target": None,
-    },
-    {
         "type": "defesa_civil",
         "url": "https://santo-andre-api-app-acta-campo.mitraonline.com.br/api/v1/iot/consultar/leitura-estacoes",
         "required_args": ["periodicidade"],
@@ -29,17 +23,6 @@ SOURCE_TYPES = [
 ]
 
 SOURCES = [
-    {
-        "type": "openweather",
-        "region": "santo_andre",
-        "subregion": "all",
-        "ttl_days": 30,
-        "args": {
-            "lat": -23.66,
-            "lon": -46.54,
-            "units": "metric",
-        },
-    },
     {
         "type": "defesa_civil",
         "region": "santo_andre",

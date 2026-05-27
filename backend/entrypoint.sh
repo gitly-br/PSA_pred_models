@@ -4,7 +4,8 @@
 cat > /etc/cron.d/crontab << EOF
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 MONGO_URI=${MONGO_URI}
-OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+CONFIG_DB_NAME=${CONFIG_DB_NAME:-harvest_config}
+DATA_DB_NAME=${DATA_DB_NAME:-api_data}
 DEFESA_CIVIL_API_ID=${DEFESA_CIVIL_API_ID}
 DEFESA_CIVIL_SISTEMA_ID=${DEFESA_CIVIL_SISTEMA_ID}
 

@@ -64,7 +64,7 @@ def test_harvest_normalizes_forecast_data():
     doc = docs[0]
     assert doc["provider"] == "openmeteo"
     assert doc["point_id"] == "-23.7_-46.5"
-    assert doc["bacia"] == "guarara"
+    assert "bacia" not in doc
     assert doc["bacias"] == ["guarara"]
     assert len(doc["hourly"]) == 2
     assert doc["hourly"][0]["precipitation_mm"] == 0.0
