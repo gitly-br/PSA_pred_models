@@ -18,14 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 HISTORIC_INDEXES = (
-    ([("provider", 1), ("station_id", 1), ("dt", 1)], "historic_provider_station_dt_idx"),
+    ([("provider", 1), ("station_id", 1), ("dt", 1)], "provider_1_station_id_1_dt_1"),
     ([("bacia", 1), ("dt", 1)], "historic_bacia_dt_idx"),
     ([("bacias", 1), ("dt", 1)], "historic_bacias_dt_idx"),
     ([("station_id", 1), ("dt", 1)], "historic_station_id_dt_idx"),
 )
 
 FORECAST_INDEXES = (
-    ([("provider", 1), ("point_id", 1), ("dt_request", 1)], "forecast_provider_point_dt_idx"),
+    ([("provider", 1), ("point_id", 1), ("dt_request", 1)], "provider_1_point_id_1_dt_request_1"),
 )
 
 

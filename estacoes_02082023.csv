@@ -1,0 +1,28 @@
+"id";"area";"ip";"ip_switch";"porta";"localidade";"mac_dispositivo";"disponivel";"observacao";"latitude";"longitude";"ordem";"tipo_leitura"
+6;"6";"172.24.1.10";"";"";Area 6 - CAPS praça Chile;"0xDE.0xAD.0xBE.0xEF.0xFE.0x26";1;"";-23.6392532;-46.525763;6;2
+5;"5";"172.24.1.9";"";"";Area 5 - Creche Demercindo;"0xDE.0xAD.0xBE.0xEF.0xFE.0x25";1;"";-23.624573;-46.5236407;5;2
+9;"9";"172.24.1.13";"";"";Area 9 - Centro reabilitação IV;"0xDE.0xAD.0xBE.0xEF.0xFE.0x29";1;"";-23.636011;-46.5449043;9;2
+23;B;"172.24.1.27";"";"";Area B - Creche Beth Lobo;"0xDE.0xAD.0xBE.0xEF.0xFE.0x38";1;"";-23.6164323;-46.5317969;23;2
+10;"10";"172.24.1.14";"192.168.21.36/192.168.21.93";"";Area 10 - UBS Vila Palmares;"0xDE.0xAD.0xBE.0xEF.0xFE.0x2A";1;"";-23.6518101;-46.560578;10;2
+11;"11";"172.24.1.15";"";"";Area 11 - CESA Vila Floresta;"0xDE.0xAD.0xBE.0xEF.0xFE.0x2B";1;"";-23.6760804;-46.5502266;11;2
+7;"7";"172.24.1.11";"";"";"";"0xDE.0xAD.0xBE.0xEF.0xFE.0x27";0;"";;;7;1
+25;E;"172.24.1.29";"";"";Area E - Creche Heitor Vila Lobos;"0xDE.0xAD.0xBE.0xEF.0xFE.0x3A";1;"";-23.6401371;-46.4918714;25;2
+13;"13";"172.24.1.17";"192.168.22.45";"";Area 13 - Creche Marina Ulbrich;"0xDE.0xAD.0xBE.0xEF.0xFE.0x2D";1;"";-23.6821143;-46.5379085;13;2
+16;"16";"172.24.1.20";"192.168.22.102";"20";Area 16 - EMEIEF Premem;"0xDE.0xAD.0xBE.0xEF.0xFE.0x31";1;"";-23.6670915;-46.5128382;16;2
+21;"21";"172.24.1.25";"";"";Area 21 - Escola do conhecimento Sabina;"0xDE.0xAD.0xBE.0xEF.0xFE.0x36";1;"";-23.6790432;-46.5314242;21;2
+14;"14";"172.24.1.18";"172.24.1.18";"";Area 14 - UBS Jd. Alvorada;"0xDE.0xAD.0xBE.0xEF.0xFE.0x2E";1;"";-23.6961177;-46.5211209;14;2
+24;D;"172.24.1.28";"";"";Area D - EMEIEF Gabriel Oscar;"0xDE.0xAD.0xBE.0xEF.0xFE.0x39";1;"";-23.6678024;-46.5382772;24;2
+1;"1";"172.24.1.5";"192.168.20.224";"24";Area 1 - Betania;"0xDE.0xAD.0xBE.0xEF.0xFE.0x21";1;"";-23.6356121;-46.5059712;1;2
+8;"8";"172.24.1.12";"192.168.20.156";"24";Area 8 - Prefeitura Municipal de Santo Andre;"0xDE.0xAD.0xBE.0xEF.0xFE.0x28";1;"";-23.6573194;-46.532942;8;2
+19;"19";"172.24.1.23";"";"";Area 19 - EMEIEF Arquiteto Estevao;"0xDE.0xAD.0xBE.0xEF.0xFE.0x34";1;"";-23.6737111;-46.4922245;19;2
+15;"15";"172.24.1.19";"10.0.1.151";"1";Area 15 - Unidade Guarará;"0xDE.0xAD.0xBE.0xEF.0xFE.0x2F";1;"";-23.687388;-46.5079282;15;2
+18;"18-C";"172.24.1.22";"";"";Area 18-C - EMEIEF Homero Thon;"0xDE.0xAD.0xBE.0xEF.0xFE.0x33";1;"";-23.6658989;-46.5022625;18;2
+22;A;"0";"";"";Area A - Unidade Iluminação Publica;"0xDE.0xAD.0xBE.0xEF.0xFE.0x37";0;IP provisorio 172.30.8.190;-23.6544014;-46.545913;22;1
+27;A;"172.24.1.26";;;Area A - EMEIEF Therezinha Monteiro;"0xDE.0xAD.0xBE.0xEF.0xFE.0x37";1;;-23.651514599999988;-46.54007649999999;22;2
+26;"26";"172.24.1.30";"172.24.1.30";"";Area 26 - EMEIEF Machado Assis;"";1;"";-23.7400518;-46.4958728;26;2
+17;"17";"172.24.1.21";"192.168.22.96";"";Area 17 - EMEIEF Francisca Zuk;"0xDE.0xAD.0xBE.0xEF.0xFE.0x32";1;"";-23.7060687;-46.5015742;17;2
+20;"20";"172.24.1.24";"";"";Area 20 - Creche vereador Cosmo;"0xDE.0xAD.0xBE.0xEF.0xFE.0x35";1;"";-23.7102568;-46.5171041;20;2
+12;"12";"172.24.1.16";"192.168.20.129";"20";Area 12 - Unidade Defesa Civil;"0xDE.0xAD.0xBE.0xEF.0xFE.0x2C";1;"";-23.6655394;-46.5521223;12;2
+4;"4";"172.24.1.8";"192.168.22.27";"12";Area 4 - CF Joao amazonas;"0xDE.0xAD.0xBE.0xEF.0xFE.0x24";1;"";-23.6473472;-46.4942573;4;2
+2;"2";"172.24.1.6";"192.168.21.95";"";Area 2 - EMEIEF Eufly Gomes;"0xDE.0xAD.0xBE.0xEF.0xFE.0x22";1;"";-23.6443238;-46.5199072;2;2
+3;"3";"172.24.1.7";"";"";Area 3 - Creche Maximo Manssur;"0xDE.0xAD.0xBE.0xEF.0xFE.0x23";1;"";-23.6466776;-46.5082739;3;2

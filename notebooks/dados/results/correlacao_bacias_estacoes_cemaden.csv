@@ -1,0 +1,58 @@
+bacia,codEstacao,cemaden_nome_estacao,api_estacao_id,api_localidade,distancia_km
+guarara,352940105A,Jardim Capuava,4,Area 4 - CF Joao amazonas,0.86
+guarara,354780901A,Vila Bastos,8,Area 8 - Prefeitura Municipal de Santo Andre,0.19
+guarara,354780907A,Jardim Rina,4,Area 4 - CF Joao amazonas,0.08
+guarara,354780903A,Vila Vitoria,15,Area 15 - Unidade Guarará,0.44
+guarara,354780905A,Cidade Sao Jorge,19,Area 19 - EMEIEF Arquiteto Estevao,0.64
+guarara,354780910A,Paraiso,21,Area 21 - Escola do conhecimento Sabina,0.28
+guarara,354780912A,Vila Suica,17,Area 17 - EMEIEF Francisca Zuk,1.25
+guarara,354780914A,Humaita,15,Area 15 - Unidade Guarará,0.94
+guarara,354780915A,Vila Joao Ramalho,17,Area 17 - EMEIEF Francisca Zuk,0.70
+guarara,354780916A,Borda do Campo,26,Area 26 - EMEIEF Machado Assis,2.41
+guarara,354780918A,Jardim Ipanema,15,Area 15 - Unidade Guarará,0.99
+guarara,354870810A,Vila Esperanca,20,Area 20 - Creche vereador Cosmo,1.89
+guarara,354870805A,Jardim Leblon,20,Area 20 - Creche vereador Cosmo,2.60
+guarara,354870803G,Palmira Grassioto,20,Area 20 - Creche vereador Cosmo,0.91
+guarara,354870817A,Centro,20,Area 20 - Creche vereador Cosmo,3.91
+guarara,354870818A,Baeta Neves,14,Area 14 - UBS Jd. Alvorada,1.42
+guarara,354870822A,Vila Sao Pedro,20,Area 20 - Creche vereador Cosmo,1.18
+oratorio,352940104A,Jardim Oratorio,4,Area 4 - CF Joao amazonas,3.23
+oratorio,352940105A,Jardim Capuava,4,Area 4 - CF Joao amazonas,0.86
+oratorio,352940109A,Jardim Paranavai,25,Area E - Creche Heitor Vila Lobos,3.91
+oratorio,354780901A,Vila Bastos,8,Area 8 - Prefeitura Municipal de Santo Andre,0.19
+oratorio,354780907A,Jardim Rina,4,Area 4 - CF Joao amazonas,0.08
+oratorio,354780904A,Vila Curuca,3,Area 3 - Creche Maximo Manssur,0.60
+oratorio,354780905A,Cidade Sao Jorge,19,Area 19 - EMEIEF Arquiteto Estevao,0.64
+oratorio,354780906A,Parque das Nacoes,2,Area 2 - EMEIEF Eufly Gomes,0.91
+oratorio,354780908A,Santa Terezinha,9,Area 9 - Centro reabilitação IV,1.05
+oratorio,354780914A,Humaita,15,Area 15 - Unidade Guarará,0.94
+oratorio,354780919A,Parque Novo Oratorio,1,Area 1 - Betania,0.04
+meninos,354780901A,Vila Bastos,8,Area 8 - Prefeitura Municipal de Santo Andre,0.19
+meninos,354780903A,Vila Vitoria,15,Area 15 - Unidade Guarará,0.44
+meninos,354780904A,Vila Curuca,3,Area 3 - Creche Maximo Manssur,0.60
+meninos,354780910A,Paraiso,21,Area 21 - Escola do conhecimento Sabina,0.28
+meninos,354780911A,Vila Principe de Gales,12,Area 12 - Unidade Defesa Civil,0.19
+meninos,354870814A,Vila Vitoria,20,Area 20 - Creche vereador Cosmo,6.83
+meninos,354870818A,Baeta Neves,14,Area 14 - UBS Jd. Alvorada,1.42
+meninos,354870821A,Vila Mussolini,12,Area 12 - Unidade Defesa Civil,1.52
+meninos,354870803G,Palmira Grassioto,20,Area 20 - Creche vereador Cosmo,0.91
+meninos,354870822A,Vila Sao Pedro,20,Area 20 - Creche vereador Cosmo,1.18
+tamanduatei,352940104A,Jardim Oratorio,4,Area 4 - CF Joao amazonas,3.23
+tamanduatei,352940105A,Jardim Capuava,4,Area 4 - CF Joao amazonas,0.86
+tamanduatei,354780901A,Vila Bastos,8,Area 8 - Prefeitura Municipal de Santo Andre,0.19
+tamanduatei,354780907A,Jardim Rina,4,Area 4 - CF Joao amazonas,0.08
+tamanduatei,354780903A,Vila Vitoria,15,Area 15 - Unidade Guarará,0.44
+tamanduatei,354780904A,Vila Curuca,3,Area 3 - Creche Maximo Manssur,0.60
+tamanduatei,354780905A,Cidade Sao Jorge,19,Area 19 - EMEIEF Arquiteto Estevao,0.64
+tamanduatei,354780906A,Parque das Nacoes,2,Area 2 - EMEIEF Eufly Gomes,0.91
+tamanduatei,354780910A,Paraiso,21,Area 21 - Escola do conhecimento Sabina,0.28
+tamanduatei,354780912A,Vila Suica,17,Area 17 - EMEIEF Francisca Zuk,1.25
+tamanduatei,354780914A,Humaita,15,Area 15 - Unidade Guarará,0.94
+tamanduatei,354780915A,Vila Joao Ramalho,17,Area 17 - EMEIEF Francisca Zuk,0.70
+tamanduatei,354780916A,Borda do Campo,26,Area 26 - EMEIEF Machado Assis,2.41
+tamanduatei,354780918A,Jardim Ipanema,15,Area 15 - Unidade Guarará,0.99
+tamanduatei,354780919A,Parque Novo Oratorio,1,Area 1 - Betania,0.04
+tamanduatei,354870810A,Vila Esperanca,20,Area 20 - Creche vereador Cosmo,1.89
+tamanduatei,354870818A,Baeta Neves,14,Area 14 - UBS Jd. Alvorada,1.42
+tamanduatei,354870803G,Palmira Grassioto,20,Area 20 - Creche vereador Cosmo,0.91
+tamanduatei,354870822A,Vila Sao Pedro,20,Area 20 - Creche vereador Cosmo,1.18
